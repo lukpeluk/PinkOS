@@ -1,0 +1,25 @@
+# Binary Files
+*.bin
+*.sys
+
+# The images
+*.img
+*.qcow2
+*.vmdk
+
+# Object files
+*.o
+
+# Vim swap files
+*.swp
+*.swo
+*.viminfo
+
+# Mac specific
+.DS_Store
+
+# VSCode
+.vscode/
+*.code-workspace
+
+
