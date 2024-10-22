@@ -2,6 +2,9 @@
 *.bin
 *.sys
 
+# Docker bash history
+.bash_history
+
 # The images
 *.img
 *.qcow2
