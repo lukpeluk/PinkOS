@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <naiveConsole.h>
+#include <videoDriver.h>
 
 extern char getKeyCode();
 
@@ -12,128 +13,263 @@ void keycodeToAscii(char keycode){
 	switch (keycode)
 	{
 		case 0x1E:
-			ncPrintChar('a');
+			drawChar('a', 0x00df8090);
 			break;
 		case 0x30: 
-			ncPrintChar('b');
+			drawChar('b', 0x00df8090);
 			break; 
 		case 0x2E:
-			ncPrintChar('c');
+			drawChar('c', 0x00df8090);
 			break;
 		case 0x20:
-			ncPrintChar('d');
+			drawChar('d', 0x00df8090);
 			break;
 		case 0x12:
-			ncPrintChar('e');
+			drawChar('e',  0x00df8090);
 			break;
 		case 0x21:
-			ncPrintChar('f');
+			drawChar('f',  0x00df8090);
 			break;
 		case 0x22:
-			ncPrintChar('g');
+			drawChar('g',  0x00df8090);
 			break;
 		case 0x23:
-			ncPrintChar('h');
+			drawChar('h',  0x00df8090);
 			break;
 		case 0x17:
-			ncPrintChar('i');
+			drawChar('i',  0x00df8090);
 			break;
 		case 0x24:
-			ncPrintChar('j');
+			drawChar('j',  0x00df8090);
 			break;
 		case 0x25:
-			ncPrintChar('k');
+			drawChar('k',  0x00df8090);
 			break;
 		case 0x26:
-			ncPrintChar('l');
+			drawChar('l',  0x00df8090);
 			break;
 		case 0x32:
-			ncPrintChar('m');
+			drawChar('m',  0x00df8090);
 			break;
 		case 0x31:
-			ncPrintChar('n');
+			drawChar('n',  0x00df8090);
 			break;
 		case 0x18:
-			ncPrintChar('o');
+			drawChar('o',  0x00df8090);
 			break;
 		case 0x19:
-			ncPrintChar('p');
+			drawChar('p',  0x00df8090);
 			break;
 		case 0x10:
-			ncPrintChar('q');
+			drawChar('q',  0x00df8090);
 			break;
 		case 0x13:
-			ncPrintChar('r');
+			drawChar('r',  0x00df8090);
 			break;
 		case 0x1F:
-			ncPrintChar('s');
+			drawChar('s',  0x00df8090);
 			break;
 		case 0x14:
-			ncPrintChar('t');
+			drawChar('t',  0x00df8090);
 			break;
 		case 0x16:
-			ncPrintChar('u');
+			drawChar('u',  0x00df8090);
 			break;
 		case 0x2F:
-			ncPrintChar('v');
+			drawChar('v',  0x00df8090);
 			break;
 		case 0x11:
-			ncPrintChar('w');
+			drawChar('w',  0x00df8090);
 			break;
 		case 0x2D:
-			ncPrintChar('x');
+			drawChar('x',  0x00df8090);
 			break;
 		case 0x15:
-			ncPrintChar('y');
+			drawChar('y',  0x00df8090);
 			break;
 		case 0x2C:
-			ncPrintChar('z');
+			drawChar('z',  0x00df8090);
 			break;
 		case 0x02:
-			ncPrintChar('1');
+			drawChar('1',  0x00df8090);
 			break;
 		case 0x03:
-			ncPrintChar('2');
+			drawChar('2',  0x00df8090);
 			break;
 		case 0x04:
-			ncPrintChar('3');
+			drawChar('3',  0x00df8090);
 			break;
 		case 0x05:
-			ncPrintChar('4');
+			drawChar('4',  0x00df8090);
 			break;
 		case 0x06:
-			ncPrintChar('5');
+			drawChar('5',  0x00df8090);
 			break;
 		case 0x07:
-			ncPrintChar('6');
+			drawChar('6',  0x00df8090);
 			break;
 		case 0x08:
-			ncPrintChar('7');
+			drawChar('7',  0x00df8090);
 			break;
 		case 0x09:
-			ncPrintChar('8');
+			drawChar('8',  0x00df8090);
 			break;
 		case 0x0A:
-			ncPrintChar('9');
+			drawChar('9',  0x00df8090);
 			break;
 		case 0x0B:
-			ncPrintChar('0');
+			drawChar('0',  0x00df8090);
 			break;
         // espacio en blanco
         case 0x39:
-            ncPrintChar(' ');
+            drawChar(' ',  0x00df8090);
             break;
 		case 0x1C:
-			ncPrintChar('\n');
+			drawChar('\n',  0x00df8090);
 			break;
 		default:
-			// ncPrintChar(keycode);
+			// drawChar(keycode);
+			break;
+	}
+}
+
+// Convierte KeyCodes a PinkMappings
+void keycodeToPinkMap(char keycode){
+	// PinkMapping (primera versión, provisoria) asigna del 0 al 9 a las teclas de 0 a 9 
+	// y luego asigna las letras de la A a la Z en minúscula a las teclas de 10 a 35
+	// con espacio en la 36 y enter en la 37
+
+	// convierte el keycode a PinkMapping
+	switch (keycode)
+	{
+		case 0x02:
+			drawChar(0, 0x00df8090);
+			break;
+		case 0x03:
+			drawChar(1, 0x00df8090);
+			break;
+		case 0x04:
+			drawChar(2, 0x00df8090);
+			break;
+		case 0x05:
+			drawChar(3, 0x00df8090);
+			break;
+		case 0x06:
+			drawChar(4, 0x00df8090);
+			break;
+		case 0x07:
+			drawChar(5, 0x00df8090);
+			break;
+		case 0x08:
+			drawChar(6, 0x00df8090);
+			break;
+		case 0x09:
+			drawChar(7, 0x00df8090);
+			break;
+		case 0x0A:
+			drawChar(8, 0x00df8090);
+			break;
+		case 0x0B:
+			drawChar(9, 0x00df8090);
+			break;
+		case 0x1E:
+			drawChar(10, 0x00df8090);
+			break;
+		case 0x30:
+			drawChar(11, 0x00df8090);
+			break;
+		case 0x2E:
+			drawChar(12, 0x00df8090);
+			break;
+		case 0x20:
+			drawChar(13, 0x00df8090);
+			break;
+		case 0x12:
+			drawChar(14, 0x00df8090);
+			break;
+		case 0x21:
+			drawChar(15, 0x00df8090);
+			break;
+		case 0x22:
+			drawChar(16, 0x00df8090);
+			break;
+		case 0x23:
+			drawChar(17, 0x00df8090);
+			break;
+		case 0x17:
+			drawChar(18, 0x00df8090);
+			break;
+		case 0x24:
+			drawChar(19, 0x00df8090);
+			break;
+		case 0x25:
+			drawChar(20, 0x00df8090);
+			break;
+		case 0x26:
+			drawChar(21, 0x00df8090);
+			break;
+		case 0x32:
+			drawChar(22, 0x00df8090);
+			break;
+		case 0x31:
+			drawChar(23, 0x00df8090);
+			break;
+		case 0x18:
+			drawChar(24, 0x00df8090);
+			break;
+		case 0x19:
+			drawChar(25, 0x00df8090);
+			break;
+		case 0x10:
+			drawChar(26, 0x00df8090);
+			break;
+		case 0x13:
+			drawChar(27, 0x00df8090);
+			break;
+		case 0x1F:
+			drawChar(28, 0x00df8090);
+			break;
+		case 0x14:
+			drawChar(29, 0x00df8090);
+			break;
+		case 0x16:
+			drawChar(30, 0x00df8090);
+			break;
+		case 0x2F:
+			drawChar(31, 0x00df8090);
+			break;
+		case 0x11:
+			drawChar(32, 0x00df8090);
+			break;
+		case 0x2D:
+			drawChar(33, 0x00df8090);
+			break;
+		case 0x15:
+			drawChar(34, 0x00df8090);
+			break;
+		case 0x2C:
+			drawChar(35, 0x00df8090);
+			break;
+		
+		case 0x39:
+			// espacio
+			drawChar(36, 0x00df8090);
+			break;
+		case 0x1C:
+			// enter
+			drawChar(37, 0x00df8090);
+			break;
+		default:
+			// probablemente basura
+			// drawChar(keycode, 0x00df8090);
 			break;
 	}
 }
 
 
+
 void int_21() {
 	char c = getKeyCode();
-	keycodeToAscii(c);
+	// keycodeToAscii(c);
+	keycodeToPinkMap(c);
 }

@@ -87,7 +87,6 @@ void * initializeKernelBinary()
 
 int main()
 {	
-
 	load_idt();
 
 	ncPrint("[Kernel Main]");
@@ -108,11 +107,7 @@ int main()
 	ncPrint((char*)sampleDataModuleAddress);
 	ncNewline();
 
-	// puedo imprimir texto en verde 😎
-	ncPrintColor("hola sr. sapooo", 0x02);
-	ncNewline();
-
-	putPixel(0x00df8090, 0x00000025, 0x00000025);
+	// putPixel(0x00df8090, 0x00000025, 0x00000025);
 
 	ncClear();
 

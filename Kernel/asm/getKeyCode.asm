@@ -1,5 +1,5 @@
 
-; código asm con una función compatible con C que devuelve el keycode de teclado
+; función que devuelve el keycode de teclado
 
 section .text
 global getKeyCode
