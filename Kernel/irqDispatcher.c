@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <naiveConsole.h>
 #include <keyboardInterrupt.h>
+#include <videoDriver.h>
 
 static void int_20();
 
@@ -15,6 +16,11 @@ void irqDispatcher(uint64_t irq) {
 		case 1:
 			int_21();
 			break;
+		case 80:
+			// las syscals no se gestionan acá, tienen un handler distinto en interrupts.asm
+			// esto es para poder pasar los argumentos directo a syscallHandler
+			// (sin que se sobreescriba rdi al llamar a irqDispatcher)
+			break;
 	}
 	return;
 }
@@ -24,3 +30,6 @@ void int_20() {
 	int a = ticks_elapsed();
 	ncPrintDec(a);
 }
+
+
+

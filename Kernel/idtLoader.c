@@ -27,12 +27,13 @@ void load_idt() {
 	setup_IDT_entry (0x00, (uint64_t)&_exception0Handler);
 	setup_IDT_entry (0x20, (uint64_t)&_irq00Handler);
 	setup_IDT_entry (0x21, (uint64_t)&_irq01Handler);
+	setup_IDT_entry (0x80, (uint64_t)&_irq80Handler);
 	
 
-	// Solo interrupcion timer tick y teclado habilitadas
+	// Solo interrupcion timer tick y teclado habilitadas, y la 80 para las syscalls
 	// Es una máscara bit a bit de las interrupciones que quiero habilitar
 	// No puedo habilitar interrupciones sin handlers porque va a ejecutar basura
-	picMasterMask(0xFC); 
+	picMasterMask(11111100); 
   // Esto va siempre FF (no pregunten por qué...)
 	picSlaveMask(0xFF);
 

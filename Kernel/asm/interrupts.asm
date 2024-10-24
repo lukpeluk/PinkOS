@@ -13,9 +13,12 @@ GLOBAL _irq03Handler
 GLOBAL _irq04Handler
 GLOBAL _irq05Handler
 
+GLOBAL _irq80Handler
+
 GLOBAL _exception0Handler
 
 EXTERN irqDispatcher
+EXTERN syscallDispatcher
 EXTERN exceptionDispatcher
 
 SECTION .text
@@ -69,8 +72,6 @@ SECTION .text
 	popState
 	iretq
 %endmacro
-
-
 
 %macro exceptionHandler 1
 	pushState
@@ -138,6 +139,18 @@ _irq04Handler:
 _irq05Handler:
 	irqHandlerMaster 5
 
+;Syscall
+_irq80Handler:
+	pushState
+
+	call syscallDispatcher
+
+	; signal pic EOI (End of Interrupt)
+	mov al, 20h
+	out 20h, al
+
+	popState
+	iretq
 
 ;Zero Division Exception
 _exception0Handler:

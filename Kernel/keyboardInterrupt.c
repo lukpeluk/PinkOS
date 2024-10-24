@@ -1,140 +1,143 @@
-// código C que se encarga de leer el scancode del teclado y mostrarlo en pantalla.
 // utiliza la función getKeyCode que se encuentra en el archivo getKeyCode.asm
+// Setea la tecla como pressed o released según el scancode, usa el eventHandlerManager
+// Además convierte el scancode a PinkMapping y lo envía a la función handle_key_press
 
 #include <stdint.h>
 #include <naiveConsole.h>
 #include <videoDriver.h>
+#include <eventHandlerManager.h>
 
 extern char getKeyCode();
 
 // convierte de keycode a ascii
-void keycodeToAscii(char keycode){
+char keycodeToAscii(char keycode){
 	// convierte el keycode a ascii
 	switch (keycode)
 	{
 		case 0x1E:
-			drawChar('a', 0x00df8090);
+			return 'a';
 			break;
 		case 0x30: 
-			drawChar('b', 0x00df8090);
+			return 'b';
 			break; 
 		case 0x2E:
-			drawChar('c', 0x00df8090);
+			return 'c';
 			break;
 		case 0x20:
-			drawChar('d', 0x00df8090);
+			return 'd';
 			break;
 		case 0x12:
-			drawChar('e',  0x00df8090);
+			return 'e';
 			break;
 		case 0x21:
-			drawChar('f',  0x00df8090);
+			return 'f';
 			break;
 		case 0x22:
-			drawChar('g',  0x00df8090);
+			return 'g';
 			break;
 		case 0x23:
-			drawChar('h',  0x00df8090);
+			return 'h';
 			break;
 		case 0x17:
-			drawChar('i',  0x00df8090);
+			return 'i';
 			break;
 		case 0x24:
-			drawChar('j',  0x00df8090);
+			return 'j';
 			break;
 		case 0x25:
-			drawChar('k',  0x00df8090);
+			return 'k';
 			break;
 		case 0x26:
-			drawChar('l',  0x00df8090);
+			return 'l';
 			break;
 		case 0x32:
-			drawChar('m',  0x00df8090);
+			return 'm';
 			break;
 		case 0x31:
-			drawChar('n',  0x00df8090);
+			return 'n';
 			break;
 		case 0x18:
-			drawChar('o',  0x00df8090);
+			return 'o';
 			break;
 		case 0x19:
-			drawChar('p',  0x00df8090);
+			return 'p';
 			break;
 		case 0x10:
-			drawChar('q',  0x00df8090);
+			return 'q';
 			break;
 		case 0x13:
-			drawChar('r',  0x00df8090);
+			return 'r';
 			break;
 		case 0x1F:
-			drawChar('s',  0x00df8090);
+			return 's';
 			break;
 		case 0x14:
-			drawChar('t',  0x00df8090);
+			return 't';
 			break;
 		case 0x16:
-			drawChar('u',  0x00df8090);
+			return 'u';
 			break;
 		case 0x2F:
-			drawChar('v',  0x00df8090);
+			return 'v';
 			break;
 		case 0x11:
-			drawChar('w',  0x00df8090);
+			return 'w';
 			break;
 		case 0x2D:
-			drawChar('x',  0x00df8090);
+			return 'x';
 			break;
 		case 0x15:
-			drawChar('y',  0x00df8090);
+			return 'y';
 			break;
 		case 0x2C:
-			drawChar('z',  0x00df8090);
+			return 'z';
 			break;
 		case 0x02:
-			drawChar('1',  0x00df8090);
+			return '1';
 			break;
 		case 0x03:
-			drawChar('2',  0x00df8090);
+			return '2';
 			break;
 		case 0x04:
-			drawChar('3',  0x00df8090);
+			return '3';
 			break;
 		case 0x05:
-			drawChar('4',  0x00df8090);
+			return '4';
 			break;
 		case 0x06:
-			drawChar('5',  0x00df8090);
+			return '5';
 			break;
 		case 0x07:
-			drawChar('6',  0x00df8090);
+			return '6';
 			break;
 		case 0x08:
-			drawChar('7',  0x00df8090);
+			return '7';
 			break;
 		case 0x09:
-			drawChar('8',  0x00df8090);
+			return '8';
 			break;
 		case 0x0A:
-			drawChar('9',  0x00df8090);
+			return '9';
 			break;
 		case 0x0B:
-			drawChar('0',  0x00df8090);
+			return '0';
 			break;
         // espacio en blanco
         case 0x39:
-            drawChar(' ',  0x00df8090);
+            return ' ';
             break;
 		case 0x1C:
-			drawChar('\n',  0x00df8090);
+			return '\n';
 			break;
 		default:
-			// drawChar(keycode);
+			// return keycode);
 			break;
 	}
 }
 
 // Convierte KeyCodes a PinkMappings
-void keycodeToPinkMap(char keycode){
+// Devuelve -1 si no es un caracter válido (o si es un keycode de release y no de press)
+int keycodeToPinkMap(char keycode){
 	// PinkMapping (primera versión, provisoria) asigna del 0 al 9 a las teclas de 0 a 9 
 	// y luego asigna las letras de la A a la Z en minúscula a las teclas de 10 a 35
 	// con espacio en la 36 y enter en la 37
@@ -143,133 +146,147 @@ void keycodeToPinkMap(char keycode){
 	switch (keycode)
 	{
 		case 0x02:
-			drawChar(0, 0x00df8090);
+			return 1;
 			break;
 		case 0x03:
-			drawChar(1, 0x00df8090);
+			return 2;
 			break;
 		case 0x04:
-			drawChar(2, 0x00df8090);
+			return 3;
 			break;
 		case 0x05:
-			drawChar(3, 0x00df8090);
+			return 4;
 			break;
 		case 0x06:
-			drawChar(4, 0x00df8090);
+			return 5;
 			break;
 		case 0x07:
-			drawChar(5, 0x00df8090);
+			return 6;
 			break;
 		case 0x08:
-			drawChar(6, 0x00df8090);
+			return 7;
 			break;
 		case 0x09:
-			drawChar(7, 0x00df8090);
+			return 8;
 			break;
 		case 0x0A:
-			drawChar(8, 0x00df8090);
+			return 9;
 			break;
 		case 0x0B:
-			drawChar(9, 0x00df8090);
+			return 0;
 			break;
 		case 0x1E:
-			drawChar(10, 0x00df8090);
+			return 10;
 			break;
 		case 0x30:
-			drawChar(11, 0x00df8090);
+			return 11;
 			break;
 		case 0x2E:
-			drawChar(12, 0x00df8090);
+			return 12;
 			break;
 		case 0x20:
-			drawChar(13, 0x00df8090);
+			return 13;
 			break;
 		case 0x12:
-			drawChar(14, 0x00df8090);
+			return 14;
 			break;
 		case 0x21:
-			drawChar(15, 0x00df8090);
+			return 15;
 			break;
 		case 0x22:
-			drawChar(16, 0x00df8090);
+			return 16;
 			break;
 		case 0x23:
-			drawChar(17, 0x00df8090);
+			return 17;
 			break;
 		case 0x17:
-			drawChar(18, 0x00df8090);
+			return 18;
 			break;
 		case 0x24:
-			drawChar(19, 0x00df8090);
+			return 19;
 			break;
 		case 0x25:
-			drawChar(20, 0x00df8090);
+			return 20;
 			break;
 		case 0x26:
-			drawChar(21, 0x00df8090);
+			return 21;
 			break;
 		case 0x32:
-			drawChar(22, 0x00df8090);
+			return 22;
 			break;
 		case 0x31:
-			drawChar(23, 0x00df8090);
+			return 23;
 			break;
 		case 0x18:
-			drawChar(24, 0x00df8090);
+			return 24;
 			break;
 		case 0x19:
-			drawChar(25, 0x00df8090);
+			return 25;
 			break;
 		case 0x10:
-			drawChar(26, 0x00df8090);
+			return 26;
 			break;
 		case 0x13:
-			drawChar(27, 0x00df8090);
+			return 27;
 			break;
 		case 0x1F:
-			drawChar(28, 0x00df8090);
+			return 28;
 			break;
 		case 0x14:
-			drawChar(29, 0x00df8090);
+			return 29;
 			break;
 		case 0x16:
-			drawChar(30, 0x00df8090);
+			return 30;
 			break;
 		case 0x2F:
-			drawChar(31, 0x00df8090);
+			return 31;
 			break;
 		case 0x11:
-			drawChar(32, 0x00df8090);
+			return 32;
 			break;
 		case 0x2D:
-			drawChar(33, 0x00df8090);
+			return 33;
 			break;
 		case 0x15:
-			drawChar(34, 0x00df8090);
+			return 34;
 			break;
 		case 0x2C:
-			drawChar(35, 0x00df8090);
+			return 35;
 			break;
 		
 		case 0x39:
 			// espacio
-			drawChar(36, 0x00df8090);
+			return 36;
 			break;
 		case 0x1C:
 			// enter
-			drawChar(37, 0x00df8090);
+			return 37;
 			break;
 		default:
 			// probablemente basura
-			// drawChar(keycode, 0x00df8090);
+			return -1;
 			break;
 	}
 }
 
-
-
+// assumes scan code set is 1
 void int_21() {
 	char c = getKeyCode();
-	// keycodeToAscii(c);
-	keycodeToPinkMap(c);
+
+	// checks whether the key was pressed or released
+	// (released keys are 0x80 + the keycode of the pressed key)
+	if(c < 0x81){
+		set_key(c);
+
+		int pinkChar = keycodeToPinkMap(c);
+		if(pinkChar != -1)
+			handle_key_press(pinkChar);
+	}
+	else if (c < 0xD9) {
+		release_key(c - 0x80);
+	} else {
+		// unsupported scancode
+	}
+
+		
 }
