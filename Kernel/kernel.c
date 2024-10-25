@@ -4,7 +4,7 @@
 #include <moduleLoader.h>
 #include <naiveConsole.h>
 
-#include "videoDriver.h"
+#include <videoDriver.h>
 #include <stdint.h>
 
 extern uint8_t text;
@@ -16,7 +16,7 @@ extern uint8_t endOfKernel;
 
 static const uint64_t PageSize = 0x1000;
 
-static void * const sampleCodeModuleAddress = (void*)0x400000;
+static void * const PinkOSAddress = (void*)0x400000;
 static void * const sampleDataModuleAddress = (void*)0x500000;
 
 typedef int (*EntryPoint)();
@@ -51,7 +51,7 @@ void * initializeKernelBinary()
 	ncNewline();
 
 	void * moduleAddresses[] = {
-		sampleCodeModuleAddress,
+		PinkOSAddress,
 		sampleDataModuleAddress
 	};
 
@@ -92,10 +92,10 @@ int main()
 	ncPrint("[Kernel Main]");
 	ncNewline();
 	ncPrint("  Sample code module at 0x");
-	ncPrintHex((uint64_t)sampleCodeModuleAddress);
+	ncPrintHex((uint64_t)PinkOSAddress);
 	ncNewline();
 	ncPrint("  Calling the sample code module returned: ");
-	ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
+	ncPrintHex(((EntryPoint)PinkOSAddress)());
 	ncNewline();
 	ncNewline();
 
