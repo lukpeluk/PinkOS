@@ -8,9 +8,12 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
             putPixel(arg1, arg2, arg3);
             break;
         case 1:
-            drawChar(arg1, arg2);
+            drawChar(arg1, arg2, arg3);
             break;
         case 2:
+            clearScreen(arg1);
+            break;
+        case 3:
             // registers a key press handler with the provided function pointer
             setKeypressHandler((KeyHandler)arg1);
             break;

@@ -253,15 +253,20 @@ int keycodeToPinkMap(char keycode){
 		case 0x2C:
 			return 35;
 			break;
-		
+
+		// espacio
 		case 0x39:
-			// espacio
 			return 36;
 			break;
+		// enter
 		case 0x1C:
-			// enter
 			return 37;
 			break;
+		// backspace
+		case 0x0E:
+			return 38;
+			break;
+
 		default:
 			// probablemente basura
 			return -1;
