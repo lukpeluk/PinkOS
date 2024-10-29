@@ -1,13 +1,46 @@
-// utiliza la función getKeyCode que se encuentra en el archivo getKeyCode.asm
-// Setea la tecla como pressed o released según el scancode, usa el eventHandlerManager
-// Además convierte el scancode a PinkMapping y lo envía a la función handle_key_press
-
+#include <keyboardDriver.h>
 #include <stdint.h>
-#include <naiveConsole.h>
-#include <videoDriver.h>
-#include <eventHandlerManager.h>
 
-extern char getKeyCode();
+static char pressed_keys[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+
+// Function to get the current pressed keys
+// It returns a pointer to the array of pressed keys, so if the user wants to modify it, technically it can, 
+// But it would be ignoring the const qualifier and shouldn't be done
+// The function could recieve a pointer to an array as an argument and return there, but for simplicity I think this is fine (to-do?)
+const char* get_pressed_keys() {
+    return pressed_keys;
+}
+
+// TODO: implementar handleKeyPress para que la lógica de qué hacer con la tecla apretada no esté en la interrupción
+
+
+// Set a key as pressed, returns 0 if successful, 1 if there are no empty slots
+// (normally a keyboard does the same, if you press more keys than it can handle, it will ignore the extra ones)
+const char set_key(char scan_code) {
+    for(int i = 0; i < 6; i++) {
+        if(pressed_keys[i] == 0x00) {
+            pressed_keys[i] = scan_code;
+            return 0;
+        }
+    }
+
+    return 1;  // If there are no empty slots, return 1
+}
+
+const char release_key(char scan_code) {
+    for(int i = 0; i < 6; i++) {
+        if(pressed_keys[i] == scan_code) {
+            pressed_keys[i] = 0x00;
+            return 0;
+        }
+    }
+
+    return 1;  // If the key was not found, return 1
+}
+
+
+// HELPERS (más que nada para trabajar con keycodes/ASCII)
 
 // convierte de keycode a ascii
 char keycodeToAscii(char keycode){
@@ -135,7 +168,9 @@ char keycodeToAscii(char keycode){
 	}
 }
 
-// Convierte KeyCodes a PinkMappings
+
+//! (DEPRECATED)
+// Convierte KeyCodes a PinkMappings 
 // Devuelve -1 si no es un caracter válido (o si es un keycode de release y no de press)
 int keycodeToPinkMap(char keycode){
 	// PinkMapping (primera versión, provisoria) asigna del 0 al 9 a las teclas de 0 a 9 
@@ -272,29 +307,4 @@ int keycodeToPinkMap(char keycode){
 			return -1;
 			break;
 	}
-}
-
-// assumes scan code set is 1
-void int_21() {
-	char c = getKeyCode();
-
-	// checks whether the key was pressed or released
-	// (released keys are 0x80 + the keycode of the pressed key)
-	// TODO: que el handler reciba además del PinkMapping si la tecla se apretó o soltó
-	// podría mandarle el scancode también por si le sirve, no estaría de más
-	// ah, igual lo puede pedir del buffer de teclado con la syscall que implementaríamos
-	if(c < 0x81){
-		set_key(c);
-
-		int pinkChar = keycodeToPinkMap(c);
-		if(pinkChar != -1)
-			handle_key_press(pinkChar);
-	}
-	else if (c < 0xD9) {
-		release_key(c - 0x80);
-	} else {
-		// unsupported scancode
-	}
-
-		
 }

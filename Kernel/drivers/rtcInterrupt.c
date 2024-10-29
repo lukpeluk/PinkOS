@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <videoDriver.h>
 
+// TODO: OJO, EL CÓDIGO DE INTERRUPTS Y DE DRIVERS AHORA ESTÁ SEPARADO 
 
 extern void rtc_acknowledge_interrupt();
 typedef struct {
