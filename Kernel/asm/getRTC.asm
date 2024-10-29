@@ -131,15 +131,7 @@ init_rtc:
     mov al, 0x8B                ; Seleccionar Registro B
     out 0x70, al
     in  al, 0x71                ; Leer valor actual del registro B
-    or  al, 0x40                ; Habilitar PIE (Periodic Interrupt Enable)
-    out 0x71, al
-
-    ; Configurar frecuencia del RTC en Registro A a 2 Hz
-    mov al, 0x8A                ; Seleccionar Registro A
-    out 0x70, al
-    in  al, 0x71                ; Leer valor actual del registro A
-    and al, 0xF0                ; Limpiar bits de frecuencia
-    or  al, 0x0F                ; Configurar frecuencia a 2 Hz
+    or al, 0x10                 ; Habilitar UIE (Update Interrupt Enable, bit 4)
     out 0x71, al
 
     ret                         ; Retornar al código en C
