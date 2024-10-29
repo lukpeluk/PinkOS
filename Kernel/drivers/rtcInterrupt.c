@@ -28,11 +28,21 @@ RTC_Time convert_bcd_to_binary(RTC_Time time) {
     return time;
 }
 
-void get_time_corrected(RTC_Time * time, int time_zone) {
+// Definimos cuántos días tiene cada mes
+int days_in_month(int month, int year) {
+    switch (month) {
+        case 4: case 6: case 9: case 11:
+            return 30;
+        case 2:
+            // Verificar si el año es bisiesto
+            return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
+        default:
+            return 31;
+    }
+}
 
-
+void get_time_corrected(RTC_Time *time, int time_zone) {
     int adjusted_hour = time->hours + time_zone;
-
 
     // Ajustar la hora y gestionar cambios de día/mes/año
     if (adjusted_hour < 0) {
@@ -45,16 +55,16 @@ void get_time_corrected(RTC_Time * time, int time_zone) {
                 time->month = 12;
                 time->year--;
             }
-            // Asignar el último día del mes anterior
-            time->day = 31;  // Simplificación: ajustar según el mes si es necesario
+            time->day = days_in_month(time->month, time->year);
         }
         time->day_of_week = (time->day_of_week == 0) ? 6 : time->day_of_week - 1;
+
     } else if (adjusted_hour >= 24) {
         time->hours = adjusted_hour - 24;
         time->day++;
 
         // Verificar cambio de mes
-        if (time->day > 31) {  // Simplificación: ajustar según el mes si es necesario
+        if (time->day > days_in_month(time->month, time->year)) {
             time->day = 1;
             time->month++;
             if (time->month > 12) {
@@ -63,6 +73,7 @@ void get_time_corrected(RTC_Time * time, int time_zone) {
             }
         }
         time->day_of_week = (time->day_of_week + 1) % 7;
+
     } else {
         time->hours = adjusted_hour;
     }
