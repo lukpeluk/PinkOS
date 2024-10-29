@@ -5,7 +5,7 @@ global disable_ints, enable_ints
 global outportb, inportb
 global rtc_acknowledge_interrupt
 
-GLOBAL get_hours, get_minutes, get_seconds, get_day, get_month, get_year, get_day_of_week   
+GLOBAL get_time
 
 rtc_acknowledge_interrupt:
     mov dx, 0x70           ; Cargar el puerto de control en DX
@@ -19,76 +19,56 @@ rtc_acknowledge_interrupt:
 
     ret
 
+get_time:
+    ; RDI apunta a la estructura RTC_Time
 
-get_hours:
-	cli ; disable interrupts
+    cli  ; Deshabilitar interrupciones
 
-	mov al, 0x04 ; read hours
-	out 70h, al
-	in al, 71h
+    ; Leer segundos (BCD)
+    mov al, 0x00
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi], al  ; Guardar en time->seconds
 
-	sti ; enable interrupts
-	ret
+    ; Leer minutos (BCD)
+    mov al, 0x02
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 1], al  ; Guardar en time->minutes
 
-get_minutes:
-	cli ; disable interrupts
+    ; Leer horas (BCD)
+    mov al, 0x04
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 2], al  ; Guardar en time->hours
 
-	mov al, 0x02 ; read minutes
-	out 70h, al
-	in al, 71h
+    ; Leer día (BCD)
+    mov al, 0x07
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 3], al  ; Guardar en time->day
 
-	sti ; enable interrupts
-	ret
+    ; Leer mes (BCD)
+    mov al, 0x08
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 4], al  ; Guardar en time->month
 
-get_seconds:
-	cli ; disable interrupts
+    ; Leer año (BCD)
+    mov al, 0x09
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 5], al  ; Guardar en time->year
 
-	mov al, 0x00 ; read seconds
-	out 70h, al
-	in al, 71h
+    ; Leer día de la semana (BCD)
+    mov al, 0x06
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 6], al  ; Guardar en time->day_of_week
 
-	sti ; enable interrupts
-	ret
-
-get_day:
-    cli ; disable interrupts
-
-    mov al, 0x07 ; read day
-    out 70h, al
-    in al, 71h
-
-    sti ; enable interrupts
+    sti  ; Habilitar interrupciones
     ret
 
-get_month:
-    cli ; disable interrupts
-
-    mov al, 0x08 ; read month
-    out 70h, al
-    in al, 71h
-
-    sti ; enable interrupts
-    ret
-
-get_year:
-    cli ; disable interrupts
-
-    mov al, 0x09 ; read year
-    out 70h, al
-    in al, 71h
-
-    sti ; enable interrupts
-    ret
-
-get_day_of_week:
-    cli ; disable interrupts
-
-    mov al, 0x06 ; read day of week
-    out 70h, al
-    in al, 71h
-
-    sti ; enable interrupts
-    ret
 
 rtc_handler:
     ; Guardar los registros manualmente en 64 bits
