@@ -1,108 +1,10 @@
 section .text
-global rtc_handler, read_rtc_time
-global init_rtc
-global disable_ints, enable_ints
-global outportb, inportb
-global rtc_acknowledge_interrupt
 
-GLOBAL get_time
+GLOBAL init_rtc
+GLOBAL rtc_acknowledge_interrupt
+GLOBAL get_time_utc
 
-rtc_acknowledge_interrupt:
-    mov dx, 0x70           ; Cargar el puerto de control en DX
-    mov al, 0x0C           ; Seleccionar registro C
-    out dx, al             ; Desactivar NMI
-    in al, 0x71              ; Leer registro C y descartar el valor
-    
-    
-    mov al, 0x20
-	out 0xA0, al  ; EOI para el PIC esclavo
-
-    ret
-
-get_time:
-    ; RDI apunta a la estructura RTC_Time
-
-    cli  ; Deshabilitar interrupciones
-
-    ; Leer segundos (BCD)
-    mov al, 0x00
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi], al  ; Guardar en time->seconds
-
-    ; Leer minutos (BCD)
-    mov al, 0x02
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi + 1], al  ; Guardar en time->minutes
-
-    ; Leer horas (BCD)
-    mov al, 0x04
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi + 2], al  ; Guardar en time->hours
-
-    ; Leer día (BCD)
-    mov al, 0x07
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi + 3], al  ; Guardar en time->day
-
-    ; Leer mes (BCD)
-    mov al, 0x08
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi + 4], al  ; Guardar en time->month
-
-    ; Leer año (BCD)
-    mov al, 0x09
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi + 5], al  ; Guardar en time->year
-
-    ; Leer día de la semana (BCD)
-    mov al, 0x06
-    out 0x70, al
-    in  al, 0x71
-    mov [rdi + 6], al  ; Guardar en time->day_of_week
-
-    sti  ; Habilitar interrupciones
-    ret
-
-
-rtc_handler:
-    ; Guardar los registros manualmente en 64 bits
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push rsi
-    push rdi
-    push rbp
-    push r8
-    push r9
-    push r10
-    push r11
-
-    ; Leer registro C del RTC para confirmar la interrupción
-    mov al, 0x0C                ; Seleccionar Registro C
-    out 0x70, al                ; Enviar al puerto de índice (0x70)
-    in  al, 0x71                ; Leer desde el puerto de datos (0x71)
-
-    ; Restaurar los registros
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rbp
-    pop rdi
-    pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-
-    iretq                       ; Retornar de la interrupción (64 bits)
+; TODO: Ver tema de uso de registros. Habria que backuppearlos antes de usarlos
 
 init_rtc:
     ; Configurar el RTC para interrupciones periódicas
@@ -116,74 +18,98 @@ init_rtc:
 
     ret                         ; Retornar al código en C
 
-read_rtc_time:
-    cli                         ; Deshabilitar interrupciones
-
-    ; Leer segundos
-    mov al, 0x00                ; Registro de segundos
-    out 0x70, al
-    in  al, 0x71                ; Leer segundos
-    call bcd_to_binary          ; Convertir a binario
-    mov [rdi], al               ; Guardar en *(rdi)
-
-    ; Leer minutos
-    mov al, 0x02                ; Registro de minutos
-    out 0x70, al
-    in  al, 0x71                ; Leer minutos
-    call bcd_to_binary          ; Convertir a binario
-    mov [rdi + 1], al           ; Guardar en *(rdi + 1)
-
-    ; Leer horas
-    mov al, 0x04                ; Registro de horas
-    out 0x70, al
-    in  al, 0x71                ; Leer horas
-    call bcd_to_binary          ; Convertir a binario
-    mov [rdi + 2], al           ; Guardar en *(rdi + 2)
-
-    sti                         ; Habilitar interrupciones
-    ret                         ; Retornar al código en C
+rtc_acknowledge_interrupt:
+    mov dx, 0x70           ; Cargar el puerto de control en DX
+    mov al, 0x0C           ; Seleccionar registro C
+    out dx, al             ; Desactivar NMI
+    in al, 0x71              ; Leer registro C y descartar el valor
     
-bcd_to_binary:
-    ; (AL contiene el valor BCD)
-    movzx rax, al              ; Extender AL a RAX (64 bits)
-
-    ; Separar decenas y unidades
-    shr rax, 4                 ; Desplazar decenas a bits bajos
-    imul rax, rax, 10          ; Multiplicar decenas por 10
-
-    ; Obtener las unidades de BCD y sumarlas
-    and al, 0x0F               ; Enmascarar unidades en AL
-    add rax, rax               ; Sumar unidades a RAX
-
-    ; Guardar el resultado final en AL (parte baja de RAX)
-    mov al, bl                 ; Usamos un registro temporal de 8 bits
+    
+    mov al, 0x20
+	out 0xA0, al  ; EOI para el PIC esclavo
 
     ret
 
-section .text
-global disable_ints, enable_ints, outportb, inportb
+; Estructura RTC_Time:
+; offset 0: seconds
+; offset 1: minutes
+; offset 2: hours
+; offset 3: day
+; offset 4: month
+; offset 5: year
+; offset 6: day_of_week
 
-; Deshabilitar interrupciones
-disable_ints:
-    cli                    ; Clear Interrupt Flag
-    ret                    ; Retornar
+get_time_utc:
+    ; RDI apunta a la estructura RTC_Time
 
-; Habilitar interrupciones
-enable_ints:
-    sti                    ; Set Interrupt Flag
-    ret                    ; Retornar
+    cli  ; Deshabilitar interrupciones
 
-; Enviar un byte al puerto (I/O)
-outportb:
-    ; Entrada: Puerto en DX, dato en AL
-    mov dx, di             ; Mover el puerto desde DI a DX
-    mov al, sil            ; Mover el dato desde SIL a AL (8 bits)
-    out dx, al             ; Enviar el byte al puerto
-    ret                    ; Retornar
+    ; Leer y convertir segundos
+    mov al, 0x00
+    out 0x70, al
+    in  al, 0x71
+    call convert_bcd_to_binary
+    mov [rdi], al
 
-; Leer un byte desde un puerto (I/O)
-inportb:
-    ; Entrada: Puerto en DX, Salida: AL
-    mov dx, di             ; Mover el puerto desde DI a DX
-    in al, dx              ; Leer el byte desde el puerto
-    ret                    ; Retornar
+    ; Leer y convertir minutos
+    mov al, 0x02
+    out 0x70, al
+    in  al, 0x71
+    call convert_bcd_to_binary
+    mov [rdi + 1], al
+
+    ; Leer y convertir horas
+    mov al, 0x04
+    out 0x70, al
+    in  al, 0x71
+    call convert_bcd_to_binary
+    mov [rdi + 2], al
+
+    ; Leer y convertir día
+    mov al, 0x07
+    out 0x70, al
+    in  al, 0x71
+    call convert_bcd_to_binary
+    mov [rdi + 3], al
+
+    ; Leer y convertir mes
+    mov al, 0x08
+    out 0x70, al
+    in  al, 0x71
+    call convert_bcd_to_binary
+    mov [rdi + 4], al
+
+    ; Leer y convertir año
+    mov al, 0x09
+    out 0x70, al
+    in  al, 0x71
+    call convert_bcd_to_binary
+    mov [rdi + 5], al
+
+    ; Leer día de la semana (no necesita conversión)
+    mov al, 0x06
+    out 0x70, al
+    in  al, 0x71
+    mov [rdi + 6], al
+
+    sti  ; Habilitar interrupciones
+    ret
+
+; Subrutina para convertir BCD a binario
+convert_bcd_to_binary:
+    ; Al tiene el valor en BCD
+    push rbx         ; Guardar BL
+    push rcx         ; Guardar CL
+
+    mov cl, al
+    and cl, 0x0F
+    and al, 0xF0
+    shr al, 4
+    mov bl, 10
+    mul bl
+    add al, cl
+
+    pop rcx          ; Restaurar CL
+    pop rbx          ; Restaurar BL
+
+    ret

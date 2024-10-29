@@ -1,6 +1,8 @@
 #ifndef _EVENT_HANDLERS_H
 #define _EVENT_HANDLERS_H
 
+#include <rtcDriver.h>
+
 // The kernel allows processes to register handlers for different events
 // To be able to register a handler, the process must have the appropriate permissions
 // That allows the OS itself to register handlers but ensures no other process can overwrite them 
@@ -17,11 +19,13 @@
 // types for the differeng handler functions 
 typedef void (*KeyHandler)(char key); // Key press handler, TODO: add key press/release flag and scancode as args
 typedef void (*TickHandler)(unsigned long ticks); // Tick handler, to be called every tick
+typedef void (*RTCHandler)(RTC_Time time); // RTC handler, to be called every RTC interrupt
 
 // stores pointers to the handler functions
 typedef struct EventHandlers {
     KeyHandler key_handler; 
     TickHandler tick_handler; 
+    RTCHandler rtc_handler;
 } EventHandlers;
 
 // Extern declaration for the global state variable

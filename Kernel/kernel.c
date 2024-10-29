@@ -5,7 +5,7 @@
 #include <naiveConsole.h>
 
 #include <videoDriver.h>
-#include <stdint.h>
+#include <rtcDriver.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -18,9 +18,6 @@ static const uint64_t PageSize = 0x1000;
 
 static void * const PinkOSAddress = (void*)0x400000;
 static void * const sampleDataModuleAddress = (void*)0x500000;
-
-extern void init_rtc();
-extern void read_rtc_time(uint8_t* time);
 
 extern void play_sound(uint32_t nFrequence);
 extern void stop_sound();
@@ -94,6 +91,7 @@ void * initializeKernelBinary()
 int main()
 {	
 	init_rtc();
+	set_timezone(-3);
 	load_idt();
 	// typedef struct {
 	// 	uint32_t freq;
