@@ -1,4 +1,8 @@
 GLOBAL cpuVendor
+GLOBAL disable_ints, enable_ints, outportb, inportb
+
+; TODO: 
+; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
 
 section .text
 	
@@ -26,5 +30,28 @@ cpuVendor:
 	pop rbp
 	ret
 
-; TODO: 
-; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
+
+; Deshabilitar interrupciones
+disable_ints:
+    cli                    ; Clear Interrupt Flag
+    ret                    ; Retornar
+
+; Habilitar interrupciones
+enable_ints:
+    sti                    ; Set Interrupt Flag
+    ret                    ; Retornar
+
+; Enviar un byte al puerto (I/O)
+outportb:
+    ; Entrada: Puerto en DX, dato en AL
+    mov dx, di             ; Mover el puerto desde DI a DX
+    mov al, sil            ; Mover el dato desde SIL a AL (8 bits)
+    out dx, al             ; Enviar el byte al puerto
+    ret                    ; Retornar
+
+; Leer un byte desde un puerto (I/O)
+inportb:
+    ; Entrada: Puerto en DX, Salida: AL
+    mov dx, di             ; Mover el puerto desde DI a DX
+    in al, dx              ; Leer el byte desde el puerto
+    ret                    ; Retornar
