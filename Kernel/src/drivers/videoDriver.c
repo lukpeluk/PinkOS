@@ -1,4 +1,4 @@
-#include <videoDriver.h>
+#include <drivers/videoDriver.h>
 #include <stdint.h>
 
 struct vbe_mode_info_structure {
