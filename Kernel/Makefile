@@ -37,6 +37,7 @@ $(LOADEROBJECT):
 	$(ASM) $(ASMFLAGS) $(LOADERSRC) -o $(LOADEROBJECT)
 
 clean:
-	rm -rf asm/*.o *.o *.bin
+	find . -type f -name '*.o' -delete
+	find . -type f -name '*.bin' -delete
 
 .PHONY: all clean
