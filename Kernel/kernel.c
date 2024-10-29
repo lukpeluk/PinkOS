@@ -19,6 +19,12 @@ static const uint64_t PageSize = 0x1000;
 static void * const PinkOSAddress = (void*)0x400000;
 static void * const sampleDataModuleAddress = (void*)0x500000;
 
+extern void init_rtc();
+extern void read_rtc_time(uint8_t* time);
+
+extern void play_sound(uint32_t nFrequence);
+extern void stop_sound();
+
 typedef int (*EntryPoint)();
 
 
@@ -87,7 +93,31 @@ void * initializeKernelBinary()
 
 int main()
 {	
+	init_rtc();
 	load_idt();
+	// typedef struct {
+	// 	uint32_t freq;
+	// 	uint32_t duration;
+	// 	uint32_t delay;
+	// } note_t;
+
+	// note_t notes[] = {
+	// 	{0, 500, 250}, {0, 250, 125}, {0, 125, 125}, {311, 125, 125}, 
+	// 	{330, 375, 125}, {370, 125, 125}, {392, 375, 125}, {311, 125, 125},
+	// 	{330, 250, 125}, {370, 125, 125}, {523, 125, 125}, {494, 125, 125},
+	// 	{659, 125, 125}, {587, 1000, 250},
+	// 	{0, 500, 250}, {311, 250, 125}, {330, 250, 125}, {370, 250, 125}, 
+	// 	{392, 125, 125}, {311, 250, 125}, {392, 125, 125}, {494, 125, 125},
+	// 	{466, 125, 125}, {440, 250, 125}, {392, 125, 125}, {440, 125, 125}
+	// };
+	// const uint32_t song_length = sizeof(notes) / sizeof(notes[0]);
+
+	// for (uint32_t i = 0; i < song_length; i++) {
+	// 	beep(notes[i].freq, notes[i].duration);
+	// 	sleep(notes[i].delay);
+	// }
+	// sleep(2000);
+	// play_melody();
 
 	ncPrint("[Kernel Main]");
 	ncNewline();

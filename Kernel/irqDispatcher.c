@@ -5,16 +5,20 @@
 #include <videoDriver.h>
 
 static void int_20();
+static void int_28();
 
 void irqDispatcher(uint64_t irq) {
 	switch (irq) {
 		// acá se llaman a las diferentes funciones de interrupción
 		case 0:
-			// int_20();
+			int_20();
 			break;
 
 		case 1:
 			int_21();
+			break;
+		case 8:
+			int_28();
 			break;
 		case 80:
 			// las syscals no se gestionan acá, tienen un handler distinto en interrupts.asm
@@ -27,8 +31,6 @@ void irqDispatcher(uint64_t irq) {
 
 void int_20() {
 	timer_handler();
-	int a = ticks_elapsed();
-	ncPrintDec(a);
 }
 
 

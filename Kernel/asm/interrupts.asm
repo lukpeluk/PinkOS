@@ -12,6 +12,7 @@ GLOBAL _irq02Handler
 GLOBAL _irq03Handler
 GLOBAL _irq04Handler
 GLOBAL _irq05Handler
+GLOBAL _irq08Handler
 
 GLOBAL _irq80Handler
 
@@ -138,6 +139,10 @@ _irq04Handler:
 ;USB
 _irq05Handler:
 	irqHandlerMaster 5
+
+;RTC
+_irq08Handler:
+	irqHandlerMaster 8
 
 ;Syscall
 _irq80Handler:

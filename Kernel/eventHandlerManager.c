@@ -1,6 +1,8 @@
 #include <eventHandlerManager.h>
 #include <string.h>  // For memset()
 
+#define NOT_SET 0
+
 // Define the kernel state structure
 typedef struct KernelState {
     char pressed_keys[6];  // Array to store the currently pressed keys (up to 6) (contains scancodes, 0x00 is empty)
@@ -22,6 +24,7 @@ void setKeypressHandler(KeyHandler handler) {
 // It's supposed to be called by the keyboard interrupt handler
 // With the key PinkMapping as argument so that the user space doesn't have to deal with scancodes
 void handle_key_press(char key) {
+    if(state.key_handler==NOT_SET) return;  // If the key handler is not set, return
     state.key_handler(key);
 }
 
