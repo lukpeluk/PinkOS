@@ -4,8 +4,8 @@
 #include <moduleLoader.h>
 #include <naiveConsole.h>
 
-#include <videoDriver.h>
-#include <rtcDriver.h>
+#include <drivers/videoDriver.h>
+#include <drivers/rtcDriver.h>
 
 extern uint8_t text;
 extern uint8_t rodata;

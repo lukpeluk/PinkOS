@@ -1,7 +1,7 @@
 #ifndef _EVENT_HANDLERS_H
 #define _EVENT_HANDLERS_H
 
-#include <rtcDriver.h>
+#include <drivers/rtcDriver.h>
 
 // The kernel allows processes to register handlers for different events
 // To be able to register a handler, the process must have the appropriate permissions

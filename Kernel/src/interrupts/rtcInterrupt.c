@@ -1,5 +1,5 @@
-#include <rtcInterrupt.h>
-#include <eventHandlers.h>
+#include <interrupts/rtcInterrupt.h>
+#include <eventHandling/eventHandlers.h>
 
 void int_28() {
     RTC_Time time = get_time();

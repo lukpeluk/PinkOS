@@ -1,8 +1,8 @@
 #include <time.h>
 #include <stdint.h>
 #include <naiveConsole.h>
-#include <keyboardInterrupt.h>
-#include <videoDriver.h>
+#include <interrupts/keyboardInterrupt.h>
+#include <drivers/videoDriver.h>
 
 static void int_20();
 static void int_28();

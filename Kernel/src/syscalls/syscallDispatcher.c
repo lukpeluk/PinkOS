@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include <videoDriver.h>
-#include <eventHandlers.h>
+#include <drivers/videoDriver.h>
+#include <eventHandling/eventHandlers.h>
 
 void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall) {

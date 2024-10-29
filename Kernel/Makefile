@@ -1,13 +1,13 @@
 include Makefile.inc
 
 KERNEL=kernel.bin
-SOURCES=$(wildcard *.c)
+SOURCES=$(wildcard src/*.c)
 SOURCES_ASM=$(wildcard asm/*.asm)
-DRIVER_SOURCES=$(wildcard drivers/*.c)
-EVENT_HANDLING_SOURCES=$(wildcard eventHandling/*.c)
-INTERRUPT_SOURCES=$(wildcard interrupts/*.c)
-EXCEPTION_SOURCES=$(wildcard exceptions/*.c)
-SYSCALLS_SOURCES=$(wildcard syscalls/*.c)
+DRIVER_SOURCES=$(wildcard src/drivers/*.c)
+EVENT_HANDLING_SOURCES=$(wildcard src/eventHandling/*.c)
+INTERRUPT_SOURCES=$(wildcard src/interrupts/*.c)
+EXCEPTION_SOURCES=$(wildcard src/exceptions/*.c)
+SYSCALLS_SOURCES=$(wildcard src/syscalls/*.c)
 
 OBJECTS=$(SOURCES:.c=.o)
 OBJECTS_ASM=$(SOURCES_ASM:.asm=.o)

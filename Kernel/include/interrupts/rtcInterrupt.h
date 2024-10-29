@@ -2,7 +2,7 @@
 #define RTC_INTERRUPT_H
 
 #include <stdint.h>
-#include <rtcDriver.h>
+#include <drivers/rtcDriver.h>
 
 void int_28();
 

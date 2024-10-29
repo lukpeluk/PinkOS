@@ -5,9 +5,9 @@
 
 #include <stdint.h>
 #include <naiveConsole.h>
-#include <videoDriver.h>
-#include <eventHandlers.h>
-#include <keyboardDriver.h>
+#include <eventHandling/eventHandlers.h>
+#include <drivers/videoDriver.h>
+#include <drivers/keyboardDriver.h>
 
 extern char getKeyCode();
 
