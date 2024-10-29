@@ -25,3 +25,6 @@ cpuVendor:
 	mov rsp, rbp
 	pop rbp
 	ret
+
+; TODO: 
+; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
