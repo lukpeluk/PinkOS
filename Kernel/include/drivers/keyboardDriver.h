@@ -2,6 +2,7 @@
 #define _KEYBOARD_DRIVER_H
 
 #include <stdint.h>
+#include <drivers/ascii.h>
 
 // Function to get the current pressed keys
 // It returns a pointer to the array of pressed keys, so if the user wants to modify it, technically it can,
