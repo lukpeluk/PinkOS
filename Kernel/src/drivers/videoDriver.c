@@ -238,6 +238,39 @@ void setCursorColumn(uint32_t column){
     x = column * CHAR_WIDTH;
 }
 
+// GRAPHIC MODE
+
+void drawRectangle(Point start, Point end, uint32_t hexColor){
+	for(uint64_t i = start.x; i < end.x; i++){
+		for(uint64_t j = start.y; j < end.y; j++){
+			putPixel(hexColor, i, j);
+		}
+	}
+}
+
+void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point position){
+	uint64_t oldX = x;
+	uint64_t oldY = y;
+	x = position.x;
+	y = position.y;
+	drawChar(c, textColor, bgColor);
+	x = oldX;
+	y = oldY;
+}
+
+void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point position){
+	uint64_t oldX = x;
+	uint64_t oldY = y;
+	x = position.x;
+	y = position.y;
+	while (*string) {
+		drawChar(*string++, textColor, bgColor);
+	}
+	x = oldX;
+	y = oldY;
+}
+
+
 void clearScreen(uint32_t bgColor){
     for(uint32_t i = 0; i < VBE_mode_info->height; i++){
         for(uint32_t j = 0; j < VBE_mode_info->width; j++){

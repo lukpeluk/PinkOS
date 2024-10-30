@@ -1,4 +1,4 @@
-#include <time.h>
+#include <drivers/pitDriver.h>
 
 static unsigned long ticks = 0;
 
@@ -17,5 +17,5 @@ int seconds_elapsed() {
 void sleep(int milis) {
 	int start = ticks;
 	// 18.2 ticks per second
-	while (ticks - start < milis * 18 / 1000);
+	while (ticks - start < milis * 19 / 1000);
 }

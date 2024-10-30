@@ -3,6 +3,10 @@
 
 static char pressed_keys[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+static int shift_pressed = 0;
+static int altgr_pressed = 0;
+static int caps_lock = 0;
+
 
 // Function to get the current pressed keys
 // It returns a pointer to the array of pressed keys, so if the user wants to modify it, technically it can, 
@@ -18,6 +22,22 @@ const char* get_pressed_keys() {
 // Set a key as pressed, returns 0 if successful, 1 if there are no empty slots
 // (normally a keyboard does the same, if you press more keys than it can handle, it will ignore the extra ones)
 const char set_key(char scan_code) {
+    // If the key is shift, set the flag and return
+    if(scan_code == 0x2A) {
+        shift_pressed = 1;
+        return 0;
+    }
+    // If the key is altgr, set the flag and return
+    if(scan_code == 0x38) {
+        altgr_pressed = 1;
+        return 0;
+    }
+    // If the key is caps lock, toggle the flag and return
+    if(scan_code == 0x3A) {
+        caps_lock = 1;
+        return 0;
+    }
+    
     for(int i = 0; i < 6; i++) {
         if(pressed_keys[i] == 0x00) {
             pressed_keys[i] = scan_code;
@@ -30,6 +50,20 @@ const char set_key(char scan_code) {
 
 
 const char release_key(char scan_code) {
+
+    // If the key is shift, unset the flag and return
+    if(scan_code == 0x2A) {
+        shift_pressed = 0;
+        return 0;
+    }
+    if (scan_code == 0x38) {
+        altgr_pressed = 0;
+        return 0;
+    }
+    if (scan_code == 0x3A) {
+        caps_lock = 0;
+        return 0;
+    }
     for(int i = 0; i < 6; i++) {
         if(pressed_keys[i] == scan_code) {
             pressed_keys[i] = 0x00;
@@ -130,7 +164,7 @@ const char release_key(char scan_code) {
 // }
 
 // convierte de keycode a ASCII
-char keycode_to_ascii[256] = {
+char base_layer[256] = {
     ASCII_NUL,        // 0x00
     ASCII_ESC,        // 0x01
     '1',              // 0x02
@@ -159,7 +193,7 @@ char keycode_to_ascii[256] = {
     'p',              // 0x19
     '`',              // 0x1A (Acento grave)
     '+',              // 0x1B (Signo más)
-    ASCII_CR,         // 0x1C (Enter)
+    ASCII_LF,         // 0x1C (Enter)
     ASCII_NUL,        // 0x1D (Control izquierdo)
     'a',              // 0x1E
     's',              // 0x1F
@@ -220,7 +254,51 @@ char keycode_to_ascii[256] = {
     [0x59 ... 0xFF] = ASCII_NUL  // Relleno con ASCII_NUL
 };
 
+char shift_layer[256] = {
+    ASCII_NUL, ASCII_ESC, '!', '"', '#', '$', '%', '&', '/', '(', ')', '=', '?', '¿',
+    ASCII_BS, ASCII_HT, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '^', '*',
+    ASCII_CR, ASCII_NUL, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', '[', ']',
+    ASCII_NUL, '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ';', ':', '_', ASCII_NUL, '*',
+    ASCII_NUL, ' ', ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL,
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, '7', '8', '9', '-', '4', '5',
+    '6', '+', '1', '2', '3', '0', '.', ASCII_NUL, ASCII_NUL, [0x59 ... 0xFF] = ASCII_NUL
+};
+
+char caps_lock_layer[256] = {
+    ASCII_NUL, ASCII_ESC, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '\'', '¡',
+    ASCII_BS, ASCII_HT, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '`', '+',
+    ASCII_CR, ASCII_NUL, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', '{', '}',
+    ASCII_NUL, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '-', ASCII_NUL, '*',
+    ASCII_NUL, ' ', ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL,
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, '7', '8', '9', '-', '4', '5',
+    '6', '+', '1', '2', '3', '0', '.', ASCII_NUL, ASCII_NUL, [0x59 ... 0xFF] = ASCII_NUL
+};
+
+char altgr_layer[256] = {
+    ASCII_NUL, ASCII_ESC, '|', '@', '#', '~', '€', '¬', '{', '[', ']', '}', '\\', ASCII_NUL,
+    ASCII_BS, ASCII_HT, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL,
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_CR, ASCII_NUL, 
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, 
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, 
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, 
+    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, '7', '8', '9', 
+    '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', ASCII_NUL, ASCII_NUL, [0x59 ... 0xFF] = ASCII_NUL
+};
+
 
 char keycodeToAscii(char keycode) {
-	return keycode_to_ascii[keycode];
+    char ascii = ASCII_NUL;
+    if (shift_pressed) {
+        ascii = shift_layer[keycode];
+    }
+    else if (altgr_pressed) {
+        ascii = altgr_layer[keycode];
+    }
+    else if (caps_lock) {
+        ascii = caps_lock_layer[keycode];
+    }
+    if (ascii == ASCII_NUL) {
+        ascii = base_layer[keycode];
+    }
+    return ascii;
 }
