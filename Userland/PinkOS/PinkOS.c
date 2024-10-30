@@ -1,6 +1,7 @@
 /* PinkOS.c */
 #include <stdint.h>
 #include <stdint.h>
+#include "include/syscallCodes.h"
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
@@ -92,7 +93,7 @@ int save_to_buffer(char key){
 
 void redraw(){
 	// clear screen
-	syscall(2, 0x00000000, 0, 0, 0, 0);
+	syscall(CLEAR_SCREEN_SYSCALL, 0x00000000, 0, 0, 0, 0);
 
 	// print the buffer from the scroll position to the current string
 
@@ -107,12 +108,12 @@ void redraw(){
 
 		// print the string
 		for(int j = 0; buffer[i][j] != 0; j++){
-			syscall(1, buffer[i][j], 0x00df8090, 0x00000000, 0, 0);
+			syscall(DRAW_CHAR_SYSCALL, buffer[i][j], 0x00df8090, 0x00000000, 0, 0);
 		}
 
 		// print a new line (except in the last string)
 		if(i != current_string)
-			syscall(1, '\n', 0x00df8090, 0x00000000, 0, 0);
+			syscall(DRAW_CHAR_SYSCALL, '\n', 0x00df8090, 0x00000000, 0, 0);
 
 	} while (i != current_string);
 
@@ -184,10 +185,10 @@ void key_handler(char key){
 		return;
 
 	// print key to screen
-	syscall(1, key, 0x00df8090, 0x00000000, 0, 0);
+	syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 0, 0);
 }
 
 int main() {
 	// set key handler, function pointer
-	syscall(3, 0, key_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
 }

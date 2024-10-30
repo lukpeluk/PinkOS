@@ -1,0 +1,19 @@
+#ifndef SYSCALL_CODES_H
+#define SYSCALL_CODES_H
+
+
+// 0 - 999 reserved for KERNEL syscalls
+#define SET_HANDLER_SYSCALL 0
+
+// 1000 - 1999 reserved for DRIVER syscalls
+
+// 1000 - 1099 reserved for VIDEO DRIVER syscalls
+#define DRAW_PIXEL_SYSCALL 1000
+// #define DRAW_RECT_SYSCALL 1001 etc
+#define DRAW_CHAR_SYSCALL 1010
+#define DRAW_STRING_SYSCALL 1011
+#define DRAW_CHAR_AT_SYSCALL 1012
+#define DRAW_STRING_AT_SYSCALL 1013
+#define CLEAR_SCREEN_SYSCALL 1020
+
+#endif

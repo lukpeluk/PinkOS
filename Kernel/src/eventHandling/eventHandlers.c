@@ -1,4 +1,5 @@
 #include <eventHandling/eventHandlers.h>
+#include <eventHandling/handlerIds.h>
 
 #define NOT_SET 0
 #define CALL_IF_IMPLEMENTED(handler, ...) if(eventHandlers.handler != NOT_SET) eventHandlers.handler(__VA_ARGS__)
@@ -19,16 +20,15 @@ static EventHandlers eventHandlers = {0}; // Initialize all event handlers to nu
 
 // registers a handler for a given event, based on the handler_id and the handler function pointer
 void registerHandler(uint32_t handler_id, void * handler) {
-    // TODO: define handler_id constants
     switch (handler_id)
     {
-    case 0:
+    case KEY_HANDLER:
         eventHandlers.key_handler = (KeyHandler)handler;
         break;
-    case 1:
+    case TICK_HANDLER:
         eventHandlers.tick_handler = (TickHandler)handler;
         break;
-    case 2:
+    case RTC_HANDLER:
         eventHandlers.rtc_handler = (RTCHandler)handler;
         break;
     
