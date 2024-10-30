@@ -1,4 +1,5 @@
 #include <kernelState.h>
+#include <permissions.h>
 #include <stdint.h>
 
 // If you are looking for specific state variables like timezone, font size, etc... you should look at the respective drivers

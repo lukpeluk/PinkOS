@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#define ROOT_PERMISSIONS 0x0FFFFFF0
-
 void initKernelState();
 
 // getters and setters
