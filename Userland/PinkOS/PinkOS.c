@@ -10,13 +10,13 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 // an index for the current string should be maintained
 // also an index for the current position in the string should be maintained
 // and an index for the oldest string should be maintained (to stop reading after that)
-// the strings are -1 terminated
+// the strings are null terminated
 // the buffer should be printed in reverse order, so that the most recent string is printed first
 
 #define BUFFER_SIZE 100
-#define STRING_SIZE 500 // 99 usable characters and the -1 termination
+#define STRING_SIZE 200 // 199 usable characters and the null termination
 
-char buffer[BUFFER_SIZE][STRING_SIZE] = {-1};
+char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
 int current_string = 0;
 int current_position = 0;
 int oldest_string = 0;
@@ -35,7 +35,7 @@ int scroll = 0; // indica qué línea es la que está en la parte superior de la
 // (obviamnte también al leer tengo que hacer un wrap around cuando llego al final del buffer)
 int save_to_buffer(char key){
 	// if enter key is pressed, move to the next string
-	if(key == 37){
+	if(key == '\n'){
 		// move to the next string, if the end is reached, wrap around to the oldest string
 		current_string++;
 		if(current_string == BUFFER_SIZE){
@@ -60,12 +60,12 @@ int save_to_buffer(char key){
 			}
 		}
 
-		// reset the current position and terminate the string with -1
+		// reset the current position and terminate the string with 0
 		current_position = 0;
-		buffer[current_string][current_position] = -1;
+		buffer[current_string][current_position] = 0;
 	}
 	// check if the key is printable, if it is it's saved to the buffer
-	else if(key >= 0 && key <= 36){
+	else if(key >= 32 && key <= 126){
 		// checks if the buffer is full, if it is, key presses are ignored
 		if(current_position == STRING_SIZE - 1)
 			return -1;
@@ -73,13 +73,13 @@ int save_to_buffer(char key){
 		// save key to buffer
 		buffer[current_string][current_position] = key;
 		current_position++;
-		buffer[current_string][current_position] = -1;
+		buffer[current_string][current_position] = 0;
 	}
 	// backspace
-	else if(key == 38){
+	else if(key == 8){
 		if(current_position > 0){
 			current_position--;
-			buffer[current_string][current_position] = -1;
+			buffer[current_string][current_position] = 0;
 		}
 	}
 	else{
@@ -106,13 +106,13 @@ void redraw(){
 		}
 
 		// print the string
-		for(int j = 0; buffer[i][j] != -1; j++){
+		for(int j = 0; buffer[i][j] != 0; j++){
 			syscall(1, buffer[i][j], 0x00df8090, 0x00000000, 0, 0);
 		}
 
 		// print a new line (except in the last string)
 		if(i != current_string)
-			syscall(1, 37, 0x00df8090, 0x00000000, 0, 0);
+			syscall(1, '\n', 0x00df8090, 0x00000000, 0, 0);
 
 	} while (i != current_string);
 
@@ -122,7 +122,7 @@ void redraw(){
 void clear_buffer(){
 	// clear the buffer
 	for(int i = 0; i < BUFFER_SIZE; i++){
-		buffer[i][0] = -1;
+		buffer[i][0] = 0;
 	}
 	current_position = 0;
 	current_string = 0;
@@ -138,12 +138,12 @@ void key_handler(char key){
 	// <3> will scroll the buffer all the way up,
 	// <4> will redraw the screen
 	// <5> will clear the buffer and the screen
-	if(key == 1){
+	if(key == '1'){
 		scroll = current_string;
 		redraw();
 		return;
 	}
-	if(key == 2){
+	if(key == '2'){
 		if(scroll == oldest_string)
 			return;
 
@@ -154,16 +154,16 @@ void key_handler(char key){
 		redraw();
 		return;
 	}
-	if(key == 3){
+	if(key == '3'){
 		scroll = oldest_string;
 		redraw();
 		return;
 	}
-	if(key == 4){
+	if(key == '4'){
 		redraw();
 		return;
 	}
-	if(key == 5){
+	if(key == '5'){
 		clear_buffer();
 		redraw();
 		return;
@@ -173,7 +173,7 @@ void key_handler(char key){
 	// dont_draw evita que se dibuje el caracter si se presiona delete en la primera posición
 	// (si no estaría borrando la línea anterior)
 	int dont_draw = 0;
-	if(key == 38 && current_position == 0){
+	if(key == 8 && current_position == 0){
 		dont_draw = 1;	
 	}
 

@@ -23,9 +23,9 @@ void int_21() {
 	if(c < 0x81){
 		set_key(c);
 
-		int pinkChar = keycodeToPinkMap(c);
-		if(pinkChar != -1 && eventHandlers.key_handler != 0)
-			eventHandlers.key_handler(pinkChar);
+		int ascii = keycodeToAscii(c);
+		if(ascii != 0 && eventHandlers.key_handler != 0)
+			eventHandlers.key_handler(ascii);
 	}
 	else if (c < 0xD9) {
 		release_key(c - 0x80);
