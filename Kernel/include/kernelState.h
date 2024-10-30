@@ -3,9 +3,6 @@
 
 #include <stdint.h>
 
-#define ACTIVATE_ROOT_MODE 1
-#define DESACTIVATE_ROOT_MODE 0
-
 void initKernelState();
 
 // getters and setters

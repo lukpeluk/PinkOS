@@ -2,6 +2,10 @@
 #include <permissions.h>
 #include <stdint.h>
 
+#define ACTIVATE_ROOT_MODE 1
+#define DESACTIVATE_ROOT_MODE 0
+#define KERNEL_PROCESS "kernel"
+
 // If you are looking for specific state variables like timezone, font size, etc... you should look at the respective drivers
 
 // stores pointers to the handler functions
@@ -15,9 +19,9 @@ static KernelState kernelState;
 
 // initializes the kernel state
 void initKernelState() {
-    kernelState.rootMode = 1;
+    kernelState.rootMode = ACTIVATE_ROOT_MODE;
     kernelState.permissions = ROOT_PERMISSIONS;
-    kernelState.currentProcess = "kernel";
+    kernelState.currentProcess = KERNEL_PROCESS;
 }
 
 // getters and setters
