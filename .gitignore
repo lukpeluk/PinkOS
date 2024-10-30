@@ -25,4 +25,7 @@
 .vscode/
 *.code-workspace
 
+# Python venv
+.venv
+
 
