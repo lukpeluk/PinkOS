@@ -189,5 +189,5 @@ void key_handler(char key){
 
 int main() {
 	// set key handler, function pointer
-	syscall(3, key_handler, 0, 0, 0, 0);
+	syscall(3, 0, key_handler, 0, 0, 0);
 }

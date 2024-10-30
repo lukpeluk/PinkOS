@@ -1,0 +1,23 @@
+#ifndef PERMISSIONS_H
+#define PERMISSIONS_H
+
+// KERNEL Permissions 0x01000000 - 0xFF000000
+#define SET_HANDLER_PERMISSION              0x01000000
+#define SET_PROCESS_PERMISSION              0x02000000
+
+
+// GUI Permissions 0x00000001 - 0x0000000F
+#define DRAWING_PERMISSION                  0x00000001 
+#define CHANGE_FONT_PERMISSION              0x00000002
+#define CHANGE_FONT_SIZE_PERMISSION         0x00000003
+
+// RTC Permissions 0x00000010 - 0x000000F0
+#define SET_TIMEZONE_PERMISSION             0x00000010
+
+// Audio Permissions 0x00000100 - 0x00000F00
+#define PLAY_AUDIO_PERMISSION               0x00000010
+
+
+
+
+#endif

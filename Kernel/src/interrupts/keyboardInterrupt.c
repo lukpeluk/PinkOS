@@ -24,8 +24,7 @@ void int_21() {
 		set_key(c);
 
 		int ascii = keycodeToAscii(c);
-		if(ascii != 0 && eventHandlers.key_handler != 0)
-			eventHandlers.key_handler(ascii);
+		callKeyHandler(ascii);
 	}
 	else if (c < 0xD9) {
 		release_key(c - 0x80);

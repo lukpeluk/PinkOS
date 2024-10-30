@@ -3,6 +3,7 @@
 #include <lib.h>
 #include <moduleLoader.h>
 #include <naiveConsole.h>
+#include <kernelState.h>
 
 #include <drivers/videoDriver.h>
 #include <drivers/rtcDriver.h>
@@ -90,6 +91,7 @@ void * initializeKernelBinary()
 
 int main()
 {	
+	initKernelState();
 	init_rtc();
 	set_timezone(-3);
 	load_idt();

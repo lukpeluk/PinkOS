@@ -1,24 +1,28 @@
 #include <stdint.h>
 #include <drivers/videoDriver.h>
 #include <eventHandling/eventHandlers.h>
+#include <kernelState.h>
+#include <permissions.h>
+
+#define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
 void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall) {
         case 0:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             putPixel(arg1, arg2, arg3);
             break;
         case 1:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             drawChar(arg1, arg2, arg3);
             break;
         case 2:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             clearScreen(arg1);
             break;
         case 3:
-            // registers a key press handler with the provided function pointer
-            // TODO: que cheque si el proceso tiene permisos para hacer esto
-            // en el futuro habría una syscall para registrar cualquier tipo de handler, usaría un switch case (ver notion)
-            // la función podría estar en un archivo eventHandlerManager.c o dispatcher o algo así, hay que pensarlo
-            eventHandlers.key_handler = (KeyHandler)arg1;
+            VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
+            registerHandler(arg1, (void *)arg2);
             break;
         default:
             break;

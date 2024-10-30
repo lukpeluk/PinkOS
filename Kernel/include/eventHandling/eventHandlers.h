@@ -13,22 +13,24 @@
 // Also it can update the status bar and other OS related things    
 
 // The handlers are pointers to functions, and are registered via a syscall
-// The kernel keeps track of them in this file, in the EventHandlers struct
+// The kernel keeps track of them in eventHandlers.c in the EventHandlers struct
 // When an event ocurrs, it is it's responsibility to call the appropriate handler
+// To register and call handlers, eventHandlerManager.c is used
 
 // types for the differeng handler functions 
 typedef void (*KeyHandler)(char key); // Key press handler, TODO: add key press/release flag and scancode as args
 typedef void (*TickHandler)(unsigned long ticks); // Tick handler, to be called every tick
 typedef void (*RTCHandler)(RTC_Time time); // RTC handler, to be called every RTC interrupt
 
-// stores pointers to the handler functions
-typedef struct EventHandlers {
-    KeyHandler key_handler; 
-    TickHandler tick_handler; 
-    RTCHandler rtc_handler;
-} EventHandlers;
 
-// Extern declaration for the global state variable
-extern EventHandlers eventHandlers;
+// function to register a handler
+void registerHandler(uint32_t handler_id, void * handler);
+
+// functions to call a handler (one per handler, wrapping the actual handler and testing for null first)
+
+void callKeyHandler(char key);
+void callTickHandler(unsigned long ticks);
+void callRTCHandler(RTC_Time time);
+
 
 #endif
