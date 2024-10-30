@@ -6,7 +6,7 @@
 
 // stores pointers to the handler functions
 typedef struct KernelState {
-    int kernelMode;       // 1 if the kernel is running in kernel mode, 0 otherwise
+    int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process
     char * currentProcess; // Name of the current process (for crash reporting and logging)
 } KernelState;
@@ -15,20 +15,24 @@ static KernelState kernelState;
 
 // initializes the kernel state
 void initKernelState() {
-    kernelState.kernelMode = 1;
+    kernelState.rootMode = 1;
     kernelState.permissions = ROOT_PERMISSIONS;
     kernelState.currentProcess = "kernel";
 }
 
 // getters and setters
 
-int getKernelMode() {
-    return kernelState.kernelMode;
+int isRootMode() {
+    return kernelState.rootMode;
 }
 
-void setKernelMode(int mode) {
-    kernelState.kernelMode = mode;
+void activateRootMode() {
+    kernelState.rootMode = ACTIVATE_ROOT_MODE;
 }
+
+void desactivateRootMode() {
+    kernelState.rootMode = DESACTIVATE_ROOT_MODE;
+}   
 
 uint32_t getPermissions() {
     return kernelState.permissions;
@@ -46,7 +50,8 @@ void setCurrentProcess(char * process) {
     kernelState.currentProcess = process;
 }
 
-// recibe un uint32_t con los permisos requeridos y devuelve 1 si el proceso actual tiene esos permisos, 0 en caso contrario
+// receives a uint32_t with the required permissions and returns 1 if the current process has those permissions, 0 otherwise
+// But if the kernel is in root mode, it returns 1
 int validatePermissions(uint32_t requiredPermissions) {
-    return (kernelState.permissions & requiredPermissions) == requiredPermissions;
+    return kernelState.rootMode || (kernelState.permissions & requiredPermissions) == requiredPermissions;
 }

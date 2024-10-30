@@ -3,12 +3,16 @@
 
 #include <stdint.h>
 
+#define ACTIVATE_ROOT_MODE 1
+#define DESACTIVATE_ROOT_MODE 0
+
 void initKernelState();
 
 // getters and setters
 
-int getKernelMode();
-void setKernelMode(int mode);
+int isRootMode();
+void activateRootMode();
+void desactivateRootMode();
 
 uint32_t getPermissions();
 void setPermissions(uint32_t permissions);
