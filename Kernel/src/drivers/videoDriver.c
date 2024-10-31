@@ -44,7 +44,7 @@ typedef struct vbe_mode_info_structure * VBEInfoPtr;
 typedef uint8_t * Font;
 
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
-static Font defaultFont = retro_font;
+static Font defaultFont = ibm_bios_font;
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
@@ -60,7 +60,7 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 
 
 #define CHAR_WIDTH 8
-#define CHAR_HEIGHT 16
+#define CHAR_HEIGHT 8
 #define FONT_NOF_CHARS 95
 
 // TODO: separar las fuentes en archivos separados
@@ -210,7 +210,7 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor) {
 
 	// Obtener el puntero al array de bytes del carácter
     // uint8_t *bitmap = retro_font[c] ? *retro_font[c] : 0;
-    uint8_t *bitmap = retro_font[c];
+    uint8_t *bitmap = ibm_bios_font[c];
     if (bitmap == 0) {
         return;  // Ignora caracteres sin representación
     }

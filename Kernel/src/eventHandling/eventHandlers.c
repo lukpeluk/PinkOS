@@ -1,6 +1,6 @@
 #include <eventHandling/eventHandlers.h>
 #include <eventHandling/handlerIds.h>
-#include <kernelState.h>
+#include <processState.h>
 
 #define NOT_SET 0
 // calls the handler if it is implemented setting the kernel in root mode first
@@ -20,6 +20,8 @@ typedef struct EventHandlers {
     KeyHandler key_handler; 
     TickHandler tick_handler; 
     RTCHandler rtc_handler;
+    RestoreContextHandler restore_context_handler;
+    UserEnvironmentApiHandler user_environment_api_handler;
 } EventHandlers;
 
 
@@ -37,6 +39,12 @@ void registerHandler(uint32_t handler_id, void * handler) {
         break;
     case RTC_HANDLER:
         eventHandlers.rtc_handler = (RTCHandler)handler;
+        break;
+    case RESTORE_CONTEXT_HANDLER:
+        eventHandlers.restore_context_handler = (RestoreContextHandler)handler;
+        break;
+    case USER_ENVIRONMENT_API_HANDLER:
+        eventHandlers.user_environment_api_handler = (UserEnvironmentApiHandler)handler;
         break;
     
     default:
@@ -58,6 +66,14 @@ void callTickHandler(unsigned long ticks) {
 
 void callRTCHandler(RTC_Time time) {
     CALL_IF_IMPLEMENTED(rtc_handler, time);
+}
+
+void callRestoreContextHandler(uint8_t was_graphic) {
+    CALL_IF_IMPLEMENTED(restore_context_handler, was_graphic);
+}
+
+void callUserEnvironmentApiHandler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
+    CALL_IF_IMPLEMENTED(user_environment_api_handler, endpoint_id, arg1, arg2, arg3, arg4);
 }
 
 

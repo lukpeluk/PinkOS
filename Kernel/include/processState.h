@@ -3,7 +3,18 @@
 
 #include <stdint.h>
 
-void initKernelState();
+typedef void (*ProgramEntry)(char*);
+
+typedef struct {
+    char* command;
+    char* name;
+    ProgramEntry entry;
+    uint32_t perms;
+    char* help;         // This is the help command (a very brief description)
+    char* description;  // All the information about the command
+} Program;
+
+void initProcessState();
 
 // getters and setters
 
@@ -12,10 +23,12 @@ void activateRootMode();
 void desactivateRootMode();
 
 uint32_t getPermissions();
-void setPermissions(uint32_t permissions);
 
 char * getCurrentProcess();
-void setCurrentProcess(char * process);
+
+void runProgram(Program * programName, char * arguments);
+
+void quitProgram();
 
 // recibe un uint32_t con los permisos requeridos y devuelve 1 si el proceso actual tiene esos permisos, 0 en caso contrario
 int validatePermissions(uint32_t requiredPermissions);

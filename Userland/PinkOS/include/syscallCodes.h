@@ -2,8 +2,11 @@
 #define SYSCALL_CODES_H
 
 
-// 0 - 999 reserved for KERNEL syscalls
+// 0 - 999 reserved for SYSTEM syscalls
 #define SET_HANDLER_SYSCALL 0
+#define RUN_PROGRAM_SYSCALL 1
+#define QUIT_PROGRAM_SYSCALL 2
+#define USER_ENVIRONMENT_API_SYSCALL 3
 
 // 1000 - 1999 reserved for DRIVER syscalls
 
@@ -15,5 +18,6 @@
 #define DRAW_CHAR_AT_SYSCALL 1012
 #define DRAW_STRING_AT_SYSCALL 1013
 #define CLEAR_SCREEN_SYSCALL 1020
+
 
 #endif
