@@ -101,14 +101,14 @@ int main()
 	// 	drawChar('T', 0x00df8090, 0x00000000);
 	// 	sleep(5000);
 	// }
-	while (1){
-		drawRectangle((Point){50, 50}, (Point){500, 500}, 0x00df8090);
-		sleep(1000);
-		drawRectangle((Point){50, 50}, (Point){500, 500}, 0x00000000);
-		sleep(1000);
-	}
-	drawStringAt("HOLA", 0x00df8090, 0x00000000, (Point){1000, 100});
-	drawRectangle((Point){100, 0}, (Point){125, 20}, 0x00df8090);
+	// while (1){
+	// 	drawRectangle((Point){50, 50}, (Point){500, 500}, 0x00df8090);
+	// 	sleep(1000);
+	// 	drawRectangle((Point){50, 50}, (Point){500, 500}, 0x00000000);
+	// 	sleep(1000);
+	// }
+	// drawStringAt("HOLA", 0x00df8090, 0x00000000, (Point){1000, 100});
+	// drawRectangle((Point){100, 0}, (Point){125, 20}, 0x00df8090);
 	// typedef struct {
 	// 	uint32_t freq;
 	// 	uint32_t duration;

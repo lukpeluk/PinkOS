@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdint.h>
 #include <syscallCodes.h>
+#include <programs.h>
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
@@ -13,6 +14,7 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 // and an index for the oldest string should be maintained (to stop reading after that)
 // the strings are null terminated
 // the buffer should be printed in reverse order, so that the most recent string is printed first
+
 
 #define BUFFER_SIZE 100
 #define STRING_SIZE 200 // 199 usable characters and the null termination
@@ -186,9 +188,47 @@ void key_handler(char key){
 
 	// print key to screen
 	syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 0, 0);
+
+
+	// if the key is enter, execute the program
+
+	if(key == '\n'){
+
+		// get the program name
+		char program_name[STRING_SIZE];
+		int program_line = current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1;
+		int i = 0;
+		for(; buffer[program_line][i] != ' ' && buffer[program_line][i] != 0; i++){
+			program_name[i] = buffer[program_line][i];
+		}
+		program_name[i] = 0;
+
+		if(buffer[program_line][i] == ' ')
+			i++;
+
+		// get the arguments
+		char arguments[STRING_SIZE];
+		int j = 0;
+		for(; buffer[program_line][i] != 0; i++, j++){
+			arguments[j] = buffer[program_line][i];
+		}
+		arguments[j] = 0;
+
+		// get the program entry point
+		ProgramEntry entry = get_program_entry(program_name);
+
+		// if the program is not found, print an error message
+		if(entry == 0){
+			syscall(DRAW_CHAR_SYSCALL, 'F', 0x00df8090, 0x00000000, 0, 0);
+		}
+		// if the program is found, execute it
+		else{
+			entry(arguments);
+		}
+	}
 }
 
 int main() {
-	// set key handler, function pointer
+	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
 }

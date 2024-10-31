@@ -21,6 +21,10 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             clearScreen(arg1);
             break;
+        case DRAW_STRING_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            drawString(arg1, arg2, arg3);
+            break;
         case SET_HANDLER_SYSCALL:
             VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
             registerHandler(arg1, (void *)arg2);

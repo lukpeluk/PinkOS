@@ -238,6 +238,12 @@ void setCursorColumn(uint32_t column){
     x = column * CHAR_WIDTH;
 }
 
+void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
+	while (*string) {
+		drawChar(*string++, textColor, bgColor);
+	}
+}
+
 // GRAPHIC MODE
 
 void drawRectangle(Point start, Point end, uint32_t hexColor){
