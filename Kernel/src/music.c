@@ -475,8 +475,8 @@ int abs(int a) {
 }
 
 void play_melody() {
-    // play_melody_in(melody_pink_panther, notes_pink_panther);
-    play_melody_in(melody_nokia, notes_nokia);
+    play_melody_in(melody_pink_panther, notes_pink_panther);
+    // play_melody_in(melody_nokia, notes_nokia);
     // play_melody_in(melody_wii, notes_wii);
     // play_melody_in(melody_furelise, notes_furelise);
     //play_melody_in(melody_supermariobros, notes_supermariobros);
