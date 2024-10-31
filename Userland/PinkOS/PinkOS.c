@@ -39,7 +39,8 @@ int shell_active = 1; // TODO: pensar nombre mejor (?)
 #define BUFFER_SIZE 100
 #define STRING_SIZE 200 // 199 usable characters and the null termination
 
-static char time_str[9] = {0};
+
+static char time_str[9] = "00:00:00";
 static Point time_position = {950, 0};
 static Point logo_position = {10, 0};
 
@@ -277,13 +278,10 @@ void status_bar_handler(RTC_Time * time){
 	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
 	time_str[0] = time->hours / 10 + '0';
 	time_str[1] = time->hours % 10 + '0';
-	time_str[2] = ':';
 	time_str[3] = time->minutes / 10 + '0';
 	time_str[4] = time->minutes % 10 + '0';
-	time_str[5] = ':';
 	time_str[6] = time->seconds / 10 + '0';
 	time_str[7] = time->seconds % 10 + '0';
-	time_str[8] = 0;
 	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
 	
 }
@@ -296,7 +294,7 @@ void newPrompt(){
 }
 
 void restoreContext(uint8_t was_graphic){
-	if(!was_graphic)
+	if(was_graphic)
 		redraw();
 	print_char_to_console('\n');
 	newPrompt();

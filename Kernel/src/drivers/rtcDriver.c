@@ -65,7 +65,7 @@ void adjust_time(RTC_Time *time, int displacement) {
 RTC_Time get_time() {
     RTC_Time time;
     get_time_utc(&time);
-    adjust_time(&time, time_zone);
+    // adjust_time(&time, time_zone);   //TODO: PORQUE CHOTA NO FUNCIONA ESTO !??!?!?!
     return time;
 }
 
