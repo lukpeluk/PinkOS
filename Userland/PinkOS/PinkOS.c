@@ -19,10 +19,29 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 // the strings are null terminated
 // the buffer should be printed in reverse order, so that the most recent string is printed first
 
+typedef struct {
+    uint8_t seconds;
+    uint8_t minutes;
+    uint8_t hours;
+    uint8_t day;
+    uint8_t month;
+    uint8_t year;
+    uint8_t day_of_week;
+} RTC_Time;
+
+typedef struct {
+	uint64_t x;
+	uint64_t y;
+} Point;
+
 int shell_active = 1; // TODO: pensar nombre mejor (?)
 
 #define BUFFER_SIZE 100
 #define STRING_SIZE 200 // 199 usable characters and the null termination
+
+static char time_str[9] = {0};
+static Point time_position = {950, 0};
+static Point logo_position = {10, 0};
 
 static const char * command_not_found_msg = "Command not found\n";
 static const char * default_prompt = " > ";
@@ -101,6 +120,7 @@ int save_str_to_buffer(char * string){
 void redraw(){
 	// clear screen
 	syscall(CLEAR_SCREEN_SYSCALL, 0x00000000, 0, 0, 0, 0);
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0);  // evita dibujar la status bar
 
 	// print the buffer from the scroll position to the current string
 
@@ -252,6 +272,22 @@ void key_handler(char key){
 	}
 }
 
+void status_bar_handler(RTC_Time * time){
+	// dibuja 
+	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
+	time_str[0] = time->hours / 10 + '0';
+	time_str[1] = time->hours % 10 + '0';
+	time_str[2] = ':';
+	time_str[3] = time->minutes / 10 + '0';
+	time_str[4] = time->minutes % 10 + '0';
+	time_str[5] = ':';
+	time_str[6] = time->seconds / 10 + '0';
+	time_str[7] = time->seconds % 10 + '0';
+	time_str[8] = 0;
+	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
+	
+}
+
 // configures the current line as a prompt, and prints a graphical indicator of that
 void newPrompt(){
 	// print the prompt
@@ -259,8 +295,9 @@ void newPrompt(){
 	syscall(DRAW_STRING_SYSCALL, default_prompt, 0x00df8090, 0x00000000, 0, 0);
 }
 
-void restoreContext(){
-	redraw();
+void restoreContext(uint8_t was_graphic){
+	if(!was_graphic)
+		redraw();
 	print_char_to_console('\n');
 	newPrompt();
 	shell_active = 1;
@@ -268,11 +305,13 @@ void restoreContext(){
 
 
 int main() {
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 	newPrompt();
 	shell_active = 1;
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
 }

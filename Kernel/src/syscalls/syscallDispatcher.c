@@ -9,6 +9,8 @@
 
 void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall) {
+
+        // --- SYSTEM
         case RUN_PROGRAM_SYSCALL:
             VALIDATE_PERMISSIONS(SET_PROCESS_PERMISSION);
             runProgram((Program *)arg1, (char *)arg2);
@@ -19,22 +21,58 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
         case USER_ENVIRONMENT_API_SYSCALL:
             callUserEnvironmentApiHandler(arg1, arg2, arg3, arg4, arg5);
             break;
+
+        // --- VIDEO DRIVER
+        // FREE DRAWING
         case DRAW_PIXEL_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             putPixel(arg1, arg2, arg3);
             break;
+        
+
+        // TEXT
         case DRAW_CHAR_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             drawChar(arg1, arg2, arg3);
-            break;
-        case CLEAR_SCREEN_SYSCALL:
-            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            clearScreen(arg1);
             break;
         case DRAW_STRING_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
             drawString(arg1, arg2, arg3);
             break;
+        case DRAW_CHAR_AT_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            drawCharAt(arg1, arg2, arg3, arg4);
+            break;
+        case DRAW_STRING_AT_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            drawStringAt(arg1, arg2, arg3, arg4);
+            break;
+
+        // CURSOR
+
+        case SET_CURSOR_COL_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            setCursorColumn(arg1);
+            break;
+        case SET_CURSOR_LINE_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            setCursorLine(arg1);
+            break;
+        case GET_CURSOR_COL_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            getCursorColumn();
+            break;
+        case GET_CURSOR_LINE_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            getCursorLine();
+            break;
+
+        case CLEAR_SCREEN_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            clearScreen(arg1);
+            break;
+
+
         case SET_HANDLER_SYSCALL:
             VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
             registerHandler(arg1, (void *)arg2);

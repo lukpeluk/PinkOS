@@ -17,6 +17,10 @@ void setCursorLine(uint32_t line);
 
 void setCursorColumn(uint32_t column);
 
+uint32_t getCursorLine();
+
+uint32_t getCursorColumn();
+
 void drawString(char * string, uint32_t textColor, uint32_t bgColor);
 
 // GRAPHIC MODE
@@ -27,12 +31,12 @@ void drawRectangle(Point start, Point end, uint32_t hexColor);
 
 void drawFrame(Point start, Point end, uint32_t thickness, uint32_t hexColor);
 
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point position);
+void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position);
 
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point position);
+void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position);
 
 // draw a bitmap image at a given position
-void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point position, uint32_t scale);
+void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * position, uint32_t scale);
 
 
 // GENERAL

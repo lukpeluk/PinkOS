@@ -238,6 +238,14 @@ void setCursorColumn(uint32_t column){
     x = column * CHAR_WIDTH;
 }
 
+uint32_t getCursorLine(){
+	return y / CHAR_HEIGHT;
+}
+
+uint32_t getCursorColumn(){
+	return x / CHAR_WIDTH;
+}
+
 void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
 	while (*string) {
 		drawChar(*string++, textColor, bgColor);
@@ -254,21 +262,21 @@ void drawRectangle(Point start, Point end, uint32_t hexColor){
 	}
 }
 
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point position){
+void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
-	x = position.x;
-	y = position.y;
+	x = position->x;
+	y = position->y;
 	drawChar(c, textColor, bgColor);
 	x = oldX;
 	y = oldY;
 }
 
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point position){
+void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
-	x = position.x;
-	y = position.y;
+	x = position->x;
+	y = position->y;
 	while (*string) {
 		drawChar(*string++, textColor, bgColor);
 	}

@@ -64,7 +64,7 @@ void callTickHandler(unsigned long ticks) {
     CALL_IF_IMPLEMENTED(tick_handler, ticks);
 }
 
-void callRTCHandler(RTC_Time time) {
+void callRTCHandler(RTC_Time * time) {
     CALL_IF_IMPLEMENTED(rtc_handler, time);
 }
 
