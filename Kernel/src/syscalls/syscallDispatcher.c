@@ -4,6 +4,7 @@
 #include <processState.h>
 #include <permissions.h>
 #include <syscalls/syscallCodes.h>
+#include <drivers/pitDriver.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
@@ -18,8 +19,17 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
         case QUIT_PROGRAM_SYSCALL:
             quitProgram();
             break;
+        case SET_HANDLER_SYSCALL:
+            VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
+            registerHandler(arg1, (void *)arg2);
+            break;
+        default:
+            break;
         case USER_ENVIRONMENT_API_SYSCALL:
             callUserEnvironmentApiHandler(arg1, arg2, arg3, arg4, arg5);
+            break;
+        case SLEEP_SYSCALL:
+            sleep(arg1);
             break;
 
         // --- VIDEO DRIVER
@@ -72,13 +82,6 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
             clearScreen(arg1);
             break;
 
-
-        case SET_HANDLER_SYSCALL:
-            VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
-            registerHandler(arg1, (void *)arg2);
-            break;
-        default:
-            break;
     }
 }
 

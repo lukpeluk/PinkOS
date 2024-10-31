@@ -4,6 +4,7 @@
 #include <syscallCodes.h>
 #include <programs.h>
 #include <environmentApiEndpoints.h>
+#include <ascii.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index) index = (index + 1 == BUFFER_SIZE) ? 0 : index + 1;
@@ -209,6 +210,8 @@ void execute_program(int input_line){
 		// if the program is found, execute it
 		else{
 			// Tiene que llamar a un syscall que ejecute el programa
+			// TODO: si en graphics mode, desactivar la shell
+			// capaz en realidad podría usar el current process para saber si dibujar o no y si capturar input la shell
 			syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
 		}
 }
@@ -266,6 +269,11 @@ void key_handler(char key){
 		return;
 	}
 
+	// quit program when esc is pressed
+	if(key == 'c'){
+		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
+		return;
+	}
 
 	print_char_to_console(key);
 	if(key == '\n' && shell_active){

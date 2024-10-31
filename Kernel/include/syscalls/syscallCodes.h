@@ -7,6 +7,7 @@
 #define RUN_PROGRAM_SYSCALL 1
 #define QUIT_PROGRAM_SYSCALL 2
 #define USER_ENVIRONMENT_API_SYSCALL 3
+#define SLEEP_SYSCALL 4
 
 // 1000 - 1999 reserved for DRIVER syscalls
 

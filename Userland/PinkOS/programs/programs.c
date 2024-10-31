@@ -19,6 +19,14 @@ Program programs[] = {
         "Prints the argument to the console",
         "usage: echo <text> \nEcho v1 \n Use this program to print text to the screen"
     },
+    {
+        "forrestgump",
+        "Forrest Gump",
+        forrest_gump_main,
+        0,
+        "Run Forrest, run!",
+        "usage: forrest_gump \nForrest Gump v1 \n Simplemente corre, y corre..."
+    }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
     // {"clear", "clear", 0, 0, "usage: clear", "clear v1 \n use this program to clear the screen"},
@@ -30,7 +38,7 @@ Program programs[] = {
 };
 
 // int programs_count = sizeof(programs) / sizeof(Program);
-int programs_count = 1;
+int programs_count = 2;
 
 
 Program * get_program_entry(const char* command) {

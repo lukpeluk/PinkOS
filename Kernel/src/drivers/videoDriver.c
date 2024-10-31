@@ -229,6 +229,29 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor) {
 	x += CHAR_WIDTH * !is_deleting; // si estoy borrando, no incremento x
 }
 
+// imprime un número
+void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor){
+	if(num == 0){
+		drawChar('0', textColor, bgColor);
+		return;
+	}
+
+	char buffer[20];
+	int i = 0;
+	while(num > 0){
+		buffer[i] = num % 10 + '0';
+		num /= 10;
+		i++;
+	}
+	buffer[i] = 0;
+
+	i--;
+	while(i >= 0){
+		drawChar(buffer[i], textColor, bgColor);
+		i--;
+	}
+}
+
 
 void setCursorLine(uint32_t line){
     y = line * CHAR_HEIGHT + line * INTERLINE;

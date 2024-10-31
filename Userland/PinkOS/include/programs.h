@@ -18,6 +18,7 @@ typedef struct {
 Program* get_program_entry(const char* name);
 
 void echo_main(char *args);
+void forrest_gump_main(char *args);
 
 
 #endif
