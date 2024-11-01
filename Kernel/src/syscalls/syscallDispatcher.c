@@ -31,6 +31,9 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
         case SLEEP_SYSCALL:
             sleep(arg1);
             break;
+        case SET_SYSTEM_STACK_BASE_SYSCALL:
+            setSystemStackBase((void *)arg1);
+            break;
 
         // --- VIDEO DRIVER
         // FREE DRAWING

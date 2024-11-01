@@ -14,9 +14,15 @@ typedef struct {
     char* description;  // All the information about the command
 } Program;
 
+
 void initProcessState();
 
+
 // getters and setters
+
+void * getSystemStackBase();
+void setSystemStackBase(void * stackBase);
+
 
 int isRootMode();
 void activateRootMode();

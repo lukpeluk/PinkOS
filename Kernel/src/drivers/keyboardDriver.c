@@ -350,6 +350,9 @@ char keycodeToAscii(char keycode) {
 			return ' ';
 		case 0x1C:
 			return ASCII_LF;
+        case 0x01:
+            return ASCII_ESC;
+
 		default:
 			return ASCII_NUL; // si no es un caracter ascii, devuelvo NUL
 	}

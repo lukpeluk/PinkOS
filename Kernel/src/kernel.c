@@ -57,7 +57,7 @@ void * initializeKernelBinary()
 
 	void * moduleAddresses[] = {
 		PinkOSAddress,
-		sampleDataModuleAddress
+		sampleDataModuleAddress // creo que esto habría que sacarlo
 	};
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
@@ -87,7 +87,10 @@ void * initializeKernelBinary()
 	ncNewline();
 	ncNewline();
 
-	return getStackBase();
+	void * stackBase = getStackBase();
+	// setSystemStackBase(stackBase);
+
+	return stackBase;
 }
 
 int main()

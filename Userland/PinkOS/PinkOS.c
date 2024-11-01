@@ -10,6 +10,7 @@
 #define ADVANCE_INDEX(index) index = (index + 1 == BUFFER_SIZE) ? 0 : index + 1;
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+extern void * get_stack_pointer();
 
 // draft of how the buffer should be (to store terminal input)
 // it's an array of strints of fixed length, so that each enter key press will be stored in a new string
@@ -270,7 +271,7 @@ void key_handler(char key){
 	}
 
 	// quit program when esc is pressed
-	if(key == 'c'){
+	if(key == ASCII_ESC){
 		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
 		return;
 	}
@@ -311,6 +312,7 @@ void restoreContext(uint8_t was_graphic){
 
 
 int main() {
+	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer()+8,0,0,0,0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 	newPrompt();
 	shell_active = 1;
@@ -320,4 +322,5 @@ int main() {
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
+	while (1);
 }

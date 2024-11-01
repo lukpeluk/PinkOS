@@ -9,13 +9,15 @@
 
 // If you are looking for specific state variables like timezone, font size, etc... you should look at the respective drivers
 
-
+extern void recover_system();
+extern void loader();
 
 // stores pointers to the handler functions
 typedef struct ProcessState {
     int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process
     char * currentProcess; // Name of the current process (for crash reporting and logging)
+    void * systemStackBase;
 } ProcessState;
 
 static ProcessState processState;
@@ -25,6 +27,13 @@ void initProcessState() {
     processState.rootMode = ACTIVATE_ROOT_MODE;
     processState.permissions = ROOT_PERMISSIONS;
     processState.currentProcess = SYSTEM_PROCESS;
+}
+
+void * getSystemStackBase(){
+    return processState.systemStackBase;
+}
+void setSystemStackBase(void * stackBase){
+    processState.systemStackBase = stackBase;
 }
 
 // getters and setters
@@ -66,10 +75,12 @@ void runProgram(Program * program, char * arguments) {
 }
 
 void quitProgram() {
-    // TODO: Clear stack
     uint8_t was_graphic = processState.permissions & DRAWING_PERMISSION;
     setPermissions(ROOT_PERMISSIONS);
     setCurrentProcess(SYSTEM_PROCESS);
+    // TODO: limpiar el stack (la idea es que la memoria de vars static no se afecte)
+    // loader();
+    // recover_system(callRestoreContextHandler, was_graphic);
     callRestoreContextHandler(was_graphic);
 }
 

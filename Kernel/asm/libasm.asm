@@ -1,5 +1,7 @@
 GLOBAL cpuVendor
-GLOBAL disable_ints, enable_ints, outportb, inportb
+GLOBAL disable_ints, enable_ints, outportb, inportb, recover_system
+EXTERN getSystemStackBase
+EXTERN getSystemStackBase
 
 ; TODO: 
 ; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
@@ -30,6 +32,15 @@ cpuVendor:
 	pop rbp
 	ret
 
+; Resetea el stack y llama a la función de recovery pasandole un parámetro
+; Recibe como argumentos el puntero a la función de recovery y el argumento
+recover_system:
+	call getSystemStackBase     ; Obtener la dirección base del stack
+	mov rsp, rax                ; Establecer el stack
+	mov rax, rdi
+	mov rdi, rsi          		; arg. de la func. de recovery
+	call rax                    ; Llamar a la función de recovery
+	hlt                         ; Detener la ejecución
 
 ; Deshabilitar interrupciones
 disable_ints:
