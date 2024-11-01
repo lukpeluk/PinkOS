@@ -6,10 +6,11 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 
 // program that runs forever
 void forrest_gump_main(char *args) {
-    while (1)
-    {
+    while (1)                               // ! Oh oh... infinite loop happening here
+    {                                       // ! If only there was a way to stop it in my single-process OS...
+        char message []= "run forest run\n";
+        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, message,0x00df8090,0x00000000, 0);
+        syscall(DRAW_CHAR_SYSCALL, 'F', 0x00df8090, 0x00000000, 0, 0);  // ! Wow wow wow, this program has permission to draw directly to screen???
         syscall(SLEEP_SYSCALL, 500, 0, 0, 0, 0);
-        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, "run forest run\n",0x00df8090,0x00000000, 0);
     }
-
 }

@@ -18,7 +18,7 @@ extern uint8_t endOfKernel;
 
 static const uint64_t PageSize = 0x1000;
 
-static void * const PinkOSAddress = (void*)0x400000;
+static void * const PinkOSAddress = (void*)0x400000; // En decimal 4194304
 static void * const sampleDataModuleAddress = (void*)0x500000;
 
 extern void play_sound(uint32_t nFrequence);

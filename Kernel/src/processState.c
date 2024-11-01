@@ -2,6 +2,7 @@
 #include <eventHandling/eventHandlers.h>
 #include <permissions.h>
 #include <stdint.h>
+#include <drivers/videoDriver.h>
 
 #define ACTIVATE_ROOT_MODE 1
 #define DESACTIVATE_ROOT_MODE 0
@@ -9,7 +10,19 @@
 
 // If you are looking for specific state variables like timezone, font size, etc... you should look at the respective drivers
 
-extern void recover_system();
+// Struct for the structuring of the "stack int" of the interrupts
+typedef struct {
+    // uint64_t error;   // Error code
+    uint64_t ss;      // Stack Segment
+    uint64_t rsp;     // Stack Pointer
+    uint64_t rflags;  // Flags Register
+    uint64_t cs;      // Code Segment
+    uint64_t rip;     // Instruction Pointer
+} InterruptStackFrame;
+
+
+extern void magic_recover(InterruptStackFrame * stackBase, uint8_t was_graphic);
+extern void load_stack_int(InterruptStackFrame * stackBase);
 extern void loader();
 
 // stores pointers to the handler functions
@@ -17,7 +30,7 @@ typedef struct ProcessState {
     int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process
     char * currentProcess; // Name of the current process (for crash reporting and logging)
-    void * systemStackBase;
+    InterruptStackFrame systemStackBase;
 } ProcessState;
 
 static ProcessState processState;
@@ -27,13 +40,11 @@ void initProcessState() {
     processState.rootMode = ACTIVATE_ROOT_MODE;
     processState.permissions = ROOT_PERMISSIONS;
     processState.currentProcess = SYSTEM_PROCESS;
-}
-
-void * getSystemStackBase(){
-    return processState.systemStackBase;
-}
-void setSystemStackBase(void * stackBase){
-    processState.systemStackBase = stackBase;
+    processState.systemStackBase.rip = 0;
+    processState.systemStackBase.cs = 0x08;
+    processState.systemStackBase.rflags = 0x202;
+    processState.systemStackBase.rsp = 0;
+    processState.systemStackBase.ss = 0x0;
 }
 
 // getters and setters
@@ -66,6 +77,10 @@ void setCurrentProcess(char * process) {
     processState.currentProcess = process;
 }
 
+void loadStackBase(uint64_t stackBase) {
+    processState.systemStackBase.rsp = stackBase;
+}
+
 void runProgram(Program * program, char * arguments) {
     desactivateRootMode();
     setPermissions(program->perms);
@@ -78,10 +93,8 @@ void quitProgram() {
     uint8_t was_graphic = processState.permissions & DRAWING_PERMISSION;
     setPermissions(ROOT_PERMISSIONS);
     setCurrentProcess(SYSTEM_PROCESS);
-    // TODO: limpiar el stack (la idea es que la memoria de vars static no se afecte)
-    // loader();
-    // recover_system(callRestoreContextHandler, was_graphic);
-    callRestoreContextHandler(was_graphic);
+    processState.systemStackBase.rip = callRestoreContextHandler;
+    magic_recover(&processState.systemStackBase, was_graphic);
 }
 
 // receives a uint32_t with the required permissions and returns 1 if the current process has those permissions, 0 otherwise

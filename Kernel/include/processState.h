@@ -20,10 +20,6 @@ void initProcessState();
 
 // getters and setters
 
-void * getSystemStackBase();
-void setSystemStackBase(void * stackBase);
-
-
 int isRootMode();
 void activateRootMode();
 void desactivateRootMode();
@@ -31,6 +27,8 @@ void desactivateRootMode();
 uint32_t getPermissions();
 
 char * getCurrentProcess();
+
+void loadStackBase(uint64_t stackBase);
 
 void runProgram(Program * programName, char * arguments);
 

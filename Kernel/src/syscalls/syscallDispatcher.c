@@ -32,7 +32,7 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
             sleep(arg1);
             break;
         case SET_SYSTEM_STACK_BASE_SYSCALL:
-            setSystemStackBase((void *)arg1);
+            loadStackBase(arg1);
             break;
 
         // --- VIDEO DRIVER

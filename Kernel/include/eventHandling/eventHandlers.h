@@ -21,7 +21,7 @@
 typedef void (*KeyHandler)(char key); // Key press handler, TODO: add key press/release flag and scancode as args
 typedef void (*TickHandler)(unsigned long ticks); // Tick handler, to be called every tick
 typedef void (*RTCHandler)(RTC_Time * time); // RTC handler, to be called every RTC interrupt
-typedef void (*RestoreContextHandler)(uint8_t was_graphic); // Restore context handler, to be called when the context needs to be restored
+typedef void (*RestoreContextHandler)(uint8_t was_graphic); // Restore context handler, to be called when the context needs to be restored. Has a flag to indicate if the context was graphic
 typedef void (*UserEnvironmentApiHandler)(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4); // User environment API handler, to be called when a syscall is made by a user environment
 
 

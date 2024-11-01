@@ -5,21 +5,15 @@
 #include <programs.h>
 #include <environmentApiEndpoints.h>
 #include <ascii.h>
+#include <stdpink.h>	
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index) index = (index + 1 == BUFFER_SIZE) ? 0 : index + 1;
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void * get_stack_pointer();
+extern void _hlt();
 
-// draft of how the buffer should be (to store terminal input)
-// it's an array of strints of fixed length, so that each enter key press will be stored in a new string
-// when the buffer is full, the oldest string will be removed
-// an index for the current string should be maintained
-// also an index for the current position in the string should be maintained
-// and an index for the oldest string should be maintained (to stop reading after that)
-// the strings are null terminated
-// the buffer should be printed in reverse order, so that the most recent string is printed first
 
 typedef struct {
     uint8_t seconds;
@@ -57,6 +51,13 @@ int oldest_string = 0;
 
 int scroll = 0; // indica qué línea es la que está en la parte superior de la pantalla
 
+// The buffer is an array of strings of fixed length, so that each enter key press will be stored in a new string
+// when the buffer is full, the oldest string will be removed
+// an index for the current string should be maintained
+// also an index for the current position in the string should be maintained
+// and an index for the oldest string should be maintained (to stop reading after that)
+// the strings are null terminated
+// the buffer should be printed in reverse order, so that the most recent string is printed first
 
 // saves the key to the buffer
 // 0 for success, -1 if save was not performed (string size exceeded for example)
@@ -213,6 +214,7 @@ void execute_program(int input_line){
 			// Tiene que llamar a un syscall que ejecute el programa
 			// TODO: si en graphics mode, desactivar la shell
 			// capaz en realidad podría usar el current process para saber si dibujar o no y si capturar input la shell
+			int test = 0;
 			syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
 		}
 }
@@ -302,25 +304,37 @@ void newPrompt(){
 	syscall(DRAW_STRING_SYSCALL, default_prompt, 0x00df8090, 0x00000000, 0, 0);
 }
 
+
+int i = 0;
 void restoreContext(uint8_t was_graphic){
 	if(was_graphic)
 		redraw();
 	print_char_to_console('\n');
 	newPrompt();
 	shell_active = 1;
+	
+	idle();
 }
 
+void idle(){
+	while(1){
+		_hlt();
+	}
+}
 
 int main() {
-	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer()+8,0,0,0,0);
+	// acá setearía la base del stack
+	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer(),0,0,0,0);
+
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 	newPrompt();
 	shell_active = 1;
-
+	
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
-	while (1);
+
+	idle();
 }
