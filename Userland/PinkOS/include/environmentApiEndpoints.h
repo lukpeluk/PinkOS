@@ -3,5 +3,5 @@
 
 
 #define PRINT_STRING_ENDPOINT 100
-
+#define PRINT_CHAR_ENDPOINT 101
 #endif

@@ -1,22 +1,31 @@
 #include <graphicsLib.h>
 #include <syscallCodes.h>
+#include <stdpink.h>
 
-extern int syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
-int getScreenWidth(){
-    return syscall(GET_SCREEN_WIDTH_SYSCALL, 0, 0, 0, 0, 0);
+uint64_t getScreenWidth(){
+    uint64_t screen_width;
+    syscall(GET_SCREEN_WIDTH_SYSCALL, &screen_width, 0, 0, 0, 0);
+    return screen_width;
 }
 
-int getScreenHeight(){
-    return syscall(GET_SCREEN_HEIGHT_SYSCALL, 0, 0, 0, 0, 0);
+uint64_t getScreenHeight(){
+    uint64_t screen_height;
+    syscall(GET_SCREEN_HEIGHT_SYSCALL, &screen_height, 0, 0, 0, 0);
+    return screen_height;
 }
 
-int getCharWidth(){
-    return syscall(GET_CHAR_WIDTH_SYSCALL, 0, 0, 0, 0, 0);
+uint64_t getCharWidth(){
+    uint64_t char_width;
+    syscall(GET_CHAR_WIDTH_SYSCALL, &char_width, 0, 0, 0, 0);
+    return char_width;
 }
 
-int getCharHeight(){
-    return syscall(GET_CHAR_HEIGHT_SYSCALL, 0, 0, 0, 0, 0);
+uint64_t getCharHeight(){
+    int char_height;
+    syscall(GET_CHAR_HEIGHT_SYSCALL, &char_height, 0, 0, 0, 0);
+    return char_height;
 }
 
 

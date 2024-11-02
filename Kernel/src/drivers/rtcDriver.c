@@ -63,10 +63,14 @@ void adjust_time(RTC_Time *time, int displacement) {
 
 // PUBLIC API
 
-RTC_Time * get_time() {
+RTC_Time * update_time() {
     get_time_utc(&time);
     // adjust_time(&time, time_zone);   //TODO: PORQUE CHOTA NO FUNCIONA ESTO !??!?!?!
     return &time;
+}
+
+void get_time(RTC_Time * time_to_return) {
+    *time_to_return = time;
 }
 
 void set_timezone(int time_zone) {

@@ -6,22 +6,34 @@
 #include <drivers/pitDriver.h>
 #include <drivers/videoDriver.h>
 #include <drivers/keyboardDriver.h>
+#include <drivers/rtcDriver.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
-uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
-uint64_t syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+
+void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     if(syscall < 1000)
-        return systemSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
-    else if(syscall < 2000)
-        return videoDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        systemSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+    else if(syscall < 1100)
+        videoDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+    else if(syscall < 1200)
+        rtcDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+    else if(syscall < 1300)
+        return;
+    else if(syscall < 1400)
+        keyboardDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+    else
+        return;
 }
 
 
 // --- SYSTEM SYSCALLS ---
-uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall) {
         case SET_HANDLER_SYSCALL:
             VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
@@ -43,14 +55,13 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
         case SET_SYSTEM_STACK_BASE_SYSCALL:
             loadStackBase(arg1);
             break;
-
         default:
             break;
     }
 }
 
 // --- VIDEO DRIVER SYSCALLS ---
-uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         // BASIC SHAPES
@@ -109,7 +120,8 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
 
         // CURSOR
         case IS_CURSOR_IN_BOUNDARIES_SYSCALL:
-            return isCursorInBoundaries(arg1, arg2);
+            int is_cursor_in_boundaries = isCursorInBoundaries(arg1, arg2);
+            *(int *)arg3 = is_cursor_in_boundaries;
             break;
 
         case SET_CURSOR_COL_SYSCALL:
@@ -121,22 +133,28 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
             setCursorLine(arg1);
             break;
         case GET_CURSOR_COL_SYSCALL:
-            return getCursorColumn();
+            uint32_t cursor_column =  getCursorColumn();
+            *((uint32_t *)arg1) = cursor_column;
             break;
         case GET_CURSOR_LINE_SYSCALL:
-            return getCursorLine();
+            uint32_t cursor_line = getCursorLine();
+            *((uint32_t *)arg1) = cursor_line;
             break;
         case GET_SCREEN_WIDTH_SYSCALL:
-            return getScreenWidth();
+            uint64_t screen_width = getScreenWidth();
+            *((uint64_t *)arg1) = screen_width;
             break;
         case GET_SCREEN_HEIGHT_SYSCALL:
-            return getScreenHeight();
+            uint64_t screen_height = getScreenHeight();
+            *(uint64_t *)arg1 = screen_height;
             break;
         case GET_CHAR_WIDTH_SYSCALL:
-            return getCharWidth();
+            uint64_t char_width = getCharWidth();
+            *(uint64_t *)arg1 = char_width;
             break;
         case GET_CHAR_HEIGHT_SYSCALL:
-            return getCharHeight();
+            uint64_t char_height = getCharHeight();
+            *(uint64_t *)arg1 = char_height;
             break;
 
         // GENERAL
@@ -161,11 +179,11 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
 }
 
 // --- RTC DRIVER SYSCALLS ---
-uint64_t rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case GET_RTC_TIME_SYSCALL:
-            return (uint64_t)get_time();
+            get_time((RTC_Time *)arg1);
             break;
         case SET_TIMEZONE_SYSCALL:
             VALIDATE_PERMISSIONS(SET_TIMEZONE_PERMISSION);
@@ -178,17 +196,18 @@ uint64_t rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t ar
 }
 
 // --- KEYBOARD DRIVER SYSCALLS ---
-uint64_t keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case GET_KEY_EVENT_SYSCALL:
-            return getKeyboardEvent();
+            getKeyboardEvent(arg1);
             break;
         case CLEAR_KEYBOARD_BUFFER_SYSCALL:
             clearKeyboardBuffer();
             break;
         case IS_KEY_PRESSED_SYSCALL:
-            return isKeyPressed(arg1, arg2);
+            int is_key_pressed = isKeyPressed(arg1, arg2);
+            *(int*)arg3 = is_key_pressed; 
             break;
 
         default:

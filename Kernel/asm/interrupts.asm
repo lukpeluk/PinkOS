@@ -183,7 +183,7 @@ _irq08Handler:
 
 ;Syscall
 _irq80Handler:
-	pushStateBesidesReturn
+	pushState
 
 	call syscallDispatcher
 
@@ -191,7 +191,7 @@ _irq80Handler:
 	mov al, 20h
 	out 20h, al
 
-	popStateBesidesReturn
+	popState
 	iretq
 
 ;Zero Division Exception

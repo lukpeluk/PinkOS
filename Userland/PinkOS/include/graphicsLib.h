@@ -8,10 +8,10 @@ typedef struct {
 	uint64_t y;
 } Point;
 
-int getScreenWidth();
-int getScreenHeight();
-int getCharWidth();
-int getCharHeight();
+uint64_t getScreenWidth();
+uint64_t getScreenHeight();
+uint64_t getCharWidth();
+uint64_t getCharHeight();
 
 void drawPixel(uint32_t color, Point position);
 void drawRectangle(uint32_t color, int width, int height, Point position);

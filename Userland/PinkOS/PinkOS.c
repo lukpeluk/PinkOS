@@ -207,6 +207,7 @@ void print_str_to_console(char * string){
 	}
 }
 
+static char arguments[STRING_SIZE];
 void execute_program(int input_line){
 		// get the program name
 		char program_name[STRING_SIZE];
@@ -220,7 +221,7 @@ void execute_program(int input_line){
 			i++;
 
 		// get the arguments
-		char arguments[STRING_SIZE];
+
 		int j = 0;
 		for(; buffer[input_line][i] != 0; i++, j++){
 			arguments[j] = buffer[input_line][i];
@@ -257,7 +258,9 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 		save_str_to_buffer((char *)arg1);
 		syscall(DRAW_STRING_SYSCALL, (char *)arg1, 0x00df8090, 0x00000000, 0, 0);
 		break;
-	
+	case PRINT_CHAR_ENDPOINT:
+		print_char_to_console((char)arg1);
+		break;
 	default:
 		break;
 	}
@@ -351,6 +354,9 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 }
 
 void status_bar_handler(RTC_Time * time){
+	if(graphics_mode)
+		return;
+
 	// dibuja 
 	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
 	time_str[0] = time->hours / 10 + '0';
@@ -381,11 +387,15 @@ void restoreContext(uint8_t was_graphic){
 	graphics_mode = 0;
 	clear_stdin();
 	
-	idle();
+	idle("idle from restoreContext");
 }
 
-void idle(){
+// message for debugging purposes
+void idle(char * message){
 	while(1){
+		// if (message != 0){
+		// 	syscall(DRAW_STRING_SYSCALL, message, 0x00df8090, 0x00000000, 0, 0);
+		// }
 		_hlt();
 	}
 }
@@ -403,5 +413,5 @@ int main() {
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
 
-	idle();
+	idle("idle from main");
 }
