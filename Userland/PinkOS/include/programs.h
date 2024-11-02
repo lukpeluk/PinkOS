@@ -21,6 +21,8 @@ void echo_main(char *args);
 void forrest_gump_main(char *args);
 void parrot_main(char *args);
 void mona_lisa_main(char *args);
+void date_main();
+void time_main();
 
 
 #endif

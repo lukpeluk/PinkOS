@@ -5,6 +5,7 @@
 #include <graphicsLib.h>
 #include <stdin.h>
 #include <syscallCodes.h>
+#include <stdpink.h>
 #include <environmentApiEndpoints.h>
 #include <math.h>
 
@@ -90,7 +91,7 @@ int str_to_int(char *str) {
 
 void mona_lisa_main(char *args) {
     if(args[0] == '\0'){
-        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, "Usage: mona_lisa <scale (range 1-15)>\n", 0, 0, 0);
+		print("Usage: mona_lisa <scale (range 1-15)>\n");
         return;
     }
     // get scale from arguments
@@ -100,7 +101,8 @@ void mona_lisa_main(char *args) {
     }
 
     if(desired_scale < 1 || desired_scale > 15){
-        desired_scale = 5;
+		print("Usage: mona_lisa <scale (range 1-15)>\n");
+        return;
     }
 
     Point position = {0};
@@ -121,7 +123,7 @@ void mona_lisa_main(char *args) {
             break;
         }
 
-        scale ++;
+        scale++;
         syscall(SLEEP_SYSCALL, 100, 0, 0, 0, 0);
     }
 
