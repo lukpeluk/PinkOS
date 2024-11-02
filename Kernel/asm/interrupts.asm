@@ -98,7 +98,6 @@ SECTION .text
 
 %macro irqHandlerMaster 1
 	pushState
-	sti
 
 	mov rdi, %1 ; pasaje de parametro
 	call irqDispatcher
@@ -185,7 +184,6 @@ _irq08Handler:
 ;Syscall
 _irq80Handler:
 	pushStateBesidesReturn
-	sti   ; capaz en vez de hacer esto, podemos hacer que el runProgram sea un iretq (o activar interrupciones antes de llamarlo)
 
 	call syscallDispatcher
 

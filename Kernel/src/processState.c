@@ -21,8 +21,9 @@ typedef struct {
 } InterruptStackFrame;
 
 
-extern void magic_recover(InterruptStackFrame * stackBase, uint8_t was_graphic);
-extern void load_stack_int(InterruptStackFrame * stackBase);
+extern void magic_recover(InterruptStackFrame * stackBase, uint64_t was_graphic);
+extern void push_to_custom_stack_pointer(uint64_t stack_pointer, uint64_t value_to_push);
+extern uint64_t get_stack_pointer();
 extern void loader();
 
 // stores pointers to the handler functions
@@ -30,21 +31,27 @@ typedef struct ProcessState {
     int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process
     char * currentProcess; // Name of the current process (for crash reporting and logging)
-    InterruptStackFrame systemStackBase;
+    uint64_t systemStackBase; // Base of the system stack
 } ProcessState;
 
 static ProcessState processState;
+
+InterruptStackFrame getDefaultCRI() {
+    InterruptStackFrame defaultCRI;
+    defaultCRI.rip = 0;
+    defaultCRI.cs = 0x08;
+    defaultCRI.rflags = 0x202;
+    defaultCRI.rsp = 0;
+    defaultCRI.ss = 0x0;
+    return defaultCRI;
+}
 
 // initializes the kernel state
 void initProcessState() {
     processState.rootMode = ACTIVATE_ROOT_MODE;
     processState.permissions = ROOT_PERMISSIONS;
     processState.currentProcess = SYSTEM_PROCESS;
-    processState.systemStackBase.rip = 0;
-    processState.systemStackBase.cs = 0x08;
-    processState.systemStackBase.rflags = 0x202;
-    processState.systemStackBase.rsp = 0;
-    processState.systemStackBase.ss = 0x0;
+    processState.systemStackBase = 0;
 }
 
 // getters and setters
@@ -78,7 +85,7 @@ void setCurrentProcess(char * process) {
 }
 
 void loadStackBase(uint64_t stackBase) {
-    processState.systemStackBase.rsp = stackBase;
+    processState.systemStackBase = stackBase;
 }
 
 // TODO: para mí macic_recover debería recibir ambos el stack y el IP como args, y un tercer arg. que le pasaría como arg. a la función que llame
@@ -92,17 +99,30 @@ void runProgram(Program * program, char * arguments) {
     desactivateRootMode();
     setPermissions(program->perms);
     setCurrentProcess(program->name);           // Save the name and not the command, because the purpose of this is to be used in crash reports and logs
-    program->entry(arguments);
-    // si hacemos lo de que runProgram haga un iret, quitProgram debería pushearse en la pila antes por si el programa termina naturalmente
-    quitProgram();  
+    
+    // ↓↓↓↓ Versión que limpia el stack antes de llamar a la función del programa ↓↓↓↓
+    InterruptStackFrame cri = getDefaultCRI();
+    cri.rip = program->entry;
+    cri.rsp = processState.systemStackBase - 8; // -8 because the return address is pushed in the stack
+    push_to_custom_stack_pointer(processState.systemStackBase, (uint64_t)quitProgram);
+    magic_recover(&cri, arguments);             
+
+    // ↓↓↓↓ Versión que preserva el stack antes de llamar a la función del programa ↓↓↓↓
+    // InterruptStackFrame cri = getDefaultCRI();
+    // cri.rip = program->entry;
+    // cri.rsp = get_stack_pointer() - 8; 
+    // magic_recover(&cri, arguments);
+    // quitProgram();
 }
 
 void quitProgram() {
-    uint8_t was_graphic = processState.permissions & DRAWING_PERMISSION;
+    uint64_t was_graphic = processState.permissions & DRAWING_PERMISSION;
     setPermissions(ROOT_PERMISSIONS);
     setCurrentProcess(SYSTEM_PROCESS);
-    processState.systemStackBase.rip = callRestoreContextHandler;
-    magic_recover(&processState.systemStackBase, was_graphic);
+    InterruptStackFrame cri = getDefaultCRI();
+    cri.rip = (uint64_t)callRestoreContextHandler;
+    cri.rsp = processState.systemStackBase;
+    magic_recover(&cri, was_graphic);      // We need to pass the argument to the function that will be called
 }
 
 // receives a uint32_t with the required permissions and returns 1 if the current process has those permissions, 0 otherwise

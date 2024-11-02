@@ -1,5 +1,5 @@
 GLOBAL cpuVendor
-GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, load_stack_int
+GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, load_stack_int, push_to_custom_stack_pointer, get_stack_pointer
 
 ; TODO: 
 ; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
@@ -64,7 +64,23 @@ magic_recover:
     ; Ejecutar iretq para retornar usando el contexto cargado
     iretq
 
+; loads a value to a specific point in the stack
+; rdi: pointer to the stack
+; rsi: value to load
+push_to_custom_stack_pointer:
+    push rbp            ; Guardar el valor de rbp
+    mov rbp, rsp        ; rbp apunta al inicio del stack (StackFrame)
+    mov rsp, rdi        ; rsp ahora apunta al inicio del stack que queremos cargar
+    push rsi            ; Apilar el valor que queremos cargar
+    mov rsp, rbp        ; Restaurar el valor de rsp
+    pop rbp             ; Restaurar el valor de rbp (dejamos el stack como estaba)
+    ret
 
+; get the actual stack pointer
+get_stack_pointer:
+    mov rax, rsp
+    add rax, 8
+    ret
 
 ; Recibe un puntero a un struct StackInt y carga los valores de la estructura en el stack
 ; typedef struct {
