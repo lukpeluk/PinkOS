@@ -97,6 +97,12 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             drawHexAt(arg1, arg2, arg3, arg4);
             break;
 
+        // BITMAPS
+        case DRAW_BITMAP_SYSCALL:
+            VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
+            drawBitmap((uint32_t *)arg1, arg2, arg3, (Point *)arg4, arg5);
+            break;
+
         // CURSOR
         case IS_CURSOR_IN_BOUNDARIES_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
