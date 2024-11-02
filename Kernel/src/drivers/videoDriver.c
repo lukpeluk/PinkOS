@@ -41,10 +41,10 @@ struct vbe_mode_info_structure {
 } __attribute__ ((packed));
 
 typedef struct vbe_mode_info_structure * VBEInfoPtr;
-typedef uint8_t * Font;
 
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
 static Font font = ibm_bios_font;
+static font_size = 1;
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
@@ -54,119 +54,39 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 	framebuffer[offset+2]   =  (hexColor >> 16) & 0xFF;
 }
 
+// BASIC SHAPES
 
+void drawRectangle(Point * start, Point * end, uint32_t hexColor){
+	for(uint64_t i = start->x; i < end->x; i++){
+		for(uint64_t j = start->y; j < end->y; j++){
+			putPixel(hexColor, i, j);
+		}
+	}
+}
 
-uint8_t font2[2][16] = {
-	// Character ' ' (space)
-	{
-		0b11111111, 
-		0b10000001, 
-		0b10000000, 
-		0b10000000,
-		0b10000000, 
-		0b10000000, 
-		0b10000000, 
-		0b10000000,
-		0b10000000, 
-		0b10000000, 
-		0b10000000, 
-		0b10000000,
-		0b10000000, 
-		0b10000000, 
-		0b10000001, 
-		0b11111111
-	},
-	// Character 'A'
-	{
-		0b00011000, 0b00111100, 0b01100110, 0b11000011,
-		0b11000011, 0b11111111, 0b11000011, 0b11000011,
-		0b11000011, 0b11000011, 0b11000011, 0b00000000,
-		0b00000000, 0b00000000, 0b00000000, 0b00000000
-	},
-	// Add more characters as needed...
-};
-
-uint8_t font_test_photoshop[][16] = {
-	// Character 'test-a'
-	{ 0b00000000, 0b00010100, 0b00011000, 0b00011000, 0b00111000, 0b00111100, 0b01111100, 0b01101100, 0b01101110, 0b11111111, 0b11111111, 0b11000111, 0b11000011, 0b11000011, 0b10000000, 0b00000000 },
-	// Character 'test-b'
-	{ 0b00000000, 0b00000000, 0b01100000, 0b01100000, 0b01100000, 0b01100000, 0b01100000, 0b01110000, 0b01111110, 0b01111110, 0b01100110, 0b01100111, 0b01111110, 0b01111100, 0b00000000, 0b00000000 },
-};
-
-// Pink Panther font
-uint8_t pink_panther_font[][16] = {
-	// Character 'K'
-	{ 0b00001111, 0b11100011, 0b10000100, 0b10000100, 0b10001000, 0b10011000, 0b10110000, 0b11100000, 0b11110000, 0b10110000, 0b10011000, 0b10011000, 0b10001100, 0b10001110, 0b10000111, 0b11100000 },
-	// Character 'J'
-	{ 0b00111111, 0b00001100, 0b00001100, 0b00001100, 0b00001100, 0b00000100, 0b00001100, 0b00001100, 0b00001100, 0b00000100, 0b00001110, 0b10001100, 0b10001100, 0b11001100, 0b10110000, 0b00000000 },
-	// Character 'H'
-	{ 0b00011111, 0b11000110, 0b10000110, 0b10000110, 0b10000110, 0b10000110, 0b10000110, 0b10000110, 0b10000110, 0b11111110, 0b10000110, 0b10000110, 0b10000110, 0b10000110, 0b10001111, 0b11100000 },
-	// Character 'I'
-	{ 0b01111100, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b00110000, 0b11111000 },
-	// Character 'Z'
-	{ 0b11111111, 0b11000110, 0b11000110, 0b01001100, 0b10001100, 0b10011000, 0b00011000, 0b00110001, 0b00110001, 0b01100010, 0b01100011, 0b11000011, 0b11000011, 0b11111110, 0b00000000, 0b00000000 },
-	// Character 'M'
-	{ 0b00000011, 0b10000011, 0b11000011, 0b11000111, 0b11000111, 0b11100101, 0b11100101, 0b01101011, 0b10111011, 0b10111001, 0b10110011, 0b10011011, 0b10010001, 0b10000011, 0b10001111, 0b11000000 },
-	// Character 'L'
-	{ 0b11111000, 0b01100000, 0b01100000, 0b01100000, 0b01100000, 0b01100000, 0b01100000, 0b01100001, 0b01100001, 0b01100010, 0b01100011, 0b01100011, 0b01100011, 0b11101111, 0b00101000, 0b00000000 },
-	// Character 'Y'
-	{ 0b00001111, 0b11100010, 0b11000010, 0b01100100, 0b01100100, 0b01100100, 0b00111000, 0b00111000, 0b00010000, 0b00011000, 0b00010000, 0b00011000, 0b00011000, 0b00111000, 0b11111100, 0b00000000 },
-	// Character 'N'
-	{ 0b10001111, 0b11100010, 0b01100010, 0b01100010, 0b10110010, 0b01010010, 0b00110010, 0b10011000, 0b01001010, 0b10001110, 0b01001110, 0b10000110, 0b10000110, 0b10000110, 0b11000010, 0b11100010 },
-	// Character 'O'
-	{ 0b00010100, 0b00100010, 0b01100010, 0b01000011, 0b11000011, 0b11000011, 0b11000011, 0b11000001, 0b11000011, 0b11000011, 0b11000011, 0b11000011, 0b11000011, 0b01000010, 0b01000110, 0b00111000 },
-	// Character 'X'
-	{ 0b00001111, 0b11110010, 0b11000110, 0b01100100, 0b01100100, 0b00111000, 0b00111000, 0b00010000, 0b00011000, 0b00111000, 0b00101100, 0b01001100, 0b01000110, 0b10000110, 0b11001111, 0b11100000 },
-	// Character 'U'
-	{ 0b00001111, 0b11110010, 0b11000010, 0b10000010, 0b11000010, 0b10000010, 0b11000010, 0b10000010, 0b11000010, 0b10000010, 0b10000010, 0b11000010, 0b10000010, 0b11000100, 0b01000100, 0b00111000 },
-	// Character 'B'
-	{ 0b11111110, 0b01100011, 0b01100011, 0b01100001, 0b01100011, 0b01100001, 0b00110011, 0b01111110, 0b00100011, 0b01100011, 0b00100001, 0b00110011, 0b01100011, 0b11111100, 0b00000000, 0b00000000 },
-	// Character 'C'
-	{ 0b00110010, 0b01000110, 0b01000110, 0b11000010, 0b11000010, 0b11000010, 0b11000000, 0b11000000, 0b11000000, 0b11000000, 0b11000000, 0b11000001, 0b11000010, 0b01000010, 0b01100110, 0b00011010 },
-	// Character 'T'
-	{ 0b11111111, 0b10011011, 0b10011001, 0b00111001, 0b00010001, 0b00011001, 0b00011000, 0b00110000, 0b00011000, 0b00010000, 0b00011000, 0b00010000, 0b00010000, 0b00111000, 0b01010100, 0b00000000 },
-	// Character 'V'
-	{ 0b01001111, 0b11000010, 0b10000100, 0b10000100, 0b10000100, 0b11000100, 0b11001000, 0b01001000, 0b01101000, 0b01100000, 0b01110000, 0b01110000, 0b00100000, 0b00100000, 0b00100000, 0b00100000 },
-	// Character 'A'
-	{ 0b11111000, 0b00111000, 0b00011100, 0b00111100, 0b00101100, 0b00101100, 0b01000110, 0b01000110, 0b01000110, 0b01111110, 0b01000011, 0b10000011, 0b11000011, 0b10001111, 0b11100000, 0b00000000 },
-	// Character 'W'
-	{ 0b00000011, 0b10010000, 0b00010001, 0b00011000, 0b00111001, 0b00011001, 0b00101001, 0b10101101, 0b10101101, 0b11001110, 0b11000110, 0b11000110, 0b11000110, 0b11000100, 0b01000100, 0b00000000 },
-	// Character 'D'
-	{ 0b11111000, 0b11000110, 0b11000110, 0b11000011, 0b11000011, 0b11000011, 0b11000011, 0b11000011, 0b01000011, 0b11000011, 0b01000011, 0b11000110, 0b01000110, 0b11001100, 0b11110000, 0b00000000 },
-	// Character 'S'
-	{ 0b00111010, 0b01000110, 0b11000110, 0b10000010, 0b11000010, 0b10000010, 0b11000010, 0b11100000, 0b01110000, 0b00011000, 0b00001110, 0b00000110, 0b10000110, 0b10000110, 0b11000100, 0b10111000 },
-	// Character 'R'
-	{ 0b11111000, 0b11001100, 0b11000110, 0b10000110, 0b11000110, 0b11000110, 0b10000110, 0b11000110, 0b10001100, 0b11111000, 0b11010000, 0b10011000, 0b11011000, 0b10001100, 0b10000110, 0b11100101 },
-	// Character 'E'
-	{ 0b11111111, 0b01100011, 0b01110001, 0b00100001, 0b01110001, 0b00100000, 0b01110100, 0b00110100, 0b01101100, 0b00100101, 0b00110001, 0b00100001, 0b01100001, 0b11111111, 0b00000000, 0b00000000 },
-	// Character 'G'
-	{ 0b00110010, 0b11001110, 0b10000110, 0b10000100, 0b10000010, 0b10000000, 0b10000000, 0b10001010, 0b10011110, 0b10000110, 0b10000110, 0b10000110, 0b10000110, 0b11001110, 0b00101010, 0b00000000 },
-	// Character 'P'
-	{ 0b11111000, 0b11000110, 0b11000011, 0b11000011, 0b11000011, 0b11000011, 0b11000011, 0b11000111, 0b11000110, 0b11111000, 0b11000000, 0b11000000, 0b01000000, 0b11000000, 0b11000000, 0b11110000 },
-	// Character 'Q'
-	{ 0b00011000, 0b01100100, 0b01000010, 0b11000010, 0b11000011, 0b11000011, 0b10000011, 0b11000011, 0b10000011, 0b11000011, 0b11000011, 0b11000011, 0b11000010, 0b01000110, 0b01101100, 0b00111100 },
-	// Character 'F'
-	{ 0b11111111, 0b01100011, 0b01110001, 0b01100001, 0b00110001, 0b01100001, 0b00110100, 0b01100100, 0b00111110, 0b00100100, 0b01100010, 0b00100000, 0b00110000, 0b00100000, 0b01110000, 0b10101000 },
-};
+void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t hexColor){
+	for(uint64_t i = start->x; i < end->x; i++){
+		for(uint64_t j = start->y; j < end->y; j++){
+			if(i < start->x + thickness || i > end->x - thickness || j < start->y + thickness || j > end->y - thickness){
+				putPixel(hexColor, i, j);
+			}
+		}
+	}
+}
 
 
 #define CHAR_WIDTH 8
 #define CHAR_HEIGHT 8
 #define FONT_NOF_CHARS 95
 
-static uint8_t * currentVideo = (uint8_t*)0xB8000;
 static uint64_t x = 0;
 static uint64_t y = 0;
 static char INTERLINE = 3;
 
-// CÓDIGO DE MIERDA, PORFA REFACTORIZAR 
-
-// TODO: que si un char no está soportado por la fuente, use un �
-
 // funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea y delete
 // hace wrapping automático, podría configurarse con un flag
 // para borrar le escribe un espacio en blanco por arriba
-void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor) {
+void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
     int is_deleting = 0;
 
 	// salto de línea (antes del wrapping pues este no le debe afectar)
@@ -182,7 +102,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor) {
     }
     
 	// hago wrap si me paso del borde de la pantalla horizontalmente
-	if(x + CHAR_WIDTH > VBE_mode_info->width){
+	if(wrap && x + CHAR_WIDTH > VBE_mode_info->width){
 		x = 0;
 		y += CHAR_HEIGHT + INTERLINE;
     }
@@ -201,15 +121,15 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor) {
     }
 
 	// Obtener el puntero al array de bytes del carácter
-    uint8_t *bitmap = ibm_bios_font[c];
-    if (bitmap == 0) {
-		bitmap = unsupported_char;
+    uint8_t *character = font[c];
+    if (character == 0) {
+		character = unsupported_char;
     }
 
-    // Dibuja el carácter usando los bits en el bitmap
+    // Dibuja el carácter usando los bits en elcharacter 
     for (uint64_t i = 0; i < CHAR_HEIGHT; i++) {
         for (uint64_t j = 0; j < CHAR_WIDTH; j++) {
-            if (bitmap[i] & (1 << (7 - j))) {
+            if (character[i] & (1 << (7 - j))) {
                 putPixel(textColor, x + j, y + i);
             } else {
                 putPixel(bgColor, x + j, y + i);
@@ -220,10 +140,37 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor) {
 	x += CHAR_WIDTH * !is_deleting; // si estoy borrando, no incremento x
 }
 
-// imprime un número
-void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor){
+void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
+	uint64_t oldX = x;
+	uint64_t oldY = y;
+	x = position->x;
+	y = position->y;
+	drawChar(c, textColor, bgColor, 0);
+	x = oldX;
+	y = oldY;
+}
+
+void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
+	while (*string) {
+		drawChar(*string++, textColor, bgColor, 1);
+	}
+}
+
+void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position){
+	uint64_t oldX = x;
+	uint64_t oldY = y;
+	x = position->x;
+	y = position->y;
+	while (*string) {
+		drawChar(*string++, textColor, bgColor, 0);
+	}
+	x = oldX;
+	y = oldY;
+}
+
+void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 	if(num == 0){
-		drawChar('0', textColor, bgColor);
+		drawChar('0', textColor, bgColor, wrap);
 		return;
 	}
 
@@ -238,14 +185,24 @@ void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor){
 
 	i--;
 	while(i >= 0){
-		drawChar(buffer[i], textColor, bgColor);
+		drawChar(buffer[i], textColor, bgColor, wrap);
 		i--;
 	}
 }
 
-void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor){
+void drawNumberAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position){
+	uint64_t oldX = x;
+	uint64_t oldY = y;
+	x = position->x;
+	y = position->y;
+	drawNumber(num, textColor, bgColor, 0);
+	x = oldX;
+	y = oldY;
+}
+
+void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 	if(num == 0){
-		drawChar('0', textColor, bgColor);
+		drawChar('0', textColor, bgColor, wrap);
 		return;
 	}
 
@@ -260,18 +217,28 @@ void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor){
 
 	i--;
 	while(i >= 0){
-		drawChar(buffer[i], textColor, bgColor);
+		drawChar(buffer[i], textColor, bgColor, wrap);
 		i--;
 	}
 }
 
-// imprime un número
+void drawHexAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position){
+	uint64_t oldX = x;
+	uint64_t oldY = y;
+	x = position->x;
+	y = position->y;
+	drawHex(num, textColor, bgColor, 0);
+	x = oldX;
+	y = oldY;
+}
+
+// imprime un número pero sin necesidad de especificar color ni nada (para debugging)
 void simpleDrawNumber(uint64_t num){
 	uint64_t textColor = 0xFFFFFF;
 	uint64_t bgColor = 0x000000;
 	
 	if(num == 0){
-		drawChar('0', textColor, bgColor);
+		drawChar('0', textColor, bgColor, 1);
 		return;
 	}
 
@@ -286,11 +253,36 @@ void simpleDrawNumber(uint64_t num){
 
 	i--;
 	while(i >= 0){
-		drawChar(buffer[i], textColor, bgColor);
+		drawChar(buffer[i], textColor, bgColor, 1);
 		i--;
 	}
 }
 
+
+// BITMAPS
+
+// bitmap format is an array of 32 bit integers, each one representing a pixel color in hexa
+// maybe it would be more efficent not to use putPixel, but to write directly to the framebuffer
+void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * position, uint32_t scale){
+	if(scale < 1){
+		return;
+	}
+	for(uint64_t i = 0; i < height; i++){
+		for(uint64_t j = 0; j < width; j++){
+			for(uint64_t k = 0; k < scale; k++){
+				for(uint64_t l = 0; l < scale; l++){
+					putPixel(bitmap[i * width + j], position->x + j * scale + k, position->y + i * scale + l);
+				}
+			}
+		}
+	}
+}
+
+// CURSOR
+
+int isCursorInBoundaries(uint32_t line, uint32_t column){
+	return line * CHAR_HEIGHT + line * INTERLINE < VBE_mode_info->height && column * CHAR_WIDTH < VBE_mode_info->width;
+}
 
 void setCursorLine(uint32_t line){
     y = line * CHAR_HEIGHT + line * INTERLINE;
@@ -301,67 +293,46 @@ void setCursorColumn(uint32_t column){
 }
 
 uint32_t getCursorLine(){
-	return y / CHAR_HEIGHT;
+	return y / (CHAR_HEIGHT + INTERLINE);
 }
 
 uint32_t getCursorColumn(){
 	return x / CHAR_WIDTH;
 }
 
-void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
-	while (*string) {
-		drawChar(*string++, textColor, bgColor);
-	}
-}
-
-// GRAPHIC MODE
-
-void drawRectangle(Point start, Point end, uint32_t hexColor){
-	for(uint64_t i = start.x; i < end.x; i++){
-		for(uint64_t j = start.y; j < end.y; j++){
-			putPixel(hexColor, i, j);
-		}
-	}
-}
-
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
-	uint64_t oldX = x;
-	uint64_t oldY = y;
-	x = position->x;
-	y = position->y;
-	drawChar(c, textColor, bgColor);
-	x = oldX;
-	y = oldY;
-}
-
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position){
-	uint64_t oldX = x;
-	uint64_t oldY = y;
-	x = position->x;
-	y = position->y;
-	while (*string) {
-		drawChar(*string++, textColor, bgColor);
-	}
-	x = oldX;
-	y = oldY;
-}
-
+// GENERAL
 
 void clearScreen(uint32_t bgColor){
+	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
+	uint64_t offset = 0;
+
+	uint8_t channel1 = (bgColor) & 0xFF;
+	uint8_t channel2 = (bgColor >> 8) & 0xFF;
+	uint8_t channel3 = (bgColor >> 16) & 0xFF;
+
     for(uint32_t i = 0; i < VBE_mode_info->height; i++){
+		offset = (i * VBE_mode_info->pitch);
+
         for(uint32_t j = 0; j < VBE_mode_info->width; j++){
-            putPixel(bgColor, j, i);
+            // putPixel(bgColor, j, i);
+			framebuffer[offset] = channel1;
+			framebuffer[offset+1] = channel2;
+			framebuffer[offset+2] = channel3;
+			offset += 3;
         }
     }
+
     x = 0;
     y = 0;
 }
 
-/*
-   void printString(const char *str, uint32_t hexColor, uint64_t x, uint64_t y) {
-   while (*str) {
-   drawChar(*str++, hexColor, x, y);
-   x += CHAR_WIDTH;
-   }
-   }
-   */
+void setFontSize(uint8_t fontSize){
+	if(fontSize < 1 || fontSize > 8){
+		return;
+	}
+	font_size = fontSize;
+}
+
+void setFont(Font newFont){
+	font = newFont;
+}

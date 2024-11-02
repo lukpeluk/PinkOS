@@ -164,7 +164,7 @@ void redraw(){
 
 		// print a new line (except in the last string)
 		if(i != current_string)
-			syscall(DRAW_CHAR_SYSCALL, '\n', 0x00df8090, 0x00000000, 0, 0);
+			syscall(DRAW_CHAR_SYSCALL, '\n', 0x00df8090, 0x00000000, 1, 0);
 
 	} while (i != current_string);
 }
@@ -186,6 +186,8 @@ void print_char_to_console(char * key){
 	if(key == 8 && current_position == 0){
 		return;
 	}
+
+	// si el caracter haría wrappeo, scrolleo una línea
 	
 
 	int result = save_char_to_buffer(key);
@@ -195,7 +197,7 @@ void print_char_to_console(char * key){
 		return;
 
 	// print key to screen
-	syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 0, 0);
+	syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 1, 0);
 }
 
 // prints and saves to the buffer
@@ -272,11 +274,11 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 	// }
 
 	// syscall(DRAW_STRING_SYSCALL, "event type: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_CHAR_SYSCALL, event_type + '0', 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_CHAR_SYSCALL, event_type + '0', 0x00df8090, 0x00000000, 1, 0);
 	// syscall(DRAW_STRING_SYSCALL, " hold times: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_CHAR_SYSCALL, hold_times + '0', 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_CHAR_SYSCALL, hold_times + '0', 0x00df8090, 0x00000000, 1, 0);
 	// syscall(DRAW_STRING_SYSCALL, " ascii: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_CHAR_SYSCALL, ascii, 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_CHAR_SYSCALL, ascii, 0x00df8090, 0x00000000, 1, 0);
 	// syscall(DRAW_STRING_SYSCALL, " scan code: ", 0x00df8090, 0x00000000, 0, 0);
 	// syscall(DRAW_STRING_SYSCALL, scan_code_str, 0x00df8090, 0x00000000, 0, 0);
 	// syscall(DRAW_STRING_SYSCALL, " ok. \n", 0x00df8090, 0x00000000, 0, 0);

@@ -10,7 +10,7 @@ void forrest_gump_main(char *args) {
     {                                       // ! If only there was a way to stop it in my single-process OS...
         char message []= "run forest run\n";
         syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, message,0x00df8090,0x00000000, 0);
-        syscall(DRAW_CHAR_SYSCALL, 'F', 0x00df8090, 0x00000000, 0, 0);  // ! Wow wow wow, this program has permission to draw directly to screen???
+        syscall(DRAW_CHAR_SYSCALL, 'F', 0x00df8090, 0x00000000, 1, 0);  // ! Wow wow wow, this program has permission to draw directly to screen???
         syscall(SLEEP_SYSCALL, 500, 0, 0, 0, 0);
     }
 }

@@ -93,6 +93,27 @@ void * initializeKernelBinary()
 	return stackBase;
 }
 
+void testScreen(){
+	clearScreen(0x00df8090);
+
+	// draw a 7 by 3 px bitmap of a rainbow in the top left corner with 50 pixels of padding and a scale of 3
+	uint32_t rainbow[16] = {
+		0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3,
+		0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000,
+		0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000, 0xFF7F00, 
+	};
+	drawBitmap(rainbow, 7, 3, &(Point){50, 50}, 10);
+
+	Point start = {50, 50};
+	Point end = {500, 500};
+	drawRectangleBoder(&start, &end, 5, 0x00000000);
+	start.x += 10;
+	start.y += 10;
+	end.x -= 10;
+	end.y -= 10;
+	drawRectangle(&start, &end, 0x00000000);
+}
+
 int main()
 {	
 	initProcessState();
@@ -100,41 +121,7 @@ int main()
 	set_timezone(-3);
 	load_idt();
 
-	// while(1){
-	// 	drawChar('T', 0x00df8090, 0x00000000);
-	// 	sleep(5000);
-	// }
-	// while (1){
-	// 	drawRectangle((Point){50, 50}, (Point){500, 500}, 0x00df8090);
-	// 	sleep(1000);
-	// 	drawRectangle((Point){50, 50}, (Point){500, 500}, 0x00000000);
-	// 	sleep(1000);
-	// }
-	// drawStringAt("HOLA", 0x00df8090, 0x00000000, (Point){1000, 100});
-	// drawRectangle((Point){100, 0}, (Point){125, 20}, 0x00df8090);
-	// typedef struct {
-	// 	uint32_t freq;
-	// 	uint32_t duration;
-	// 	uint32_t delay;
-	// } note_t;
-
-	// note_t notes[] = {
-	// 	{0, 500, 250}, {0, 250, 125}, {0, 125, 125}, {311, 125, 125}, 
-	// 	{330, 375, 125}, {370, 125, 125}, {392, 375, 125}, {311, 125, 125},
-	// 	{330, 250, 125}, {370, 125, 125}, {523, 125, 125}, {494, 125, 125},
-	// 	{659, 125, 125}, {587, 1000, 250},
-	// 	{0, 500, 250}, {311, 250, 125}, {330, 250, 125}, {370, 250, 125}, 
-	// 	{392, 125, 125}, {311, 250, 125}, {392, 125, 125}, {494, 125, 125},
-	// 	{466, 125, 125}, {440, 250, 125}, {392, 125, 125}, {440, 125, 125}
-	// };
-	// const uint32_t song_length = sizeof(notes) / sizeof(notes[0]);
-
-	// for (uint32_t i = 0; i < song_length; i++) {
-	// 	beep(notes[i].freq, notes[i].duration);
-	// 	sleep(notes[i].delay);
-	// }
-	// sleep(2000);
-	// play_melody();
+	testScreen();
 
 	ncPrint("[Kernel Main]");
 	ncNewline();
