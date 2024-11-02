@@ -15,6 +15,8 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor);
 
 void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor);
 
+void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor);
+
 void setCursorLine(uint32_t line);
 
 void setCursorColumn(uint32_t column);
