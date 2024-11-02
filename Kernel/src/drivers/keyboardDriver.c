@@ -1,18 +1,19 @@
 #include <drivers/keyboardDriver.h>
-#include <drivers/videoDriver.h>  // just for debugging
 #include <stdint.h>
 
 extern char getKeyCode();
 
-#define ADVANCE_INDEX(index) index = (index + 1) % 20
 #define BUFFER_SIZE 10
 #define PRESSED_KEYS_CACHE_SIZE 6
 
+#define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE
+
 // otra opción sería un arreglo con un elemento por scan code, a modo de flag
-// pero me parece demasiado siendo que los teclados habitualmente no mandan eventos de más de 6 teclas 
-// volvería O(1) el seteo y el borrado de teclas, pero empeora el caso de listar las teclas apretadas
+// pero me parece innecesario siendo que los teclados rara vez soportan más de 6 teclas a la vez (por como funcionan electrónicamente y por limitaciones en la interfaz HID)
+// volvería O(1) el seteo y el borrado de teclas, pero tampoco es que recorrer 6 posiciones cueste tanto, además empeora el caso de listar las teclas apretadas
 static char pressed_keys[PRESSED_KEYS_CACHE_SIZE] = {0x00};
 static char pressed_keys_special_keycode_flag[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // if a one, the key is a special keycode
+static char pressed_keys_hold_times[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // times the key was pressed before being released
 
 static KeyboardEvent keyboardEventBuffer[BUFFER_SIZE];
 int bufferReadIndex = 0;
@@ -24,25 +25,20 @@ static int caps_lock = 0;
 
 static int handling_special_scancode = 0; // indicates if a scancode is one of the special ones, that use two interrupts
 
-void addKeyboardEvent(char event_type, char ascii, char scan_code);
-const char set_key(char scan_code, char is_special);
+void addKeyboardEvent(char event_type, int hold_times, char ascii, char scan_code);
+int set_key(char scan_code, char is_special);
 void release_key(char scan_code, char is_special);
 
 // intended to be called by int_21, assumes scancode set 1
 KeyboardEvent processKeyPress() {
 	unsigned char c = getKeyCode();
+    int hold_times = 0;
     char ascii = 0;
     char event_type = 0;
 
-    // debugging
-    // drawChar('\n', 0xFFFFFF, 0);
-    // drawHex((uint64_t)c, 0xFFFFFF, 0);
-    // drawChar('\n', 0xFFFFFF, 0);
-    
-
     if(c == 0xE0) {
         handling_special_scancode = 1;
-        return (KeyboardEvent) {event_type, ascii, c};
+        return (KeyboardEvent) {0};
     }
 
     if(handling_special_scancode) {
@@ -56,26 +52,24 @@ KeyboardEvent processKeyPress() {
 	// checks whether the key was pressed or released (released keys are 0x80 + the keycode of the pressed key)
     // this is to update the pressed_keys array
 	if(event_type == 1 || event_type == 3) {
-        drawString("pressed\n", 0xFFFFFF, 0);
-		set_key(c, event_type == 3);
+		hold_times = set_key(c, event_type == 3);
 	}
 	else if (event_type == 2 || event_type == 4) {
-        drawString("released\n", 0xFFFFFF, 0);
 		release_key(c - 0x80, event_type == 4);
-	} 
+	}
 
-    KeyboardEvent event = {event_type, ascii, c};
-    addKeyboardEvent(event_type, ascii, c);       // adds the event to the buffer
+    KeyboardEvent event = {event_type, hold_times, ascii, c};
+    addKeyboardEvent(event_type, hold_times, ascii, c);       // adds the event to the buffer
     return event;
 }
 
-
+// If the key is being pressed, returns for how many times it's been pressed, 0 if it's not pressed
 int isKeyPressed(char scan_code, char is_special) {
     is_special = is_special ? 1 : 0;
 
     for(int i = 0; i < PRESSED_KEYS_CACHE_SIZE; i++) {
-        if(pressed_keys_special_keycode_flag[i] == is_special && pressed_keys[i] == scan_code) {
-            return 1;
+        if(pressed_keys[i] == scan_code && pressed_keys_special_keycode_flag[i] == is_special) {
+            return pressed_keys_hold_times[i];
         }
     }
     return 0;
@@ -86,7 +80,7 @@ int isKeyPressed(char scan_code, char is_special) {
 // returns as copy, so it cannot be given directly to the handler
 KeyboardEvent getKeyboardEvent() {
     if (bufferReadIndex == bufferWriteIndex) {
-        return (KeyboardEvent) {0, 0, 0};  // If the buffer is empty, return an empty event
+        return (KeyboardEvent) {0};  // If the buffer is empty, return an empty event
     }
     KeyboardEvent event = keyboardEventBuffer[bufferReadIndex];
     ADVANCE_INDEX(bufferReadIndex);
@@ -94,8 +88,8 @@ KeyboardEvent getKeyboardEvent() {
 }
 
 // Enqueue a KeyboardEvent to the buffer, if the buffer is full, the oldest event is overwritten
-void addKeyboardEvent(char event_type, char ascii, char scan_code) {
-    keyboardEventBuffer[bufferWriteIndex] = (KeyboardEvent) {event_type, ascii, scan_code};
+void addKeyboardEvent(char event_type, int hold_times, char ascii, char scan_code) {
+    keyboardEventBuffer[bufferWriteIndex] = (KeyboardEvent) {event_type, hold_times, ascii, scan_code};
     ADVANCE_INDEX(bufferWriteIndex);
     if(bufferReadIndex == bufferWriteIndex) {
         ADVANCE_INDEX(bufferReadIndex);
@@ -107,10 +101,9 @@ void clearKeyboardBuffer() {
 }
 
 
-
-// Set a key as pressed, returns 0 if successful, 1 if there are no empty slots
+// Set a key as pressed, returns the times the key was pressed, or 0 if the key couldn't be saved
 // (normally a keyboard does the same, if you press more keys than it can handle, it will ignore the extra ones)
-const char set_key(char scan_code, char is_special) {
+int set_key(char scan_code, char is_special) {
     is_special = is_special ? 1 : 0;
 
     // Flags for modifier keys
@@ -123,21 +116,23 @@ const char set_key(char scan_code, char is_special) {
     int avaliable_slot = -1;
     for(int i = 0; i < PRESSED_KEYS_CACHE_SIZE; i++) {
         if(pressed_keys[i] == scan_code && pressed_keys_special_keycode_flag[i] == is_special) {
-            return 0;  // If the key is already pressed, return 0
+            // If the key is already pressed, increment and return the times it was pressed
+            pressed_keys_hold_times[i]++;
+            return pressed_keys_hold_times[i];
         }
         if(pressed_keys[i] == 0x00) {
             avaliable_slot = i;
         }
     }
+    // Key was pressed for the first time
     if (avaliable_slot != -1) {
         pressed_keys[avaliable_slot] = scan_code;
         pressed_keys_special_keycode_flag[avaliable_slot] = is_special;
-        return 0;
+        pressed_keys_hold_times[avaliable_slot] = 1;
+        return 1; 
     }
-
-    return 1;  // If there are no empty slots, return 1
+    return 0; // the key couldn't be saved, all slots full
 }
-
 
 void release_key(char scan_code, char is_special) {
     is_special = is_special ? 1 : 0;
@@ -152,6 +147,8 @@ void release_key(char scan_code, char is_special) {
     for(int i = 0; i < PRESSED_KEYS_CACHE_SIZE; i++) {
         if(pressed_keys[i] == scan_code && pressed_keys_special_keycode_flag[i] == is_special) {
             pressed_keys[i] = 0x00;
+            pressed_keys_special_keycode_flag[i] = 0x00;
+            pressed_keys_hold_times[i] = 0;
         }
     }
 }
@@ -282,8 +279,8 @@ char altgr_layer[256] = {
 
 // keycode must be in the ascii range (TODO: fix)
 // should handle both press and release keycodes
-char keycodeToAsciiWIP(char keycode) {
-    keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 80 : 0;
+char keycodeToAsciiWIP(unsigned char keycode) {
+    keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 0x80 : 0;
 
     char ascii = ASCII_NUL;
     if (shift_pressed) {
@@ -304,9 +301,10 @@ char keycodeToAsciiWIP(char keycode) {
 
 // convierte de keycode a ascii (forma vieja)
 // se usa temporalmente porque la otra no funca
-char keycodeToAscii(char keycode) {
-    keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 80 : 0;
+char keycodeToAscii(unsigned char keycode) {
+    keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 0x80 : 0;
 	if(!keycode) return 0;
+
 
 	switch (keycode) {
 		case 0x0E:

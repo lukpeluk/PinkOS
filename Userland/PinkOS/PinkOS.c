@@ -233,7 +233,10 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 	}
 }
 
-void key_handler(char key){
+void key_handler(char event_type, int hold_times, char ascii, char scan_code){
+
+	if(event_type != 1)
+		return;
 
 	// for testing purposes:
 	// <1> will scroll the current line to the top, 
@@ -241,12 +244,12 @@ void key_handler(char key){
 	// <3> will scroll the buffer all the way up,
 	// <4> will redraw the screen
 	// <5> will clear the buffer and the screen
-	if(key == '1'){
+	if(ascii == '1'){
 		scroll = current_string;
 		redraw();
 		return;
 	}
-	if(key == '2'){
+	if(ascii == '2'){
 		if(scroll == oldest_string)
 			return;
 
@@ -257,29 +260,29 @@ void key_handler(char key){
 		redraw();
 		return;
 	}
-	if(key == '3'){
+	if(ascii == '3'){
 		scroll = oldest_string;
 		redraw();
 		return;
 	}
-	if(key == '4'){
+	if(ascii == '4'){
 		redraw();
 		return;
 	}
-	if(key == '5'){
+	if(ascii == '5'){
 		clear_buffer();
 		redraw();
 		return;
 	}
 
 	// quit program when esc is pressed
-	if(key == ASCII_ESC){
+	if(ascii == ASCII_ESC){
 		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
 		return;
 	}
 
-	print_char_to_console(key);
-	if(key == '\n' && shell_active){
+	print_char_to_console(ascii);
+	if(ascii == '\n' && shell_active){
 		execute_program(PREV_STRING);
 	}
 }

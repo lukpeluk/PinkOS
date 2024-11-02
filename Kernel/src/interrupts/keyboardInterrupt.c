@@ -14,5 +14,5 @@ extern char getKeyCode();
 // assumes scan code set is 1
 void int_21() {
 	KeyboardEvent event = processKeyPress();
-	callKeyHandler(event.ascii);	
+	callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);	
 }
