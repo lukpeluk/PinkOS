@@ -95,7 +95,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 	// salto de línea (antes del wrapping pues este no le debe afectar)
 	if(c == '\n'){
         x = 0;
-		y += CHAR_HEIGHT + INTERLINE;
+		y += (CHAR_HEIGHT * font_size) + INTERLINE;
 		return;
 	}
 
@@ -105,9 +105,9 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
     }
     
 	// hago wrap si me paso del borde de la pantalla horizontalmente
-	if(wrap && x + CHAR_WIDTH > VBE_mode_info->width){
+	if(wrap && x + (CHAR_WIDTH * font_size) > VBE_mode_info->width){
 		x = 0;
-		y += CHAR_HEIGHT + INTERLINE;
+		y += (CHAR_HEIGHT * font_size) + INTERLINE;
     }
 
     // si es el caracter de borrar, muevo el cursor para atrás, seteo el flag para después dejarlo quieto y cambio el caracter a espacio
@@ -116,10 +116,10 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
         c = ' ';
 
         if(x == 0){
-            x = VBE_mode_info->width - CHAR_WIDTH;
-            y -= CHAR_HEIGHT + INTERLINE;
+            x = VBE_mode_info->width - (CHAR_WIDTH * font_size);
+            y -= (CHAR_HEIGHT * font_size) + INTERLINE;
         } else {
-            x -= CHAR_WIDTH;
+            x -= (CHAR_WIDTH * font_size);
         }
     }
 
@@ -130,17 +130,21 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
     }
 
     // Dibuja el carácter usando los bits en elcharacter 
-    for (uint64_t i = 0; i < CHAR_HEIGHT; i++) {
-        for (uint64_t j = 0; j < CHAR_WIDTH; j++) {
-            if (character[i] & (1 << (7 - j))) {
-                putPixel(textColor, x + j, y + i);
-            } else {
-                putPixel(bgColor, x + j, y + i);
-            }
-        }
-    }
+	for (uint64_t i = 0; i < CHAR_HEIGHT; i++) {
+		for (uint64_t j = 0; j < CHAR_WIDTH; j++) {
+			for (uint64_t k = 0; k < font_size; k++) {
+				for (uint64_t l = 0; l < font_size; l++) {
+					if (character[i] & (1 << (7 - j))) {
+						putPixel(textColor, x + j * font_size + l, y + i * font_size + k);
+					} else {
+						putPixel(bgColor, x + j * font_size + l, y + i * font_size + k);
+					}
+				}
+			}
+		}
+	}
 
-	x += CHAR_WIDTH * !is_deleting; // si estoy borrando, no incremento x
+	x += (CHAR_WIDTH * font_size) * !is_deleting; // si estoy borrando, no incremento x
 }
 
 void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
@@ -285,23 +289,23 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * posi
 // CURSOR
 
 int isCursorInBoundaries(uint32_t line, uint32_t column){
-	return line * CHAR_HEIGHT + line * INTERLINE < VBE_mode_info->height && column * CHAR_WIDTH < VBE_mode_info->width;
+	return line * (CHAR_HEIGHT * font_size) + line * INTERLINE < VBE_mode_info->height && column * (CHAR_WIDTH * font_size) < VBE_mode_info->width;
 }
 
 void setCursorLine(uint32_t line){
-    y = line * CHAR_HEIGHT + line * INTERLINE;
+    y = line * (CHAR_HEIGHT * font_size) + line * INTERLINE;
 }
 
 void setCursorColumn(uint32_t column){
-    x = column * CHAR_WIDTH;
+    x = column * (CHAR_WIDTH * font_size);
 }
 
 uint32_t getCursorLine(){
-	return y / (CHAR_HEIGHT + INTERLINE);
+	return y / ((CHAR_HEIGHT * font_size) + INTERLINE);
 }
 
 uint32_t getCursorColumn(){
-	return x / CHAR_WIDTH;
+	return x / (CHAR_WIDTH * font_size);
 }
 
 
@@ -312,10 +316,10 @@ uint64_t getScreenHeight(){
 	return VBE_mode_info->height;
 }
 uint64_t getCharWidth(){
-	return CHAR_WIDTH;
+	return (CHAR_WIDTH * font_size);
 }
 uint64_t getCharHeight(){
-	return CHAR_HEIGHT;
+	return (CHAR_HEIGHT * font_size);
 }
 
 // GENERAL
