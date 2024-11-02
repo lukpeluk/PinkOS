@@ -36,7 +36,7 @@ int graphics_mode = 0; // 0 for CLI, 1 for GUI
 
 #define BUFFER_SIZE 500
 #define STRING_SIZE 200 // 199 usable characters and the null termination
-
+#define KEY_REPEAT_ENABLED 0    // 0 for disabling key repeat
 
 static char time_str[9] = "00:00:00";
 static Point time_position = {950, 0};
@@ -284,7 +284,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 		return;
 	}
 
-	if(!graphics_mode){
+	if(!graphics_mode && (hold_times == 1 || KEY_REPEAT_ENABLED)){
 		print_char_to_console(ascii);
 	}
 
