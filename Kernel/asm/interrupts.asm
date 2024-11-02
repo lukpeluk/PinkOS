@@ -75,6 +75,7 @@ SECTION .text
 	iretq
 %endmacro
 
+; acá supongo que deberíamos desactivar las interrupciones
 %macro exceptionHandler 1
 	pushState
 
@@ -148,7 +149,7 @@ _irq08Handler:
 ;Syscall
 _irq80Handler:
 	pushState
-	sti
+	sti   ; capaz en vez de hacer esto, podemos hacer que el runProgram sea un iretq (o activar interrupciones antes de llamarlo)
 
 	call syscallDispatcher
 

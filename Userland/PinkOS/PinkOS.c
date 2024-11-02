@@ -32,7 +32,7 @@ typedef struct {
 
 int shell_active = 1; // TODO: pensar nombre mejor (?)
 
-#define BUFFER_SIZE 100
+#define BUFFER_SIZE 500
 #define STRING_SIZE 200 // 199 usable characters and the null termination
 
 
