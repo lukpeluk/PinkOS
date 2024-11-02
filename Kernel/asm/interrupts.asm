@@ -62,6 +62,7 @@ SECTION .text
 
 %macro irqHandlerMaster 1
 	pushState
+	sti
 
 	mov rdi, %1 ; pasaje de parametro
 	call irqDispatcher
@@ -147,6 +148,7 @@ _irq08Handler:
 ;Syscall
 _irq80Handler:
 	pushState
+	sti
 
 	call syscallDispatcher
 
