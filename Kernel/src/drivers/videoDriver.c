@@ -203,7 +203,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor) {
 	// Obtener el puntero al array de bytes del carácter
     uint8_t *bitmap = ibm_bios_font[c];
     if (bitmap == 0) {
-        return;  // Ignora caracteres sin representación
+		bitmap = unsupported_char;
     }
 
     // Dibuja el carácter usando los bits en el bitmap
