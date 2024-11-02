@@ -55,7 +55,8 @@ KeyboardEvent processKeyPress() {
 		hold_times = set_key(c, event_type == 3);
 	}
 	else if (event_type == 2 || event_type == 4) {
-		release_key(c - 0x80, event_type == 4);
+        c = c - 0x80;
+		release_key(c, event_type == 4);
 	}
 
     KeyboardEvent event = {event_type, hold_times, ascii, c};

@@ -9,7 +9,8 @@
 #include <stdpink.h>	
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
-#define ADVANCE_INDEX(index) index = (index + 1 == BUFFER_SIZE) ? 0 : index + 1;
+#define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE;
+#define IS_PRINTABLE(ascii) ((ascii >= 32 && ascii <= 126) || ascii == '\n' || ascii == '\b')
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void * get_stack_pointer();
@@ -51,6 +52,28 @@ int current_string = 0;
 int current_position = 0;
 int oldest_string = 0;
 
+unsigned char stdin_buffer[STRING_SIZE] = {0};
+int stdin_write_position = 0;
+int stdin_read_position = 0;
+
+unsigned char get_char_from_stdin(){
+	if(stdin_write_position == stdin_read_position){
+		return 0;
+	}
+
+	unsigned char c = stdin_buffer[stdin_read_position];
+	stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
+	return c;
+}
+
+void add_char_to_stdin(unsigned char c){
+	stdin_buffer[stdin_write_position] = c;
+	stdin_write_position = (stdin_write_position + 1) % STRING_SIZE;
+	if(stdin_write_position == stdin_read_position){
+		stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
+	}
+}
+
 int scroll = 0; // indica qué línea es la que está en la parte superior de la pantalla
 
 // The buffer is an array of strings of fixed length, so that each enter key press will be stored in a new string
@@ -81,6 +104,7 @@ int save_char_to_buffer(char key){
 			ADVANCE_INDEX(oldest_string)
 
 			// TODO: ver si este código está bien acá o es más prolijo abstraer la lógica del scroll
+			// igual la única forma de que esto pase es que el buffer sea más chico que la pantalla
 			if(oldest_string == scroll){
 				ADVANCE_INDEX(scroll)
 			}
@@ -91,8 +115,14 @@ int save_char_to_buffer(char key){
 		buffer[current_string][current_position] = 0;
 		is_input[current_string] = 0;  // lines are not input until assigned as such by newPrompt()
 	}
-	// check if the key is printable, if it is it's saved to the buffer
-	else if(key >= 32 && key <= 126){
+	// backspace
+	else if(key == 8){
+		if(current_position > 0){
+			current_position--;
+			buffer[current_string][current_position] = 0;
+		}
+	}
+	else if(IS_PRINTABLE(key)){
 		// checks if the buffer is full, if it is, key presses are ignored
 		if(current_position == STRING_SIZE - 1)
 			return -1;
@@ -101,13 +131,6 @@ int save_char_to_buffer(char key){
 		buffer[current_string][current_position] = key;
 		current_position++;
 		buffer[current_string][current_position] = 0;
-	}
-	// backspace
-	else if(key == 8){
-		if(current_position > 0){
-			current_position--;
-			buffer[current_string][current_position] = 0;
-		}
 	}
 	else{
 		// unsupported key
@@ -163,6 +186,7 @@ void print_char_to_console(char * key){
 	if(key == 8 && current_position == 0){
 		return;
 	}
+	
 
 	int result = save_char_to_buffer(key);
 
@@ -237,6 +261,27 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 
 void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 
+	// Tests for the keyboard event
+	// char * scan_code_str = "0x00";
+	// scan_code_str[2] = scan_code / 16 < 10 ? scan_code / 16 + '0' : scan_code / 16 - 10 + 'A';
+	// scan_code_str[3] = scan_code % 16 < 10 ? scan_code % 16 + '0' : scan_code % 16 - 10 + 'A';
+
+	// if(!event_type){
+	// 	syscall(DRAW_STRING_SYSCALL, "null event\n", 0x00df8090, 0x00000000, 0, 0);
+	// 	return;
+	// }
+
+	// syscall(DRAW_STRING_SYSCALL, "event type: ", 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_CHAR_SYSCALL, event_type + '0', 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_STRING_SYSCALL, " hold times: ", 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_CHAR_SYSCALL, hold_times + '0', 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_STRING_SYSCALL, " ascii: ", 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_CHAR_SYSCALL, ascii, 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_STRING_SYSCALL, " scan code: ", 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_STRING_SYSCALL, scan_code_str, 0x00df8090, 0x00000000, 0, 0);
+	// syscall(DRAW_STRING_SYSCALL, " ok. \n", 0x00df8090, 0x00000000, 0, 0);
+
+
 	if(event_type != 1)
 		return;
 
@@ -277,6 +322,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 		return;
 	}
 
+
 	// quit program when esc is pressed
 	if(ascii == ASCII_ESC && running_program){
 		if(hold_times > 3)
@@ -286,6 +332,11 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 
 	if(!graphics_mode && (hold_times == 1 || KEY_REPEAT_ENABLED)){
 		print_char_to_console(ascii);
+
+		// si el char es imprimible, lo guardo en stdin para que lo pueda leer el programa
+		if(running_program && IS_PRINTABLE(ascii)){
+			add_char_to_stdin(ascii);
+		}
 	}
 
 	if(ascii == '\n' && !running_program){
@@ -321,6 +372,7 @@ void restoreContext(uint8_t was_graphic){
 	print_char_to_console('\n');
 	newPrompt();
 	running_program = 0;
+	stdin_read_position = stdin_write_position; // clear stdin buffer
 	
 	idle();
 }

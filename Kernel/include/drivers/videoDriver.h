@@ -11,7 +11,7 @@ typedef struct {
 
 // sabe la posición del último caracter dibujado y dibuja el siguiente
 // hace wrapping automático, aunque debería ser configurable con un flag
-void drawChar(char c, uint32_t textColor, uint32_t bgColor);
+void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor);
 
 void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor);
 

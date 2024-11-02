@@ -10,7 +10,7 @@ int strcmp(const char* a, const char* b) {
 }
 
 
-Program programs[] = {
+static Program programs[] = {
     {
         "echo", 
         "echo", 
@@ -25,7 +25,15 @@ Program programs[] = {
         forrest_gump_main,
         0,
         "Run Forrest, run!",
-        "usage: forrest_gump \nForrest Gump v1 \n Simplemente corre, y corre..."
+        "usage: forrest_gump \nForrest Gump v1 \n Runs, and runs, and runs..."
+    },
+    {
+        "parrot",
+        "Parrot",
+        parrot_main,
+        0,
+        "Like echo but for user input via stdin",
+        "usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
@@ -37,8 +45,8 @@ Program programs[] = {
     // {"ps", "ps", 0, 0,  "usage: ps", "ps v1 \n use this program to list all running processes ;)"}
 };
 
-// int programs_count = sizeof(programs) / sizeof(Program);
-int programs_count = 2;
+int programs_count = sizeof(programs) / sizeof(Program);
+// int programs_count = 3;
 
 
 Program * get_program_entry(const char* command) {

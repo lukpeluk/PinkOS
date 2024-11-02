@@ -44,7 +44,7 @@ typedef struct vbe_mode_info_structure * VBEInfoPtr;
 typedef uint8_t * Font;
 
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
-static Font defaultFont = ibm_bios_font;
+static Font font = ibm_bios_font;
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
@@ -55,17 +55,6 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 }
 
 
-// a character table and a print function for video mode (bitmaps)
-// the font is here, not in a separate file
-
-
-#define CHAR_WIDTH 8
-#define CHAR_HEIGHT 8
-#define FONT_NOF_CHARS 95
-
-// TODO: separar las fuentes en archivos separados
-// Y capaz que sean otro tipo de estructura, no un array de arrays, porque no todas las fuentes van a tener todos los chars
-// (queremos que si uno no lo tiene use un �)
 
 uint8_t font2[2][16] = {
 	// Character ' ' (space)
@@ -160,6 +149,11 @@ uint8_t pink_panther_font[][16] = {
 	{ 0b11111111, 0b01100011, 0b01110001, 0b01100001, 0b00110001, 0b01100001, 0b00110100, 0b01100100, 0b00111110, 0b00100100, 0b01100010, 0b00100000, 0b00110000, 0b00100000, 0b01110000, 0b10101000 },
 };
 
+
+#define CHAR_WIDTH 8
+#define CHAR_HEIGHT 8
+#define FONT_NOF_CHARS 95
+
 static uint8_t * currentVideo = (uint8_t*)0xB8000;
 static uint64_t x = 0;
 static uint64_t y = 0;
@@ -167,17 +161,15 @@ static char INTERLINE = 3;
 
 // CÓDIGO DE MIERDA, PORFA REFACTORIZAR 
 
-// por ahora avanza automáticamente a la posición del sig. caracter, después vemos si eso tiene que hacerse acá
-// funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea
+// TODO: que si un char no está soportado por la fuente, use un �
+
+// funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea y delete
 // hace wrapping automático, podría configurarse con un flag
-// también permite borrar un caracter (enviando el PinkMapping correspondiente)
-// para borrarlo, hay que primero configurar x e y con las coordenadas del caracter a borrar
-// se encarga de no incrementar x e y ya que el siguiente char debe ir en la misma posición
 // para borrar le escribe un espacio en blanco por arriba
-void drawChar(char c, uint32_t textColor, uint32_t bgColor) {
+void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor) {
     int is_deleting = 0;
 
-	// salto de línea (antes del wrapping pues este no le afecta)
+	// salto de línea (antes del wrapping pues este no le debe afectar)
 	if(c == '\n'){
         x = 0;
 		y += CHAR_HEIGHT + INTERLINE;
@@ -190,9 +182,9 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor) {
     }
     
 	// hago wrap si me paso del borde de la pantalla horizontalmente
-	if(x >= VBE_mode_info->width){
-		y += (CHAR_HEIGHT + INTERLINE) * (x / VBE_mode_info->width);
-        x = x % VBE_mode_info->width;
+	if(x + CHAR_WIDTH > VBE_mode_info->width){
+		x = 0;
+		y += CHAR_HEIGHT + INTERLINE;
     }
 
     // si es el caracter de borrar, muevo el cursor para atrás, seteo el flag para después dejarlo quieto y cambio el caracter a espacio
@@ -209,7 +201,6 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor) {
     }
 
 	// Obtener el puntero al array de bytes del carácter
-    // uint8_t *bitmap = retro_font[c] ? *retro_font[c] : 0;
     uint8_t *bitmap = ibm_bios_font[c];
     if (bitmap == 0) {
         return;  // Ignora caracteres sin representación
