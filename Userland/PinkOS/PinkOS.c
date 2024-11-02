@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <syscallCodes.h>
 #include <programs.h>
+#include <permissions.h>
 #include <environmentApiEndpoints.h>
 #include <ascii.h>
 #include <stdpink.h>	
@@ -30,7 +31,8 @@ typedef struct {
 	uint64_t y;
 } Point;
 
-int shell_active = 1; // TODO: pensar nombre mejor (?)
+int running_program = 0; // 0 if no program is running (besides the shell itself, ofc)
+int graphics_mode = 0; // 0 for CLI, 1 for GUI
 
 #define BUFFER_SIZE 500
 #define STRING_SIZE 200 // 199 usable characters and the null termination
@@ -211,10 +213,10 @@ void execute_program(int input_line){
 		}
 		// if the program is found, execute it
 		else{
-			// Tiene que llamar a un syscall que ejecute el programa
-			// TODO: si en graphics mode, desactivar la shell
-			// capaz en realidad podría usar el current process para saber si dibujar o no y si capturar input la shell
-			int test = 0;
+			running_program = 1;
+			if(program->perms & DRAWING_PERMISSION){
+				graphics_mode = 1;
+			}
 			syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
 		}
 }
@@ -276,13 +278,17 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 	}
 
 	// quit program when esc is pressed
-	if(ascii == ASCII_ESC){
-		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
+	if(ascii == ASCII_ESC && running_program){
+		if(hold_times > 3)
+			syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
 		return;
 	}
 
-	print_char_to_console(ascii);
-	if(ascii == '\n' && shell_active){
+	if(!graphics_mode){
+		print_char_to_console(ascii);
+	}
+
+	if(ascii == '\n' && !running_program){
 		execute_program(PREV_STRING);
 	}
 }
@@ -314,7 +320,7 @@ void restoreContext(uint8_t was_graphic){
 		redraw();
 	print_char_to_console('\n');
 	newPrompt();
-	shell_active = 1;
+	running_program = 0;
 	
 	idle();
 }
@@ -326,14 +332,13 @@ void idle(){
 }
 
 int main() {
-	// acá setearía la base del stack
+	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer(),0,0,0,0);
 
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 	newPrompt();
-	shell_active = 1;
 	
-	// Setea todos los handlers, para quedar corriendo "en el fondo"
+	// Setea todos los handlers, para quedar corriendo "en el fondo" <- bueno cambio de idioma cuando se me canta el ogt
 	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
