@@ -11,7 +11,7 @@
 #define ASCII_BEL 0x07
 #define ASCII_BS  0x08
 #define ASCII_HT  0x09
-#define ASCII_LF  0x0A
+#define ASCII_LF  '\n'
 #define ASCII_VT  0x0B
 #define ASCII_FF  0x0C
 #define ASCII_CR  0x0D

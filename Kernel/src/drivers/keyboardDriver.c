@@ -200,9 +200,9 @@ char base_layer[256] = {
     'l',              // 0x26
     'ñ',              // 0x27
     '{',              // 0x28
-    '}',              // 0x29
+    'º',              // 0x29
     ASCII_NUL,        // 0x2A (Shift izquierdo)
-    '|',              // 0x2B
+    '}',              // 0x2B
     'z',              // 0x2C
     'x',              // 0x2D
     'c',              // 0x2E
@@ -243,46 +243,162 @@ char base_layer[256] = {
     '3',              // 0x51 (Teclado numérico 3)
     '0',              // 0x52 (Teclado numérico 0)
     '.',              // 0x53 (Teclado numérico .)
+    ASCII_NUL,        // 0x54 (Teclado numérico Enter)
+    ASCII_NUL,        // 0x55 (Control derecho)
+    '<',        // 0x56 (Menor que)
     ASCII_NUL,        // 0x57 (F11)
     ASCII_NUL,        // 0x58 (F12)
     [0x59 ... 0xFF] = ASCII_NUL  // Relleno con ASCII_NUL
 };
 
 char shift_layer[256] = {
-    ASCII_NUL, ASCII_ESC, '!', '"', '#', '$', '%', '&', '/', '(', ')', '=', '?', '¿',
-    ASCII_BS, ASCII_HT, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '^', '*',
-    ASCII_CR, ASCII_NUL, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', '[', ']',
-    ASCII_NUL, '\\', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ';', ':', '_', ASCII_NUL, '*',
-    ASCII_NUL, ' ', ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL,
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, '7', '8', '9', '-', '4', '5',
-    '6', '+', '1', '2', '3', '0', '.', ASCII_NUL, ASCII_NUL, [0x59 ... 0xFF] = ASCII_NUL
+    ASCII_NUL,         // 0x00
+    ASCII_NUL,         // 0x01
+    '!',               // 0x02
+    '"',               // 0x03
+    '#',               // 0x04
+    '$',               // 0x05
+    '%',               // 0x06
+    '&',               // 0x07
+    '/',               // 0x08
+    '(',               // 0x09
+    ')',               // 0x0A
+    '=',               // 0x0B
+    '?',               // 0x0C
+    '¿',               // 0x0D
+    ASCII_NUL,          // 0x0E
+    ASCII_NUL,          // 0x0F
+    'Q',               // 0x10
+    'W',               // 0x11
+    'E',               // 0x12
+    'R',               // 0x13
+    'T',               // 0x14
+    'Y',               // 0x15
+    'U',               // 0x16
+    'I',               // 0x17
+    'O',               // 0x18
+    'P',               // 0x19
+    '^',               // 0x1A
+    '*',               // 0x1B
+    ASCII_NUL,          // 0x1C
+    ASCII_NUL,         // 0x1D
+    'A',               // 0x1E
+    'S',               // 0x1F
+    'D',               // 0x20
+    'F',               // 0x21
+    'G',               // 0x22
+    'H',               // 0x23
+    'J',               // 0x24
+    'K',               // 0x25
+    'L',               // 0x26
+    'Ñ',               // 0x27
+    '[',               // 0x28
+    '\\',               // 0x29
+    ASCII_NUL,          // 0x2A
+    ']',               // 0x2B
+    'Z',               // 0x2C
+    'X',               // 0x2D
+    'C',               // 0x2E
+    'V',               // 0x2F
+    'B',               // 0x30
+    'N',               // 0x31
+    'M',               // 0x32
+    ';',               // 0x33
+    ':',               // 0x34
+    '_',               // 0x35
+    ASCII_NUL,          // 0x36
+    '*',               // 0x37
+    ASCII_NUL,          // 0x38
+    ' ',               // 0x39
+    ASCII_NUL,          // 0x3A
+    ASCII_NUL,          // 0x3B
+    ASCII_NUL,          // 0x3C
+    ASCII_NUL,          // 0x3D
+    ASCII_NUL,          // 0x3E
+    ASCII_NUL,          // 0x3F
+    ASCII_NUL,          // 0x40
+    ASCII_NUL,          // 0x41
+    ASCII_NUL,          // 0x42
+    ASCII_NUL,          // 0x43
+    ASCII_NUL,          // 0x44
+    ASCII_NUL,          // 0x45
+    ASCII_NUL,          // 0x46
+    '7',               // 0x47
+    '8',               // 0x48
+    '9',               // 0x49
+    '-',               // 0x4A
+    '4',               // 0x4B
+    '5',               // 0x4C
+    '6',               // 0x4D
+    '+',               // 0x4E
+    '1',               // 0x4F
+    '2',               // 0x50
+    '3',               // 0x51
+    '0',               // 0x52
+    '.',               // 0x53
+    ASCII_NUL,          // 0x54
+    ASCII_NUL,          // 0x55
+    '>',               // 0x56
+    ASCII_NUL,          // 0x57
+    ASCII_NUL,          // 0x58
+    [0x59 ... 0xFF] = ASCII_NUL
 };
 
+
+
 char caps_lock_layer[256] = {
-    ASCII_NUL, ASCII_ESC, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '\'', '¡',
-    ASCII_BS, ASCII_HT, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '`', '+',
-    ASCII_CR, ASCII_NUL, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ', '{', '}',
-    ASCII_NUL, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '-', ASCII_NUL, '*',
-    ASCII_NUL, ' ', ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL,
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, '7', '8', '9', '-', '4', '5',
-    '6', '+', '1', '2', '3', '0', '.', ASCII_NUL, ASCII_NUL, [0x59 ... 0xFF] = ASCII_NUL
+    [0x00 ... 0x0F] = ASCII_NUL,
+    'Q', // 0x10
+    'W', // 0x11
+    'E', // 0x12
+    'R', // 0x13
+    'T', // 0x14
+    'Y', // 0x15
+    'U', // 0x16
+    'I', // 0x17
+    'O', // 0x18
+    'P', // 0x19
+    ASCII_NUL, // 0x1A
+    ASCII_NUL, // 0x1B
+    ASCII_NUL, // 0x1C
+    ASCII_NUL, // 0x1D
+    'A', // 0x1E
+    'S', // 0x1F
+    'D', // 0x20
+    'F', // 0x21
+    'G', // 0x22
+    'H', // 0x23
+    'J', // 0x24
+    'K', // 0x25
+    'L', // 0x26
+    'Ñ', // 0x27
+    ASCII_NUL, // 0x28
+    ASCII_NUL, // 0x29
+    ASCII_NUL, // 0x2A
+    ASCII_NUL, // 0x2B
+    'Z', // 0x2C
+    'X', // 0x2D
+    'C', // 0x2E
+    'V', // 0x2F
+    'B', // 0x30
+    'N', // 0x31
+    'M', // 0x32
+    [0x33 ... 0xFF] = ASCII_NUL
 };
 
 char altgr_layer[256] = {
-    ASCII_NUL, ASCII_ESC, '|', '@', '#', '~', '€', '¬', '{', '[', ']', '}', '\\', ASCII_NUL,
-    ASCII_BS, ASCII_HT, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL,
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_CR, ASCII_NUL, 
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, 
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, 
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, 
-    ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, ASCII_NUL, '7', '8', '9', 
-    '-', '4', '5', '6', '+', '1', '2', '3', '0', '.', ASCII_NUL, ASCII_NUL, [0x59 ... 0xFF] = ASCII_NUL
+    ASCII_NUL, // 0x00
+    ASCII_NUL, // 0x01
+    ASCII_NUL, // 0x02
+    '@', // 0x03
+    [0x04 ... 0x0F] = ASCII_NUL,
+    '@', // 0x10
+    [0x11 ... 0xFF] = ASCII_NUL,
 };
-
-
+    
 // keycode must be in the ascii range (TODO: fix)
 // should handle both press and release keycodes
-char keycodeToAsciiWIP(unsigned char keycode) {
+char keycodeToAscii(unsigned char keycode) {
     keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 0x80 : 0;
 
     char ascii = ASCII_NUL;
@@ -304,7 +420,7 @@ char keycodeToAsciiWIP(unsigned char keycode) {
 
 // convierte de keycode a ascii (forma vieja)
 // se usa temporalmente porque la otra no funca
-char keycodeToAscii(unsigned char keycode) {
+char keycodeToAsciiOld(unsigned char keycode) {
     keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 0x80 : 0;
 	if(!keycode) return 0;
 
