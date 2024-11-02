@@ -396,6 +396,7 @@ char altgr_layer[256] = {
     [0x11 ... 0xFF] = ASCII_NUL,
 };
     
+// caps-lock no funca por algún motivo... pero bueno, no es tan importante
 // keycode must be in the ascii range (TODO: fix)
 // should handle both press and release keycodes
 char keycodeToAscii(unsigned char keycode) {
