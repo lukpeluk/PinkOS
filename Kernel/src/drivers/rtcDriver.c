@@ -4,6 +4,7 @@
 
 extern void get_time_utc(RTC_Time * time);
 
+static RTC_Time time;
 static int time_zone = 0;
 
 
@@ -62,11 +63,10 @@ void adjust_time(RTC_Time *time, int displacement) {
 
 // PUBLIC API
 
-RTC_Time get_time() {
-    RTC_Time time;
+RTC_Time * get_time() {
     get_time_utc(&time);
     // adjust_time(&time, time_zone);   //TODO: PORQUE CHOTA NO FUNCIONA ESTO !??!?!?!
-    return time;
+    return &time;
 }
 
 void set_timezone(int time_zone) {

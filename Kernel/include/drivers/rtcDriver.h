@@ -16,7 +16,7 @@ typedef struct {
 extern void init_rtc();
 extern void rtc_acknowledge_interrupt();
 
-RTC_Time get_time();
+RTC_Time * get_time();
 
 void set_timezone(int time_zone);
 

@@ -44,6 +44,11 @@ uint32_t getCursorColumn();
 
 int isCursorInBoundaries(uint32_t line, uint32_t column);
 
+uint64_t getScreenWidth();
+uint64_t getScreenHeight();
+uint64_t getCharWidth();
+uint64_t getCharHeight();
+
 // GENERAL
 
 void clearScreen(uint32_t bgColor);

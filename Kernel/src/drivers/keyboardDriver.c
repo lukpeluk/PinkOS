@@ -16,6 +16,7 @@ static char pressed_keys_special_keycode_flag[PRESSED_KEYS_CACHE_SIZE] = {0x00};
 static char pressed_keys_hold_times[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // times the key was pressed before being released
 
 static KeyboardEvent keyboardEventBuffer[BUFFER_SIZE];
+static KeyboardEvent keyboardEventTransitStore = {0};  // used to store the event returned by getKeyboardEvent
 int bufferReadIndex = 0;
 int bufferWriteIndex = 0;
 
@@ -79,13 +80,14 @@ int isKeyPressed(char scan_code, char is_special) {
 
 // Dequeue a KeyboardEvent from the buffer, returns NULL if the buffer is empty
 // returns as copy, so it cannot be given directly to the handler
-KeyboardEvent getKeyboardEvent() {
+KeyboardEvent * getKeyboardEvent() {
     if (bufferReadIndex == bufferWriteIndex) {
-        return (KeyboardEvent) {0};  // If the buffer is empty, return an empty event
+        keyboardEventTransitStore = (KeyboardEvent) {0};  // If the buffer is empty, return an empty event
+        return &keyboardEventTransitStore;
     }
-    KeyboardEvent event = keyboardEventBuffer[bufferReadIndex];
+    keyboardEventTransitStore = keyboardEventBuffer[bufferReadIndex];
     ADVANCE_INDEX(bufferReadIndex);
-    return event;
+    return &keyboardEventTransitStore;
 }
 
 // Enqueue a KeyboardEvent to the buffer, if the buffer is full, the oldest event is overwritten

@@ -17,7 +17,7 @@ KeyboardEvent processKeyPress();
 
 int isKeyPressed(char scan_code, char is_special);    // checks if a specific key is currently being pressed, and for how many times it was held
 
-KeyboardEvent getKeyboardEvent();    // dequeues from buffer
+KeyboardEvent * getKeyboardEvent();    // dequeues from buffer
 void clearKeyboardBuffer(); // clears the buffer
 
 char keycodeToAscii(unsigned char keycode);

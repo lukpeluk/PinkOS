@@ -7,6 +7,7 @@
 #include <environmentApiEndpoints.h>
 #include <ascii.h>
 #include <stdpink.h>	
+#include <graphicsLib.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE;
@@ -26,11 +27,6 @@ typedef struct {
     uint8_t year;
     uint8_t day_of_week;
 } RTC_Time;
-
-typedef struct {
-	uint64_t x;
-	uint64_t y;
-} Point;
 
 int running_program = 0; // 0 if no program is running (besides the shell itself, ofc)
 int graphics_mode = 0; // 0 for CLI, 1 for GUI
@@ -72,6 +68,10 @@ void add_char_to_stdin(unsigned char c){
 	if(stdin_write_position == stdin_read_position){
 		stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
 	}
+}
+
+void clear_stdin(){
+	stdin_read_position = stdin_write_position;
 }
 
 int scroll = 0; // indica qué línea es la que está en la parte superior de la pantalla
@@ -242,7 +242,9 @@ void execute_program(int input_line){
 			running_program = 1;
 			if(program->perms & DRAWING_PERMISSION){
 				graphics_mode = 1;
+				syscall(CLEAR_SCREEN_SYSCALL, 0x00000000, 0, 0, 0, 0);
 			}
+			syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 			syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
 		}
 }
@@ -293,12 +295,12 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 	// <3> will scroll the buffer all the way up,
 	// <4> will redraw the screen
 	// <5> will clear the buffer and the screen
-	if(ascii == '1'){
+	if(ascii == '1' && hold_times > 3){
 		scroll = current_string;
 		redraw();
 		return;
 	}
-	if(ascii == '2'){
+	if(ascii == '2' && hold_times > 3){
 		if(scroll == oldest_string)
 			return;
 
@@ -309,16 +311,16 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 		redraw();
 		return;
 	}
-	if(ascii == '3'){
+	if(ascii == '3' && hold_times > 3){
 		scroll = oldest_string;
 		redraw();
 		return;
 	}
-	if(ascii == '4'){
+	if(ascii == '4' && hold_times > 3){
 		redraw();
 		return;
 	}
-	if(ascii == '5'){
+	if(ascii == '5' && hold_times > 3){
 		clear_buffer();
 		redraw();
 		return;
@@ -332,8 +334,10 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 		return;
 	}
 
-	if(!graphics_mode && (hold_times == 1 || KEY_REPEAT_ENABLED)){
-		print_char_to_console(ascii);
+	if(hold_times == 1 || KEY_REPEAT_ENABLED){
+		if(!graphics_mode){
+			print_char_to_console(ascii);
+		}
 
 		// si el char es imprimible, lo guardo en stdin para que lo pueda leer el programa
 		if(running_program && IS_PRINTABLE(ascii)){
@@ -374,7 +378,8 @@ void restoreContext(uint8_t was_graphic){
 	print_char_to_console('\n');
 	newPrompt();
 	running_program = 0;
-	stdin_read_position = stdin_write_position; // clear stdin buffer
+	graphics_mode = 0;
+	clear_stdin();
 	
 	idle();
 }

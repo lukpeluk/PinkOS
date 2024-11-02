@@ -47,6 +47,9 @@ static Font font = ibm_bios_font;
 static font_size = 1;
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
+	if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
+		return;
+	}
 	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
 	uint64_t offset = (x * ((VBE_mode_info->bpp)/8)) + (y * VBE_mode_info->pitch);
 	framebuffer[offset]     =  (hexColor) & 0xFF;
@@ -267,6 +270,7 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * posi
 	if(scale < 1){
 		return;
 	}
+
 	for(uint64_t i = 0; i < height; i++){
 		for(uint64_t j = 0; j < width; j++){
 			for(uint64_t k = 0; k < scale; k++){
@@ -298,6 +302,20 @@ uint32_t getCursorLine(){
 
 uint32_t getCursorColumn(){
 	return x / CHAR_WIDTH;
+}
+
+
+uint64_t getScreenWidth(){
+	return VBE_mode_info->width;
+}
+uint64_t getScreenHeight(){
+	return VBE_mode_info->height;
+}
+uint64_t getCharWidth(){
+	return CHAR_WIDTH;
+}
+uint64_t getCharHeight(){
+	return CHAR_HEIGHT;
 }
 
 // GENERAL

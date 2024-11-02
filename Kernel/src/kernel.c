@@ -121,7 +121,7 @@ int main()
 	set_timezone(-3);
 	load_idt();
 
-	testScreen();
+	// testScreen();
 
 	ncPrint("[Kernel Main]");
 	ncNewline();

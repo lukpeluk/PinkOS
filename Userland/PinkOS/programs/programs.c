@@ -34,6 +34,14 @@ static Program programs[] = {
         0,
         "Like echo but for user input via stdin",
         "usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
+    },
+    {
+        "monalisa",
+        "Mona Lisa",
+        mona_lisa_main,
+        1,
+        "Draws the Mona Lisa",
+        "usage: monalisa <scale (range 1-15)>\nMona Lisa v1 \n Draws the Mona Lisa on the screen, animating it to the desired scale passed as argument (range 1-15). \nPress any key to exit (well, any printable key, coz i'm checking stdin')"
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
