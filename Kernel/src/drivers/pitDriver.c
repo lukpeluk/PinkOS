@@ -1,5 +1,6 @@
 #include <drivers/pitDriver.h>
 #include <drivers/registersDriver.h>
+#include <drivers/videoDriver.h>
 
 extern void _hlt();
 
@@ -9,6 +10,7 @@ void timer_handler() {
 	// drawChar(ticks % 10 + '0', 0x00df8090, 0x00000000, 1);
 	ticks++;
 	saveRegisters();
+	// drawChar(ticks, 0x00df8090, 0x00000000, 1);
 }
 
 int ticks_elapsed() {

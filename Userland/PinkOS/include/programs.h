@@ -31,6 +31,7 @@ void time_main(char *args);
 void help_main(char *args);
 void man_main(char *args);
 void test_main(char *args);
+void ps_main(char *args);
 
 
 #endif

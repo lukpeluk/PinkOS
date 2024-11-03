@@ -8,6 +8,7 @@
 #include <ascii.h>
 #include <stdpink.h>	
 #include <graphicsLib.h>
+#include <keyboard.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE;
@@ -43,11 +44,13 @@ int graphics_mode = 0; // 0 for CLI, 1 for GUI
 
 #define BUFFER_SIZE 500
 #define STRING_SIZE 200 // 199 usable characters and the null termination
-#define KEY_REPEAT_ENABLED 0    // 0 for disabling key repeat
+#define KEY_REPEAT_ENABLED 1    // 0 for disabling key repeat
 
 static char time_str[9] = "00:00:00";
 static Point time_position = {950, 0};
 static Point logo_position = {10, 0};
+
+#define TIME_PADDING 10
 
 static const char * command_not_found_msg = "Command not found\n";
 static const char * default_prompt = " > ";
@@ -178,6 +181,7 @@ int save_number_to_buffer(uint64_t number){
 void redraw(){
 	// clear screen
 	syscall(CLEAR_SCREEN_SYSCALL, 0x00000000, 0, 0, 0, 0);
+	draw_status_bar();
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0);  // evita dibujar la status bar
 
 	// print the buffer from the scroll position to the current string
@@ -315,30 +319,12 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 }
 
 void key_handler(char event_type, int hold_times, char ascii, char scan_code){
-
-	// Tests for the keyboard event
-	// char * scan_code_str = "0x00";
-	// scan_code_str[2] = scan_code / 16 < 10 ? scan_code / 16 + '0' : scan_code / 16 - 10 + 'A';
-	// scan_code_str[3] = scan_code % 16 < 10 ? scan_code % 16 + '0' : scan_code % 16 - 10 + 'A';
-
-	// if(!event_type){
-	// 	syscall(DRAW_STRING_SYSCALL, "null event\n", 0x00df8090, 0x00000000, 0, 0);
-	// 	return;
-	// }
-
-	// syscall(DRAW_STRING_SYSCALL, "event type: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_CHAR_SYSCALL, event_type + '0', 0x00df8090, 0x00000000, 1, 0);
-	// syscall(DRAW_STRING_SYSCALL, " hold times: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_CHAR_SYSCALL, hold_times + '0', 0x00df8090, 0x00000000, 1, 0);
-	// syscall(DRAW_STRING_SYSCALL, " ascii: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_CHAR_SYSCALL, ascii, 0x00df8090, 0x00000000, 1, 0);
-	// syscall(DRAW_STRING_SYSCALL, " scan code: ", 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_STRING_SYSCALL, scan_code_str, 0x00df8090, 0x00000000, 0, 0);
-	// syscall(DRAW_STRING_SYSCALL, " ok. \n", 0x00df8090, 0x00000000, 0, 0);
-
-
 	if(event_type != 1)
 		return;
+
+	int is_ctrl_pressed = 0;
+	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, &is_ctrl_pressed, 0, 0);
+
 
 	// for testing purposes:
 	// <1> will scroll the current line to the top, 
@@ -377,6 +363,21 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 		return;
 	}
 
+	// If ctrl + + is pressed, zoom in
+	if(ascii == '+' && is_ctrl_pressed){
+		syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
+		
+		redraw();
+		return;
+	}
+
+	// If ctrl + - is pressed, zoom out
+	if(ascii == '-' && is_ctrl_pressed){
+		syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
+		redraw();
+		return;
+	}
+
 
 	// quit program when esc is pressed
 	if(ascii == ASCII_ESC && running_program){
@@ -402,19 +403,28 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 }
 
 void status_bar_handler(RTC_Time * time){
-	if(graphics_mode)
-		return;
 
-	// dibuja 
-	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
 	time_str[0] = time->hours / 10 + '0';
 	time_str[1] = time->hours % 10 + '0';
 	time_str[3] = time->minutes / 10 + '0';
 	time_str[4] = time->minutes % 10 + '0';
 	time_str[6] = time->seconds / 10 + '0';
 	time_str[7] = time->seconds % 10 + '0';
-	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
 	
+	draw_status_bar();
+}
+
+void draw_status_bar(){
+	if(graphics_mode)
+		return;
+
+	int screen_width = 0;
+	syscall(GET_SCREEN_WIDTH_SYSCALL, &screen_width, 0, 0, 0, 0);
+
+	time_position.x = getScreenWidth() - (9 * getCharWidth());
+
+	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
 }
 
 
@@ -479,7 +489,6 @@ void exception_handler(int exception_id, BackupRegisters * backup_registers){
 	print_str_to_console("cri_rflags: ");
 	print_number_to_console(backup_registers->cri_rflags);
 	print_char_to_console('\n');
-	
 }
 
 void registers_handler(BackupRegisters * backup_registers){
@@ -550,12 +559,13 @@ void newPrompt(){
 
 int i = 0;
 void restoreContext(uint8_t was_graphic){
-	if(was_graphic)
+	if(was_graphic){
+		graphics_mode = 0;
 		redraw();
+	}
 	print_char_to_console('\n');
 	newPrompt();
 	running_program = 0;
-	graphics_mode = 0;
 	clear_stdin();
 	
 	idle("idle from restoreContext");

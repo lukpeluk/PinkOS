@@ -130,9 +130,9 @@ void mona_lisa_main(char *args) {
     // Wait for a key press
     char c = get_char_from_stdin();
     while(1){
-        if (c != 0) {
-            break;
-        }
-        c = get_char_from_stdin();
+        // if (c != 0) {
+        //     break;
+        // }
+        // c = get_char_from_stdin();
     }
 }

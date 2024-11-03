@@ -45,6 +45,7 @@ typedef struct vbe_mode_info_structure * VBEInfoPtr;
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
 static Font font = ibm_bios_font;
 static font_size = 2;
+#define FONT_SIZE_LIMIT 6
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 	if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
@@ -349,10 +350,22 @@ void clearScreen(uint32_t bgColor){
 }
 
 void setFontSize(uint8_t fontSize){
-	if(fontSize < 1 || fontSize > 8){
+	if(fontSize < 1 || fontSize > FONT_SIZE_LIMIT){
 		return;
 	}
 	font_size = fontSize;
+}
+
+void incFontSize(){
+	if(font_size < FONT_SIZE_LIMIT){
+		font_size++;
+	}
+}
+
+void decFontSize(){
+	if(font_size > 1){
+		font_size--;
+	}
 }
 
 void setFont(Font newFont){

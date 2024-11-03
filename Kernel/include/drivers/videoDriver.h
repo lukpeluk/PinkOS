@@ -56,5 +56,7 @@ void clearScreen(uint32_t bgColor);
 // range: 1-8
 void setFontSize(uint8_t fontSize);
 void setFont(Font font); 
+void incFontSize();
+void decFontSize();
 
 #endif

@@ -168,6 +168,14 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             VALIDATE_PERMISSIONS(CHANGE_FONT_SIZE_PERMISSION);
             setFontSize(arg1);
             break;
+        case INC_FONT_SIZE_SYSCALL:
+            VALIDATE_PERMISSIONS(CHANGE_FONT_SIZE_PERMISSION);
+            incFontSize();
+            break;
+        case DEC_FONT_SIZE_SYSCALL:
+            VALIDATE_PERMISSIONS(CHANGE_FONT_SIZE_PERMISSION);
+            decFontSize();
+            break;
         case SET_FONT_SYSCALL:
             VALIDATE_PERMISSIONS(CHANGE_FONT_PERMISSION);
             setFont((Font)arg1);

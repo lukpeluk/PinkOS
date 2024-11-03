@@ -73,7 +73,7 @@ static Program programs[] = {
         man_main,
         0,
         "Prints the manual of a program",
-        "Omg, you're reading the manual of the manual.\nThis is a little bit too much, don't you think?"
+        "Omg, you're reading the manual of the manual.\nThis is a bit meta, don't you think?"
     },
     {
         "test",
@@ -82,6 +82,14 @@ static Program programs[] = {
         0,
         "Test program",
         "usage: test <args> \nTest v1 \n Use this program to test the exception handling"
+    },
+    {
+        "ps",
+        "PS",
+        ps_main,
+        0,
+        "Prints the list of running processes",
+        "usage: ps \nPS v1 \n Prints the list of running processes"
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
