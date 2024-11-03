@@ -2,6 +2,7 @@
 #define _EVENT_HANDLERS_H
 
 #include <drivers/rtcDriver.h>
+#include <exceptions/exceptions.h>
 
 // The kernel allows processes to register handlers for different events
 // To be able to register a handler, the process must have the appropriate permissions
@@ -23,7 +24,7 @@ typedef void (*TickHandler)(unsigned long ticks); // Tick handler, to be called 
 typedef void (*RTCHandler)(RTC_Time * time); // RTC handler, to be called every RTC interrupt
 typedef void (*RestoreContextHandler)(uint8_t was_graphic); // Restore context handler, to be called when the context needs to be restored. Has a flag to indicate if the context was graphic
 typedef void (*UserEnvironmentApiHandler)(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4); // User environment API handler, to be called when a syscall is made by a user environment
-
+typedef void (*ExceptionHandler)(int exception_id, BackupRegisters * backup_registers); // Exception handler, to be called when an exception ocurrs
 
 // function to register a handler
 void registerHandler(uint32_t handler_id, void * handler);
@@ -35,6 +36,6 @@ void callTickHandler(unsigned long ticks);
 void callRTCHandler(RTC_Time * time);
 void callRestoreContextHandler(uint8_t was_graphic);
 void callUserEnvironmentApiHandler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4);
-
+void callExceptionHandler(int exception_id, BackupRegisters * backup_registers);
 
 #endif

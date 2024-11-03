@@ -68,6 +68,29 @@ void printf(char * format, ...) {
                     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
                     break;
                 }
+                case '0' ... '9': {
+                    int width = 0;
+                    while (*str >= '0' && *str <= '9') {
+                        width = width * 10 + (*str - '0');
+                        str++;
+                    }
+                    if (*str == 's') {
+                        char *string = va_arg(args, char *);
+                        int len = 0;
+                        while (string[len] != '\0') {
+                            len++;
+                        }
+                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
+                        for (int i = 0; i < width - len; i++) {
+                            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, ' ', 0, 0, 0);
+                        }
+                    } else {
+                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, invalid_format_message, 0, 0, 0);
+                        va_end(args);
+                        return;
+                    }
+                    break;
+                }
                 default:
                     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, invalid_format_message, 0, 0, 0);                
                     va_end(args);

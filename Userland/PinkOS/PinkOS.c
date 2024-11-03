@@ -28,6 +28,11 @@ typedef struct {
     uint8_t day_of_week;
 } RTC_Time;
 
+typedef struct {
+	uint64_t rax, rbx, rcx, rdx, rsi, rdi, rbp, r8, r9, r10, r11, r12, r13, r14, r15;
+	uint64_t cri_rip, cri_rsp, cri_rflags;
+} BackupRegisters;
+
 int running_program = 0; // 0 if no program is running (besides the shell itself, ofc)
 int graphics_mode = 0; // 0 for CLI, 1 for GUI
 
@@ -207,6 +212,25 @@ void print_str_to_console(char * string){
 	}
 }
 
+void print_number_to_console(uint64_t number){
+	char buffer[12];
+	int i = 0;
+	if(number == 0){
+		buffer[i++] = '0';
+	}
+	else{
+		while(number > 0){
+			buffer[i++] = number % 10 + '0';
+			number /= 10;
+		}
+	}
+	buffer[i] = 0;
+
+	for(int j = i - 1; j >= 0; j--){
+		print_char_to_console(buffer[j]);
+	}
+}
+
 static char arguments[STRING_SIZE];
 void execute_program(int input_line){
 		// get the program name
@@ -369,6 +393,78 @@ void status_bar_handler(RTC_Time * time){
 	
 }
 
+void exception_handler(int exception_id, BackupRegisters * backup_registers){
+	// print the exception id
+	print_str_to_console("Exception: ");
+	print_char_to_console(exception_id + '0');
+	print_char_to_console('\n');
+	// print the backup registers
+	print_str_to_console("rax: ");
+	print_number_to_console(backup_registers->rax);
+	print_char_to_console('\n');
+	print_str_to_console("rbx: ");
+	print_number_to_console(backup_registers->rbx);
+	print_char_to_console('\n');
+	print_str_to_console("rcx: ");
+	print_number_to_console(backup_registers->rcx);
+	print_char_to_console('\n');
+	print_str_to_console("rdx: ");
+	print_number_to_console(backup_registers->rdx);
+	print_char_to_console('\n');
+	print_str_to_console("rsi: ");
+	print_number_to_console(backup_registers->rsi);
+	print_char_to_console('\n');
+	print_str_to_console("rdi: ");
+	print_number_to_console(backup_registers->rdi);
+	print_char_to_console('\n');
+	print_str_to_console("rbp: ");
+	print_number_to_console(backup_registers->rbp);
+	print_char_to_console('\n');
+	print_str_to_console("r8: ");
+	print_number_to_console(backup_registers->r8);
+	print_char_to_console('\n');
+	print_str_to_console("r9: ");
+	print_number_to_console(backup_registers->r9);
+	print_char_to_console('\n');
+	print_str_to_console("r10: ");
+	print_number_to_console(backup_registers->r10);
+	print_char_to_console('\n');
+	print_str_to_console("r11: ");
+	print_number_to_console(backup_registers->r11);
+	print_char_to_console('\n');
+	print_str_to_console("r12: ");
+	print_number_to_console(backup_registers->r12);
+	print_char_to_console('\n');
+	print_str_to_console("r13: ");
+	print_number_to_console(backup_registers->r13);
+	print_char_to_console('\n');
+	print_str_to_console("r14: ");
+	print_number_to_console(backup_registers->r14);
+	print_char_to_console('\n');
+	print_str_to_console("r15: ");
+	print_number_to_console(backup_registers->r15);
+	print_char_to_console('\n');
+	// print_str_to_console("rip: ");
+	// print_number_to_console(backup_registers->rip);
+	// print_char_to_console('\n');
+	// print_str_to_console("rsp: ");
+	// print_number_to_console(backup_registers->rsp);
+	// print_char_to_console('\n');
+	// print_str_to_console("rflags: ");
+	// print_number_to_console(backup_registers->rflags);
+	// print_char_to_console('\n');
+	print_str_to_console("cri_rip: ");
+	print_number_to_console(backup_registers->cri_rip);
+	print_char_to_console('\n');
+	print_str_to_console("cri_rsp: ");
+	print_number_to_console(backup_registers->cri_rsp);
+	print_char_to_console('\n');
+	print_str_to_console("cri_rflags: ");
+	print_number_to_console(backup_registers->cri_rflags);
+	print_char_to_console('\n');
+	
+}
+
 // configures the current line as a prompt, and prints a graphical indicator of that
 void newPrompt(){
 	// print the prompt
@@ -412,6 +508,7 @@ int main() {
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, 5, exception_handler, 0, 0, 0);
 
 	idle("idle from main");
 }

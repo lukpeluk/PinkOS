@@ -17,12 +17,20 @@ typedef struct {
 
 Program* get_program_entry(const char* name);
 
+char * get_name();
+char * get_command();
+char * get_help();
+int increment_index();
+
 void echo_main(char *args);
 void forrest_gump_main(char *args);
 void parrot_main(char *args);
 void mona_lisa_main(char *args);
-void date_main();
-void time_main();
+void date_main(char *args);
+void time_main(char *args);
+void help_main(char *args);
+void man_main(char *args);
+void test_main(char *args);
 
 
 #endif

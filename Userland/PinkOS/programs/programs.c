@@ -45,7 +45,7 @@ static Program programs[] = {
     },
     {
         "date",
-        "date",
+        "Date",
         date_main,
         0,
         "Prints the current date",
@@ -53,11 +53,35 @@ static Program programs[] = {
     },
     {
         "time",
-        "time",
+        "Time",
         time_main,
         0,
         "Prints the current time",
         "usage: time \nTime v1 \n Prints the current time"
+    },
+    {
+        "help",
+        "Help",
+        help_main,
+        0,
+        "Prints the help menu",
+        "usage: help \nHelp v1 \n Prints the help menu"
+    },
+    {
+        "man",
+        "MAN",
+        man_main,
+        0,
+        "Prints the manual of a program",
+        "Omg, you're reading the manual of the manual.\nThis is a little bit too much, don't you think?"
+    },
+    {
+        "test",
+        "Test",
+        test_main,
+        0,
+        "Test program",
+        "usage: test <args> \nTest v1 \n Use this program to test the exception handling"
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
@@ -80,4 +104,26 @@ Program * get_program_entry(const char* command) {
         }
     }
     return 0;
+}
+
+static int index_to_actual_program = 0;
+
+char * get_name(){
+    return programs[index_to_actual_program].name;
+}
+
+char * get_command(){
+    return programs[index_to_actual_program].command;
+}
+
+char * get_help(){
+    return programs[index_to_actual_program].help;
+}
+
+int increment_index(){
+    index_to_actual_program++;
+    if(index_to_actual_program >= programs_count){
+        index_to_actual_program = 0;
+    }
+    return index_to_actual_program;
 }

@@ -22,6 +22,7 @@ typedef struct EventHandlers {
     RTCHandler rtc_handler;
     RestoreContextHandler restore_context_handler;
     UserEnvironmentApiHandler user_environment_api_handler;
+    ExceptionHandler exception_handler;
 } EventHandlers;
 
 
@@ -45,6 +46,9 @@ void registerHandler(uint32_t handler_id, void * handler) {
         break;
     case USER_ENVIRONMENT_API_HANDLER:
         eventHandlers.user_environment_api_handler = (UserEnvironmentApiHandler)handler;
+        break;
+    case EXCEPTION_HANDLER:
+        eventHandlers.exception_handler = (ExceptionHandler)handler;
         break;
     
     default:
@@ -76,4 +80,7 @@ void callUserEnvironmentApiHandler(uint64_t endpoint_id, uint64_t arg1, uint64_t
     CALL_IF_IMPLEMENTED(user_environment_api_handler, endpoint_id, arg1, arg2, arg3, arg4);
 }
 
+void callExceptionHandler(int exception_id, BackupRegisters * backup_registers) {
+    CALL_IF_IMPLEMENTED(exception_handler, exception_id, backup_registers);
+}
 

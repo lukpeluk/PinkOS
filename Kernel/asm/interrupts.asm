@@ -17,6 +17,10 @@ GLOBAL _irq08Handler
 GLOBAL _irq80Handler
 
 GLOBAL _exception0Handler
+GLOBAL _exception6Handler
+
+GLOBAL rax_backup, rbx_backup, rcx_backup, rdx_backup, rbp_backup, rdi_backup, rsi_backup, r8_backup, r9_backup, r10_backup, r11_backup, r12_backup, r13_backup, r14_backup, r15_backup
+GLOBAL cri_rip, cri_rflags, cri_rsp
 
 EXTERN irqDispatcher
 EXTERN syscallDispatcher
@@ -110,8 +114,37 @@ SECTION .text
 	iretq
 %endmacro
 
+%macro makeBackup 0
+	mov [rax_backup], rax
+	mov [rbx_backup], rbx
+	mov [rcx_backup], rcx
+	mov [rdx_backup], rdx
+	mov [rbp_backup], rbp
+	mov [rdi_backup], rdi
+	mov [rsi_backup], rsi
+	mov [r8_backup], r8
+	mov [r9_backup], r9
+	mov [r10_backup], r10
+	mov [r11_backup], r11
+	mov [r12_backup], r12
+	mov [r13_backup], r13
+	mov [r14_backup], r14
+	mov [r15_backup], r15
+
+	mov rax, [rsp]
+	mov [cri_rip], rax
+	mov rax, [rsp+16]
+	mov [cri_rflags], rax
+	mov rax, [rsp+24]
+	mov [cri_rsp], rax
+
+	mov rax, [rax_backup]
+%endmacro
+
 ; acá supongo que deberíamos desactivar las interrupciones
 %macro exceptionHandler 1
+	cli
+	makeBackup
 	pushState
 
 	mov rdi, %1 ; pasaje de parametro
@@ -198,12 +231,38 @@ _irq80Handler:
 _exception0Handler:
 	exceptionHandler 0
 
+;Invalid Opcode Exception
+_exception6Handler:
+	exceptionHandler 6
+
 haltcpu:
 	cli
 	hlt
 	ret
 
 
+SECTION .data 
+; Registers backup (84 bytes)
+	rax_backup dq 0
+	rbx_backup dq 0
+	rcx_backup dq 0
+	rdx_backup dq 0
+	rbp_backup dq 0
+	rdi_backup dq 0
+	rsi_backup dq 0
+	r8_backup dq 0
+	r9_backup dq 0
+	r10_backup dq 0
+	r11_backup dq 0
+	r12_backup dq 0
+	r13_backup dq 0
+	r14_backup dq 0
+	r15_backup dq 0
+
+; CRI backup
+	cri_rip dq 0
+	cri_rflags dq 0
+	cri_rsp dq 0
 
 SECTION .bss
 	aux resq 1
