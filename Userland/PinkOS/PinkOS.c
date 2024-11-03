@@ -30,8 +30,13 @@ typedef struct {
 
 typedef struct {
 	uint64_t rax, rbx, rcx, rdx, rsi, rdi, rbp, r8, r9, r10, r11, r12, r13, r14, r15;
+} Registers;
+
+typedef struct {
+	Registers registers;
 	uint64_t cri_rip, cri_rsp, cri_rflags;
 } BackupRegisters;
+
 
 int running_program = 0; // 0 if no program is running (besides the shell itself, ofc)
 int graphics_mode = 0; // 0 for CLI, 1 for GUI
@@ -149,6 +154,25 @@ int save_str_to_buffer(char * string){
 	for(int i = 0; string[i] != 0; i++){
 		save_char_to_buffer(string[i]);
 	}	
+}
+
+int save_number_to_buffer(uint64_t number){
+	char buffer[12];
+	int i = 0;
+	if(number == 0){
+		buffer[i++] = '0';
+	}
+	else{
+		while(number > 0){
+			buffer[i++] = number % 10 + '0';
+			number /= 10;
+		}
+	}
+	buffer[i] = 0;
+
+	for(int j = i - 1; j >= 0; j--){
+		save_char_to_buffer(buffer[j]);
+	}
 }
 
 void redraw(){
@@ -393,66 +417,59 @@ void status_bar_handler(RTC_Time * time){
 	
 }
 
+
 void exception_handler(int exception_id, BackupRegisters * backup_registers){
+
 	// print the exception id
 	print_str_to_console("Exception: ");
 	print_char_to_console(exception_id + '0');
 	print_char_to_console('\n');
 	// print the backup registers
 	print_str_to_console("rax: ");
-	print_number_to_console(backup_registers->rax);
+	print_number_to_console(backup_registers->registers.rax);
 	print_char_to_console('\n');
 	print_str_to_console("rbx: ");
-	print_number_to_console(backup_registers->rbx);
+	print_number_to_console(backup_registers->registers.rbx);
 	print_char_to_console('\n');
 	print_str_to_console("rcx: ");
-	print_number_to_console(backup_registers->rcx);
+	print_number_to_console(backup_registers->registers.rcx);
 	print_char_to_console('\n');
 	print_str_to_console("rdx: ");
-	print_number_to_console(backup_registers->rdx);
+	print_number_to_console(backup_registers->registers.rdx);
 	print_char_to_console('\n');
 	print_str_to_console("rsi: ");
-	print_number_to_console(backup_registers->rsi);
+	print_number_to_console(backup_registers->registers.rsi);
 	print_char_to_console('\n');
 	print_str_to_console("rdi: ");
-	print_number_to_console(backup_registers->rdi);
+	print_number_to_console(backup_registers->registers.rdi);
 	print_char_to_console('\n');
 	print_str_to_console("rbp: ");
-	print_number_to_console(backup_registers->rbp);
+	print_number_to_console(backup_registers->registers.rbp);
 	print_char_to_console('\n');
 	print_str_to_console("r8: ");
-	print_number_to_console(backup_registers->r8);
+	print_number_to_console(backup_registers->registers.r8);
 	print_char_to_console('\n');
 	print_str_to_console("r9: ");
-	print_number_to_console(backup_registers->r9);
+	print_number_to_console(backup_registers->registers.r9);
 	print_char_to_console('\n');
 	print_str_to_console("r10: ");
-	print_number_to_console(backup_registers->r10);
+	print_number_to_console(backup_registers->registers.r10);
 	print_char_to_console('\n');
 	print_str_to_console("r11: ");
-	print_number_to_console(backup_registers->r11);
+	print_number_to_console(backup_registers->registers.r11);
 	print_char_to_console('\n');
 	print_str_to_console("r12: ");
-	print_number_to_console(backup_registers->r12);
+	print_number_to_console(backup_registers->registers.r12);
 	print_char_to_console('\n');
 	print_str_to_console("r13: ");
-	print_number_to_console(backup_registers->r13);
+	print_number_to_console(backup_registers->registers.r13);
 	print_char_to_console('\n');
 	print_str_to_console("r14: ");
-	print_number_to_console(backup_registers->r14);
+	print_number_to_console(backup_registers->registers.r14);
 	print_char_to_console('\n');
 	print_str_to_console("r15: ");
-	print_number_to_console(backup_registers->r15);
+	print_number_to_console(backup_registers->registers.r15);
 	print_char_to_console('\n');
-	// print_str_to_console("rip: ");
-	// print_number_to_console(backup_registers->rip);
-	// print_char_to_console('\n');
-	// print_str_to_console("rsp: ");
-	// print_number_to_console(backup_registers->rsp);
-	// print_char_to_console('\n');
-	// print_str_to_console("rflags: ");
-	// print_number_to_console(backup_registers->rflags);
-	// print_char_to_console('\n');
 	print_str_to_console("cri_rip: ");
 	print_number_to_console(backup_registers->cri_rip);
 	print_char_to_console('\n');
@@ -463,6 +480,64 @@ void exception_handler(int exception_id, BackupRegisters * backup_registers){
 	print_number_to_console(backup_registers->cri_rflags);
 	print_char_to_console('\n');
 	
+}
+
+void registers_handler(BackupRegisters * backup_registers){
+	// print the backup registers
+	save_str_to_buffer("rax: ");
+	save_number_to_buffer(backup_registers->registers.rax);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rbx: ");
+	save_number_to_buffer(backup_registers->registers.rbx);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rcx: ");
+	save_number_to_buffer(backup_registers->registers.rcx);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rdx: ");
+	save_number_to_buffer(backup_registers->registers.rdx);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rsi: ");
+	save_number_to_buffer(backup_registers->registers.rsi);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rdi: ");
+	save_number_to_buffer(backup_registers->registers.rdi);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rbp: ");
+	save_number_to_buffer(backup_registers->registers.rbp);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r8: ");
+	save_number_to_buffer(backup_registers->registers.r8);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r9: ");
+	save_number_to_buffer(backup_registers->registers.r9);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r10: ");
+	save_number_to_buffer(backup_registers->registers.r10);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r11: ");
+	save_number_to_buffer(backup_registers->registers.r11);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r12: ");
+	save_number_to_buffer(backup_registers->registers.r12);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r13: ");
+	save_number_to_buffer(backup_registers->registers.r13);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r14: ");
+	save_number_to_buffer(backup_registers->registers.r14);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("r15: ");
+	save_number_to_buffer(backup_registers->registers.r15);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rip: ");
+	save_number_to_buffer(backup_registers->cri_rip);
+	save_char_to_buffer('\n');
+	save_str_to_buffer("rsp: ");
+	save_number_to_buffer(backup_registers->cri_rsp);
+	save_char_to_buffer('\n');
+	if(!graphics_mode){
+		redraw();
+	}
 }
 
 // configures the current line as a prompt, and prints a graphical indicator of that
@@ -509,6 +584,7 @@ int main() {
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 5, exception_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, 6, registers_handler, 0, 0, 0);
 
 	idle("idle from main");
 }

@@ -8,11 +8,15 @@
 #include <eventHandling/eventHandlers.h>
 #include <drivers/videoDriver.h>
 #include <drivers/keyboardDriver.h>
+#include <drivers/registersDriver.h>
 
 extern char getKeyCode();
 
 // assumes scan code set is 1
 void int_21() {
 	KeyboardEvent event = processKeyPress();
+	if(isCtrlR()) {
+		callRegistersHandler(getBackupRegisters());
+	}
 	callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);	
 }

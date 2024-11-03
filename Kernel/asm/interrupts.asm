@@ -19,7 +19,7 @@ GLOBAL _irq80Handler
 GLOBAL _exception0Handler
 GLOBAL _exception6Handler
 
-GLOBAL rax_backup, rbx_backup, rcx_backup, rdx_backup, rbp_backup, rdi_backup, rsi_backup, r8_backup, r9_backup, r10_backup, r11_backup, r12_backup, r13_backup, r14_backup, r15_backup
+GLOBAL rax_backup, rbx_backup, rcx_backup, rdx_backup, rsp_backup, rbp_backup, rdi_backup, rsi_backup, r8_backup, r9_backup, r10_backup, r11_backup, r12_backup, r13_backup, r14_backup, r15_backup
 GLOBAL cri_rip, cri_rflags, cri_rsp
 
 EXTERN irqDispatcher
@@ -188,6 +188,7 @@ picSlaveMask:
 
 ;8254 Timer (Timer Tick)
 _irq00Handler:
+	makeBackup
 	irqHandlerMaster 0
 
 ;Keyboard
@@ -250,6 +251,7 @@ SECTION .data
 	rbp_backup dq 0
 	rdi_backup dq 0
 	rsi_backup dq 0
+	rsp_backup dq 0
 	r8_backup dq 0
 	r9_backup dq 0
 	r10_backup dq 0
