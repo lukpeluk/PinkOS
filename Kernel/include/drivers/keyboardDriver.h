@@ -23,6 +23,5 @@ void clearKeyboardBuffer(); // clears the buffer
 char keycodeToAscii(unsigned char keycode);
 // char asciiToKeycode(char ascii);  // no sé si tiene sentido implementarla pero qcy
 
-int isCtrlR();  // checks if the key combination Ctrl + R is being pressed
 #endif
 

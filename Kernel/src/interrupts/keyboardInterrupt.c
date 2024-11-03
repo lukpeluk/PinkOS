@@ -10,12 +10,15 @@
 #include <drivers/keyboardDriver.h>
 #include <drivers/registersDriver.h>
 
+#define ISCTRLR() (isKeyPressed(0x1D, 0) && isKeyPressed(0x13, 0))
+
 extern char getKeyCode();
+
 
 // assumes scan code set is 1
 void int_21() {
 	KeyboardEvent event = processKeyPress();
-	if(isCtrlR()) {
+	if(ISCTRLR()) {
 		callRegistersHandler(getBackupRegisters());
 	}
 	callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);	

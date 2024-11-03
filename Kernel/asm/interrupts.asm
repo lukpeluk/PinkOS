@@ -141,7 +141,6 @@ SECTION .text
 	mov rax, [rax_backup]
 %endmacro
 
-; acá supongo que deberíamos desactivar las interrupciones
 %macro exceptionHandler 1
 	cli
 	makeBackup

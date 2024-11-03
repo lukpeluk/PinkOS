@@ -156,11 +156,6 @@ void release_key(char scan_code, char is_special) {
 }
 
 
-int isCtrlR() {
-    return isKeyPressed(0x1D, 0) && isKeyPressed(0x13, 0);
-}
-
-
 // convierte de keycode a ASCII
 char base_layer[256] = {
     ASCII_NUL,        // 0x00
