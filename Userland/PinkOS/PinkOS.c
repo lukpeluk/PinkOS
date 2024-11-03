@@ -429,7 +429,7 @@ void draw_status_bar(){
 
 
 void exception_handler(int exception_id, BackupRegisters * backup_registers){
-
+	// TODO: Implementar Pantallazo Rosa
 	// print the exception id
 	print_str_to_console("Exception: ");
 	print_char_to_console(exception_id + '0');
@@ -492,7 +492,7 @@ void exception_handler(int exception_id, BackupRegisters * backup_registers){
 }
 
 void registers_handler(BackupRegisters * backup_registers){
-	// print the backup registers
+	// print the backup registers 
 	save_str_to_buffer("rax: ");
 	save_number_to_buffer(backup_registers->registers.rax);
 	save_char_to_buffer('\n');
@@ -544,8 +544,10 @@ void registers_handler(BackupRegisters * backup_registers){
 	save_str_to_buffer("rsp: ");
 	save_number_to_buffer(backup_registers->cri_rsp);
 	save_char_to_buffer('\n');
+
 	if(!graphics_mode){
 		redraw();
+		newPrompt();
 	}
 }
 
