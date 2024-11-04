@@ -90,6 +90,14 @@ static Program programs[] = {
         0,
         "Prints the list of running processes",
         "usage: ps \nPS v1 \n Prints the list of running processes"
+    },
+    {
+        "snake",
+        "Snake",
+        snake_main,
+        1,
+        "Snake game",
+        "usage: snake \nSnake v1 \n Use this program to play the snake game"
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},

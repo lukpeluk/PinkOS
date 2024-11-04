@@ -41,4 +41,12 @@ char getChar();
 */
 void scanf(char * format, ...);
 
+/*
+ * Gives a random number between min and max
+ * @param min the minimum value
+ * @param max the maximum value
+ * @return the random number
+*/
+int randInt(int min, int max);
+
 #endif

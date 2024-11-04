@@ -63,7 +63,7 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 void drawRectangle(Point * start, Point * end, uint32_t hexColor){
 	for(uint64_t i = start->x; i < end->x; i++){
 		for(uint64_t j = start->y; j < end->y; j++){
-			putPixel(hexColor, i, j);
+			putPixel(hexColor, j, i);
 		}
 	}
 }
@@ -71,7 +71,7 @@ void drawRectangle(Point * start, Point * end, uint32_t hexColor){
 void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t hexColor){
 	for(uint64_t i = start->x; i < end->x; i++){
 		for(uint64_t j = start->y; j < end->y; j++){
-			if(i < start->x + thickness || i > end->x - thickness || j < start->y + thickness || j > end->y - thickness){
+			if(i < start->x + thickness || i >= end->x - thickness || j < start->y + thickness || j >= end->y - thickness){
 				putPixel(hexColor, i, j);
 			}
 		}
