@@ -8,6 +8,7 @@
 #include <drivers/videoDriver.h>
 #include <drivers/rtcDriver.h>
 #include <drivers/pitDriver.h>
+#include <drivers/audioDriver.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -114,6 +115,165 @@ void testScreen(){
 	drawRectangle(&start, &end, 0x00000000);
 }
 
+
+// Ligature always 0 coz it's not supported by the previous format, manually choose notes to ligate
+Note * pinkPanther[] = {
+    &(Note) {0, 2, 0},
+    &(Note) {0, 4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {311, 8, 0},
+    &(Note) {330, -4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {370, 8, 0},
+    &(Note) {392, -4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {311, 8, 0},
+    &(Note) {330, -8, 0},
+    &(Note) {370, 8, 0},
+    &(Note) {392, -8, 0},
+    &(Note) {523, 8, 0},
+    &(Note) {494, -8, 0},
+    &(Note) {330, 8, 0},
+    &(Note) {392, -8, 0},
+    &(Note) {494, 8, 0},
+    &(Note) {466, 2, 0},
+    &(Note) {440, -16, 0},
+    &(Note) {392, -16, 0},
+    &(Note) {330, -16, 0},
+    &(Note) {294, -16, 0},
+    &(Note) {330, 2, 0},
+    &(Note) {0, 4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {311, 4, 0},
+    &(Note) {330, -4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {370, 8, 0},
+    &(Note) {392, -4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {311, 8, 0},
+    &(Note) {330, -8, 0},
+    &(Note) {370, 8, 0},
+    &(Note) {392, -8, 0},
+    &(Note) {523, 8, 0},
+    &(Note) {494, -8, 0},
+    &(Note) {392, 8, 0},
+    &(Note) {494, -8, 0},
+    &(Note) {659, 8, 0},
+    &(Note) {622, 1, 0},
+    &(Note) {587, 2, 0},
+    &(Note) {0, 4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {311, 8, 0},
+    &(Note) {330, -4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {370, 8, 0},
+    &(Note) {392, -4, 0},
+    &(Note) {0, 8, 0},
+    &(Note) {311, 8, 0},
+    &(Note) {330, -8, 0},
+    &(Note) {370, 8, 0},
+    &(Note) {392, -8, 0},
+    &(Note) {523, 8, 0},
+    &(Note) {494, -8, 0},
+    &(Note) {330, 8, 0},
+    &(Note) {392, -8, 0},
+    &(Note) {494, 8, 0},
+    &(Note) {466, 2, 0},
+    &(Note) {440, -16, 0},
+    &(Note) {392, -16, 0},
+    &(Note) {330, -16, 0},
+    &(Note) {294, -16, 0},
+    &(Note) {330, -4, 0},
+    &(Note) {0, 4, 0},
+    &(Note) {0, 4, 0},
+    &(Note) {659, -8, 0},
+    &(Note) {587, 8, 0},
+    &(Note) {494, -8, 0},
+    &(Note) {440, 8, 0},
+    &(Note) {392, -8, 0},
+    &(Note) {330, -8, 0},
+    &(Note) {466, 16, 0},
+    &(Note) {440, -8, 0},
+    &(Note) {466, 16, 0},
+    &(Note) {440, -8, 0},
+    &(Note) {466, 16, 0},
+    &(Note) {440, -8, 0},
+    &(Note) {466, 16, 0},
+    &(Note) {440, -8, 0},
+    &(Note) {392, -16, 0},
+    &(Note) {330, -16, 0},
+    &(Note) {294, -16, 0},
+    &(Note) {330, 16, 0},
+    &(Note) {330, 16, 0},
+    &(Note) {330, 2, 0},
+    0,  // Null terminate the song
+};
+
+// Test audio, plays duration of 1 second, rest of 1 second and a note for 6 seconds
+Note * testAudioNotes[] = {
+    &(Note) {440, 4, 0},
+    &(Note) {0, 4, 0},
+    &(Note) {440, -1, 0},
+    0,  // Null terminate the song
+};
+
+Note * testChromaticScale[] = {
+    &(Note) {262, 1, 0},
+    &(Note) {277, 1, 0},
+    &(Note) {294, 1, 0},
+    &(Note) {311, 1, 0},
+    &(Note) {330, 1, 0},
+    &(Note) {349, 1, 0},
+    &(Note) {370, 1, 0},
+    &(Note) {392, 1, 0},
+    &(Note) {415, 1, 0},
+    &(Note) {440, 1, 0},
+    &(Note) {466, 1, 0},
+    &(Note) {494, 1, 0},
+    &(Note) {523, 1, 0},
+    0,
+};
+
+Note * testChromaticScaleLigated[] = {
+    &(Note) {262, 1, 1},
+    &(Note) {277, 1, 1},
+    &(Note) {294, 1, 1},
+    &(Note) {311, 1, 1},
+    &(Note) {330, 1, 1},
+    &(Note) {349, 1, 1},
+    &(Note) {370, 1, 1},
+    &(Note) {392, 1, 1},
+    &(Note) {415, 1, 1},
+    &(Note) {440, 1, 1},
+    &(Note) {466, 1, 1},
+    &(Note) {494, 1, 1},
+    &(Note) {523, 1, 0},
+    0,
+};
+
+// El tempo funca joya, el ligado también, el loop lo mismo, y hasta podés cambiar de tema en el medio de una canción y después seguir con la que estabas
+void testAudio(){
+	// play_sound(440);
+	// sleep(1000);
+	// stop_sound();
+
+	play_audio(pinkPanther, 1, 140);
+    sleep(6000);
+    pause_audio();
+    AudioState prev_audio = get_audio_state();
+
+    play_audio(testAudioNotes, 1, 60);
+    sleep(10000);
+
+    load_audio_state(prev_audio);
+    resume_audio();
+    sleep(6000);
+
+    play_audio(testChromaticScale, 1, 120);
+    sleep(10000);
+    play_audio(testChromaticScaleLigated, 1, 120);
+}
+
 int main()
 {	
 	initProcessState();
@@ -122,6 +282,7 @@ int main()
 	load_idt();
 
 	// testScreen();
+	// testAudio();
 
 	ncPrint("[Kernel Main]");
 	ncNewline();

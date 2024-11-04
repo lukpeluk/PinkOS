@@ -1,5 +1,6 @@
 #include <programs.h>
 #include <syscallCodes.h>
+#include <permissions.h>
 
 int strcmp(const char* a, const char* b) {
     while (*a && *b && *a == *b) {
@@ -39,9 +40,9 @@ static Program programs[] = {
         "monalisa",
         "Mona Lisa",
         mona_lisa_main,
-        1,
+        DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
         "Draws the Mona Lisa",
-        "usage: monalisa <scale (range 1-15)>\nMona Lisa v1 \n Draws the Mona Lisa on the screen, animating it to the desired scale passed as argument (range 1-15). \nPress any key to exit (well, any printable key, coz i'm checking stdin')"
+        "usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the Mona Lisa on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
     },
     {
         "date",
@@ -98,7 +99,39 @@ static Program programs[] = {
         1,
         "Snake game",
         "usage: snake \nSnake v1 \n Use this program to play the snake game"
-    }
+    },
+    {
+        "sing",
+        "Sing",
+        sing_main,
+        PLAY_AUDIO_PERMISSION,
+        "Plays music",
+        "Usage: sing [-b] <song number>\nSing v1.6\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t0: Pink Panther theme\n\t1: Mario bros theme\n\t2: Fur Elise\n\nIf not in background mode, you can use space to pause/resume the song.\n"
+    },
+    {
+        "pause",
+        "Pause",
+        pause_main,
+        PLAY_AUDIO_PERMISSION,
+        "Pauses the current song",
+        "usage: pause \nPause v1 \n Pauses the current song"
+    },
+    {
+        "resume",
+        "Resume",
+        resume_main,
+        PLAY_AUDIO_PERMISSION,
+        "Resumes the current song",
+        "usage: resume \nResume v1 \n Resumes the current song"
+    },
+    {
+        "clear",
+        "Clear",
+        clear_main,
+        0,
+        "Clears the screen",
+        "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
+    },
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
     // {"clear", "clear", 0, 0, "usage: clear", "clear v1 \n use this program to clear the screen"},

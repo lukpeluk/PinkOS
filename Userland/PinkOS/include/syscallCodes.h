@@ -11,6 +11,7 @@
 #define SET_SYSTEM_STACK_BASE_SYSCALL 5
 
 // 1000 - 1999 reserved for DRIVER syscalls
+// ========================================
 
 // 1000 - 1099 reserved for VIDEO DRIVER syscalls
 #define DRAW_PIXEL_SYSCALL 1000
@@ -54,6 +55,15 @@
 #define CLEAR_KEYBOARD_BUFFER_SYSCALL 1310
 #define IS_KEY_PRESSED_SYSCALL 1320
 
+// 1400 - 1499 reserved for audio DRIVER syscalls
+#define PLAY_AUDIO_SYSCALL 1400
+#define STOP_AUDIO_SYSCALL 1401
+#define PAUSE_AUDIO_SYSCALL 1410
+#define RESUME_AUDIO_SYSCALL 1411
 
+#define GET_AUDIO_STATE_SYSCALL 1420
+#define LOAD_AUDIO_STATE_SYSCALL 1421
+
+#define IS_AUDIO_PLAYING_SYSCALL 1430
 
 #endif

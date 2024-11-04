@@ -3,6 +3,7 @@
 
 #include <syscallCodes.h>
 #include <environmentApiEndpoints.h>
+#include <stdint.h>
 
 /*
  * Prints a string to the console
@@ -48,5 +49,12 @@ void scanf(char * format, ...);
  * @return the random number
 */
 int randInt(int min, int max);
+
+void enableBackgroundAudio();
+void disableBackgroundAudio();
+
+void clear();
+
+void sleep(uint64_t millis);
 
 #endif

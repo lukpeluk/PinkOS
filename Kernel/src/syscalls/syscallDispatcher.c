@@ -7,6 +7,7 @@
 #include <drivers/videoDriver.h>
 #include <drivers/keyboardDriver.h>
 #include <drivers/rtcDriver.h>
+#include <drivers/audioDriver.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
@@ -27,6 +28,8 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
         return;
     else if(syscall < 1400)
         keyboardDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+    else if(syscall < 1500)
+        audioDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else
         return;
 }
@@ -218,6 +221,44 @@ void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t a
             *(int*)arg3 = is_key_pressed; 
             break;
 
+        default:
+            break;
+    }
+}
+
+// --- AUDIO DRIVER SYSCALLS ---
+void audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+    switch (syscall)
+    {
+        case PLAY_AUDIO_SYSCALL:
+            VALIDATE_PERMISSIONS(PLAY_AUDIO_PERMISSION);
+            play_audio((Note **)arg1, arg2, arg3);
+            break;
+        case STOP_AUDIO_SYSCALL:
+            VALIDATE_PERMISSIONS(PLAY_AUDIO_PERMISSION);
+            stop_audio();
+            break;
+        case PAUSE_AUDIO_SYSCALL:
+            VALIDATE_PERMISSIONS(PLAY_AUDIO_PERMISSION);
+            pause_audio();
+            break;
+        case RESUME_AUDIO_SYSCALL:
+            VALIDATE_PERMISSIONS(PLAY_AUDIO_PERMISSION);
+            resume_audio();
+            break;
+        case IS_AUDIO_PLAYING_SYSCALL:
+            int is_playing = is_audio_playing();
+            *(int*)arg1 = is_playing;
+            break;
+            
+        case GET_AUDIO_STATE_SYSCALL:
+            AudioState audio_state = get_audio_state();
+            *(AudioState *)arg1 = audio_state;
+            break;
+        case LOAD_AUDIO_STATE_SYSCALL:
+            VALIDATE_PERMISSIONS(PLAY_AUDIO_PERMISSION);
+            load_audio_state(*(AudioState *)arg1);
+            break;
         default:
             break;
     }

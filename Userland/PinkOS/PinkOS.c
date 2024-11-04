@@ -9,6 +9,8 @@
 #include <stdpink.h>	
 #include <graphicsLib.h>
 #include <keyboard.h>
+#include <audioLib.h>
+#include <pictures.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE;
@@ -18,6 +20,9 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 extern void * get_stack_pointer();
 extern void _hlt();
 
+static int background_audio_enabled = 0;
+
+static int show_home_screen = 1;
 
 typedef struct {
     uint8_t seconds;
@@ -306,12 +311,24 @@ void execute_program(int input_line){
 void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4){
 	switch (endpoint_id)
 	{
+	case CLEAR_SCREEN_ENDPOINT:
+		save_char_to_buffer('\n');
+		scroll = current_string;
+		// newPrompt();
+		redraw();
+		break;
 	case PRINT_STRING_ENDPOINT:
 		save_str_to_buffer((char *)arg1);
 		syscall(DRAW_STRING_SYSCALL, (char *)arg1, 0x00df8090, 0x00000000, 0, 0);
 		break;
 	case PRINT_CHAR_ENDPOINT:
 		print_char_to_console((char)arg1);
+		break;
+	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
+		background_audio_enabled = 1;
+		break;
+	case DISABLE_BACKGROUND_AUDIO_ENDPOINT:
+		background_audio_enabled = 0;
 		break;
 	default:
 		break;
@@ -381,7 +398,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code){
 
 	// quit program when esc is pressed
 	if(ascii == ASCII_ESC && running_program){
-		if(hold_times > 3)
+		if(hold_times > 1)
 			syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
 		return;
 	}
@@ -429,6 +446,8 @@ void draw_status_bar(){
 
 
 void exception_handler(int exception_id, BackupRegisters * backup_registers){
+	stop_audio();
+
 	// TODO: Implementar Pantallazo Rosa
 	// print the exception id
 	print_str_to_console("Exception: ");
@@ -569,6 +588,9 @@ void restoreContext(uint8_t was_graphic){
 	newPrompt();
 	running_program = 0;
 	clear_stdin();
+
+	if(!background_audio_enabled)
+		stop_audio();
 	
 	idle("idle from restoreContext");
 }
@@ -583,20 +605,67 @@ void idle(char * message){
 	}
 }
 
+
+void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code){
+	show_home_screen = 0;
+}
+
+void home_screen(){
+
+	syscall(SET_HANDLER_SYSCALL, 0, home_screen_exit_handler, 0, 0, 0);
+
+    Point position = {0};
+	int scale = 12;
+
+    int screen_width = getScreenWidth();
+    int screen_height = getScreenHeight();
+	
+	position.x = (screen_width - MONA_LISA_WIDTH * scale) / 2;
+	position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
+
+    drawBitmap(mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
+
+	
+	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
+	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
+
+	// center the text
+	position.x = 50;
+	position.y = 400;
+
+	// draw a big welcome message
+	syscall(DRAW_STRING_AT_SYSCALL, "Welcome to PinkOS!", 0x00df8090, 0x00000000, &position, 0);
+
+	position.y += 50;
+
+	syscall(DRAW_STRING_AT_SYSCALL, "Press any key to continue", 0x00df8090, 0x00000000, &position, 0);
+
+	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
+	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
+
+	while(show_home_screen){
+		_hlt();
+	}
+}
+
 int main() {
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer(),0,0,0,0);
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0);  // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt)
 
-	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
-	newPrompt();
-	
-	// Setea todos los handlers, para quedar corriendo "en el fondo" <- bueno cambio de idioma cuando se me canta el ogt
+	home_screen();
+	redraw();
+
+	// Setea todos los handlers, para quedar corriendo "en el fondo" 
+	syscall(SET_HANDLER_SYSCALL, 5, exception_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, 6, registers_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 5, exception_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 6, registers_handler, 0, 0, 0);
+	
+	print_str_to_console("\nType help for help\n");
+	newPrompt();
 
 	idle("idle from main");
 }

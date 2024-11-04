@@ -85,7 +85,7 @@ void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t
 
 static uint64_t x = 0;
 static uint64_t y = 0;
-static char INTERLINE = 3;
+static char INTERLINE = 4;
 
 // funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea y delete
 // hace wrapping automático, podría configurarse con un flag

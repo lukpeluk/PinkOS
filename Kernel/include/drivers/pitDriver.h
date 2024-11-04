@@ -7,4 +7,7 @@ void init_pit();
 
 void sleep(uint64_t milis);
 
+uint64_t ticks_elapsed();
+uint64_t milliseconds_elapsed();
+
 #endif

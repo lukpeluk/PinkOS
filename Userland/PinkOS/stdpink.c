@@ -1,6 +1,7 @@
 #include <stdpink.h>
 #include <stdarg.h>
 #include <stdin.h>
+#include <stdint.h>
 
 static char * invalid_format_message = "Invalid format, use %s for a string or %d for a int\n";
 
@@ -167,4 +168,20 @@ void scanf(char * format, ...){
     }
 
     va_end(args);
+}
+
+void enableBackgroundAudio(){
+    syscall(USER_ENVIRONMENT_API_SYSCALL, ENABLE_BACKGROUND_AUDIO_ENDPOINT, 0, 0, 0, 0);
+}
+
+void disableBackgroundAudio(){
+    syscall(USER_ENVIRONMENT_API_SYSCALL, DISABLE_BACKGROUND_AUDIO_ENDPOINT, 0, 0, 0, 0);
+}
+
+void clear(){
+    syscall(USER_ENVIRONMENT_API_SYSCALL, CLEAR_SCREEN_ENDPOINT, 0, 0, 0, 0);
+}
+
+void sleep(uint64_t millis){
+    syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
 }
