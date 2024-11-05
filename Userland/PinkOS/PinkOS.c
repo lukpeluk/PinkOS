@@ -17,6 +17,7 @@
 #define DECREASE_INDEX(index) index = index ? (index - 1) : BUFFER_SIZE - 1;
 
 #define IS_ASCII(ascii) ((unsigned char)ascii > 0 && (unsigned char)ascii < 256)
+#define IS_PRINTABLE_CHAR(ascii) ((unsigned char)ascii >= 32 && (unsigned char)ascii < 255 && (unsigned char)ascii != ASCII_DEL)
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void *get_stack_pointer();
@@ -55,7 +56,7 @@ int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 #define STRING_SIZE 200		 // 199 usable characters and the null termination
 #define KEY_REPEAT_ENABLED 1 // 0 for disabling key repeat
 
-static char time_str[11] = "  00:00:00 ";
+static char time_str[10] = "  00:00:00";
 static Point time_position = {950, 0};
 static Point logo_position = {10, 0};
 
@@ -155,7 +156,7 @@ int save_char_to_buffer(char key)
 			buffer[current_string][current_position] = 0;
 		}
 	}
-	else if (IS_ASCII(key))
+	else if (IS_PRINTABLE_CHAR(key))
 	{
 		// checks if the buffer is full, if it is, key presses are ignored
 		if (current_position == STRING_SIZE - 1)
@@ -415,7 +416,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 			syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);  // If ctrl + '-' is pressed, zoom out
 
 		// --- SCROLL ---
-		else if(ascii == 'l' || (scan_code == 0x48 && event_type == 3))
+		else if((scan_code == 0x48 && event_type == 3))
 		{
 			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
 			if(is_shift_pressed) scroll = oldest_string;	// with shift + ctrl + up, scroll to the top
@@ -426,6 +427,10 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
 			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
 			else ADVANCE_INDEX(scroll);
+		}
+		else if(ascii == 'l')
+		{
+			scroll = current_string;
 		}else{
 			return;
 		}
@@ -437,7 +442,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
 	// 		El key repeat es configurable, 
 	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
-	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_DEL)
+	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_BS)
 	{
 		// Solo guardo en el buffer de la terminal si estoy en modo CLI
 		if (!graphics_mode) add_char_to_stdout(ascii);
@@ -452,8 +457,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 
 void status_bar_handler(RTC_Time *time)
 {
-	if(is_audio_playing)
-		time_str[0] = 128; 		// Music note icon
+	time_str[0] = is_audio_playing() ? 128 : ' ';
 
 	time_str[2] = time->hours / 10 + '0';
 	time_str[3] = time->hours % 10 + '0';
@@ -473,10 +477,8 @@ void draw_status_bar()
 	int screen_width = 0;
 	syscall(GET_SCREEN_WIDTH_SYSCALL, &screen_width, 0, 0, 0, 0);
 
-	time_position.x = getScreenWidth() - (9 * getCharWidth());
+	time_position.x = getScreenWidth() - (11 * getCharWidth());
 	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
-	syscall(DRAW_CHAR_AT_SYSCALL, 128, 0x00df8090, 0x00000000, &logo_position, 0);
-
 	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
 }
 
@@ -708,7 +710,8 @@ int main()
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 
-	add_str_to_stdout("\nType help for help\n");
+	add_str_to_stdout("\n * This system has a * 90% humor setting * ...\n * but only 100% style.\n");
+	add_str_to_stdout("\n * Type help for help\n");
 	newPrompt();
 
 	idle("idle from main");
