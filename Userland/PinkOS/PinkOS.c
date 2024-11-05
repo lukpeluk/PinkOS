@@ -566,7 +566,10 @@ void draw_status_bar()
 void exception_handler(int exception_id, BackupRegisters *backup_registers)
 {
 	stop_audio();
-	disableBackgroundAudio();
+	// disableBackgroundAudio();
+	background_audio_enabled = 0;
+	running_program = 0;
+	graphics_mode = 0;
 
 	// TODO: Implementar Pantallazo Rosa
 	// print the exception id

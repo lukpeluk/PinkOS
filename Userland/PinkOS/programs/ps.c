@@ -8,7 +8,12 @@ void ps_main(unsigned char *args) {
     unsigned char *header_time = "TIME";
     unsigned char *header_cmd = "CMD";
  //   696969 pts/0    00:00:00 ps
+    seedRandom(getMillisElapsed());
     unsigned char *pid = "696969";
+    for (int i = 0; i < 6; i++) {
+        pid[i] = randInt(0, 9) + '0';
+    }
+
     unsigned char *tty = "pts/0";
     unsigned char *time = "00:00:00";
     unsigned char *cmd = "ps";

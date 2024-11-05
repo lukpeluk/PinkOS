@@ -17,7 +17,7 @@ extern unsigned char getKeyCode();
 // assumes scan code set is 1
 void int_21() {
 	KeyboardEvent event = processKeyPress();
-	if(event.scan_code == BACKUP_REGISTERS_KEY){
+	if(event.scan_code == BACKUP_REGISTERS_KEY && event.event_type == 1) {
 		callRegistersHandler(getBackupRegisters());
 	}
 	callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);	

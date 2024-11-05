@@ -3,6 +3,8 @@
 #include <stdin.h>
 #include <stdint.h>
 
+static uint32_t randmon_seed = 0;
+
 static unsigned char * invalid_format_message = "Invalid format, use %s for a string or %d for a int\n";
 
 void print(unsigned char * string){
@@ -67,6 +69,11 @@ void printf(unsigned char * format, ...) {
                 case 's': {
                     unsigned char *string = va_arg(args, unsigned char *);
                     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
+                    break;
+                }
+                case 'c': {
+                    unsigned char c = va_arg(args, int);
+                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, c, 0, 0, 0);
                     break;
                 }
                 case '0' ... '9': {
@@ -190,4 +197,13 @@ uint64_t getMillisElapsed(){
     uint64_t millis;
     syscall(GET_MILLIS_ELAPSED_SYSCALL, &millis, 0, 0, 0, 0);
     return millis;
+}
+
+void seedRandom(uint64_t seed){
+    randmon_seed = (uint32_t)(seed & 0xFFFFFFFF);
+}
+
+uint32_t randInt(uint32_t min, uint32_t max){
+    randmon_seed = randmon_seed * 1664525 + 1013904223;
+    return (randmon_seed % (max - min + 1)) + min;
 }

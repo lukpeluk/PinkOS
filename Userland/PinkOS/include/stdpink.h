@@ -44,13 +44,16 @@ unsigned char getChar();
 */
 void scanf(unsigned char * format, ...);
 
+
+void seedRandom(uint64_t seed);
+
 /*
  * Gives a random number between min and max
  * @param min the minimum value
  * @param max the maximum value
  * @return the random number
 */
-int randInt(int min, int max);
+uint32_t randInt(uint32_t min, uint32_t max);
 
 void enableBackgroundAudio();
 void disableBackgroundAudio();
@@ -58,6 +61,7 @@ void disableBackgroundAudio();
 void clear();
 
 void sleep(uint64_t millis);
+
 
 uint64_t getMillisElapsed();
 
