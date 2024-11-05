@@ -132,6 +132,14 @@ static Program programs[] = {
         "Clears the screen",
         "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
     },
+    {
+        "ls",
+        "List",
+        easter_egg_main,
+        DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
+        "List files",
+        "usage: ls \nList v1 \n List files in the current directory"
+    }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
     // {"clear", "clear", 0, 0, "usage: clear", "clear v1 \n use this program to clear the screen"},

@@ -28,7 +28,10 @@ void sing_main(char *args){
             play_audio(superMarioBros, background, 180);
             break;
         case '2':
-            play_audio(furElise, background, 60);
+            play_audio(furElise, background, 80);
+            break;
+        case '3':
+            play_audio(neverGonnaGiveYouUp, background, 114);
             break;
         default:
             break;

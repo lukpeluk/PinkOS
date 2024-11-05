@@ -37,6 +37,7 @@ void pause_main(char *args);
 void clear_main(char *args);
 void resume_main(char *args);
 void snake_main(char *args);
+void easter_egg_main(char *args);
 
 
 #endif
