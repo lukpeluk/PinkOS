@@ -13,8 +13,8 @@
 #include <pictures.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
-#define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE;
-#define DECREASE_INDEX(index) index = index ? (index - 1) : BUFFER_SIZE - 1;
+#define ADVANCE_INDEX(index, array_size) index = (index + 1) % array_size;
+#define DECREASE_INDEX(index, array_size) index = index ? (index - 1) : array_size - 1;
 
 #define IS_ASCII(ascii) ((unsigned char)ascii > 0 && (unsigned char)ascii < 256)
 #define IS_PRINTABLE_CHAR(ascii) ((unsigned char)ascii >= 32 && (unsigned char)ascii < 255 && (unsigned char)ascii != ASCII_DEL)
@@ -61,6 +61,8 @@ int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 #define STRING_SIZE 200		 // 199 usable characters and the null termination
 #define KEY_REPEAT_ENABLED 1 // 0 for disabling key repeat
 
+#define COMMAND_BUFFER_SIZE 10
+
 static unsigned char logo_str[10] = "    PinkOS";
 static unsigned char time_str[10] = "  00:00:00";
 static Point time_position = {950, 0};
@@ -75,6 +77,11 @@ uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's a
 int current_string = 0;
 int current_position = 0;
 int oldest_string = 0;
+
+unsigned char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
+int current_command = 0;
+int oldest_command = 0;
+int command_in_iteration = -1;
 
 unsigned char stdin_buffer[STRING_SIZE] = {0};
 int stdin_write_position = 0;
@@ -132,19 +139,19 @@ int save_char_to_buffer(unsigned char key)
 	// if enter key is pressed, move to the next string
 	if (key == '\n')
 	{
-		ADVANCE_INDEX(current_string) // move to the next string
+		ADVANCE_INDEX(current_string, BUFFER_SIZE) // move to the next string
 
 		// if the buffer is full, the oldest string gets overwritten, move the oldest string index to the next string
 		// and automatically scroll if a visible line is overwritten
 		if (current_string == oldest_string)
 		{
-			ADVANCE_INDEX(oldest_string)
+			ADVANCE_INDEX(oldest_string, BUFFER_SIZE)
 
 			// TODO: ver si este código está bien acá o es más prolijo abstraer la lógica del scroll
 			// igual la única forma de que esto pase es que el buffer sea más chico que la pantalla
 			if (oldest_string == scroll)
 			{
-				ADVANCE_INDEX(scroll)
+				ADVANCE_INDEX(scroll, BUFFER_SIZE)
 			}
 		}
 
@@ -226,7 +233,7 @@ void redraw()
 	int i = scroll ? scroll - 1 : BUFFER_SIZE - 1;
 	do
 	{
-		ADVANCE_INDEX(i)
+		ADVANCE_INDEX(i, BUFFER_SIZE)
 
 		if (is_input[i] == 1)
 		{
@@ -276,7 +283,7 @@ void scroll_if_out_of_bounds()
 		syscall(IS_CURSOR_IN_BOUNDARIES_SYSCALL, cursor_line, cursor_col + 1, &is_in_boundaries, 0, 0);
 
 		if(!is_in_boundaries){
-			ADVANCE_INDEX(scroll);
+			ADVANCE_INDEX(scroll, BUFFER_SIZE);
 			needs_redraw = 1;
 			syscall(SET_CURSOR_LINE_SYSCALL, cursor_line - 1, 0, 0, 0, 0);
 		}
@@ -355,8 +362,9 @@ void execute_program(int input_line)
 	}
 	program_name[i] = 0;
 
-	if (buffer[input_line][i] == ' ')
+	if (buffer[input_line][i] == ' '){
 		i++;
+	}
 
 	// get the arguments
 
@@ -398,6 +406,7 @@ void execute_program(int input_line)
 			pause_audio();
 			previousAudioState.state = get_audio_state();
 		}
+
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 		syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
 	}
@@ -448,6 +457,7 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, &is_ctrl_pressed, 0, 0);
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, &is_shift_pressed, 0, 0);
 
+
 	// --- HANDLE SHELL KEYBOARD SHORTCUTS ---
 	if(is_ctrl_pressed && !graphics_mode)
 	{
@@ -462,13 +472,13 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 		{
 			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
 			if(is_shift_pressed) scroll = oldest_string;	// with shift + ctrl + up, scroll to the top
-			else DECREASE_INDEX(scroll);
+			else DECREASE_INDEX(scroll, BUFFER_SIZE);
 		}
 		else if(scan_code == 0x50 && event_type == 3)
 		{
 			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
 			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
-			else ADVANCE_INDEX(scroll);
+			else ADVANCE_INDEX(scroll, BUFFER_SIZE);
 		}
 		else if(ascii == 'l')
 		{
@@ -479,6 +489,18 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 
 		redraw();
 		return;
+	}
+
+	// --- HANDLE ARROWS FOR PREVIOUS COMMANDS ---
+	if(scan_code == 0x48){
+		// WIP - ITERAR POR LOS COMANDOS RECIENTES
+		// print("UP\n");
+		// if(command_in_iteration != oldest_command){
+		// 	command_in_iteration = current_command ? current_command - 1 : COMMAND_BUFFER_SIZE - 1;
+		// 	buffer[current_string][0] = 0;
+		// 	add_str_to_stdout(command_buffer[command_in_iteration]);
+		// 	DECREASE_INDEX(command_in_iteration, COMMAND_BUFFER_SIZE);
+		// }
 	}
 
 	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
@@ -494,7 +516,23 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 	}
 	
 	// --- ENTER TO EXECUTE ---
-	if (ascii == '\n' && !running_program) execute_program(PREV_STRING);
+	if (ascii == '\n' && !running_program) {
+		// WIP - ITERAR POR LOS COMANDOS RECIENTES
+		// Al tocar enter se guarda la línea en el buffer de comandos
+		// strcpy(command_buffer[current_command], PREV_STRING);
+		// ADVANCE_INDEX(current_command, COMMAND_BUFFER_SIZE);
+		// if(current_command == oldest_command){
+		// 	ADVANCE_INDEX(oldest_command, COMMAND_BUFFER_SIZE);
+		// }
+
+		// // Si se está iterando por los comandos anteriores, se ejecuta el comando actual
+		// if(command_in_iteration != -1){
+		// 	command_in_iteration = -1;
+		// 	execute_program(command_buffer[command_in_iteration]);
+		// }
+
+		execute_program(PREV_STRING);
+	}
 }
 
 void status_bar_handler(RTC_Time *time)

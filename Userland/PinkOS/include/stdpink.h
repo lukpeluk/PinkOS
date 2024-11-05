@@ -5,6 +5,8 @@
 #include <environmentApiEndpoints.h>
 #include <stdint.h>
 
+void strcpy(unsigned char * dest, unsigned char * src);
+
 /*
  * Prints a string to the console
  * @param string the string to print
