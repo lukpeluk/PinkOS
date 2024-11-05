@@ -85,7 +85,7 @@ void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t
 
 static uint64_t x = 0;
 static uint64_t y = 0;
-static char INTERLINE = 4;
+static unsigned char INTERLINE = 4;
 
 // funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea y delete
 // hace wrapping automático, podría configurarse con un flag
@@ -152,7 +152,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 	x += (CHAR_WIDTH * font_size) * !is_deleting; // si estoy borrando, no incremento x
 }
 
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawCharAt(unsigned char c, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
@@ -162,13 +162,13 @@ void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
 	y = oldY;
 }
 
-void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
+void drawString(unsigned char * string, uint32_t textColor, uint32_t bgColor) {
 	while (*string) {
 		drawChar(*string++, textColor, bgColor, 1);
 	}
 }
 
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawStringAt(unsigned char * string, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
@@ -186,7 +186,7 @@ void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 		return;
 	}
 
-	char buffer[50];
+	unsigned char buffer[50];
 	int i = 0;
 	while(num > 0){
 		buffer[i] = num % 10 + '0';
@@ -218,7 +218,7 @@ void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 		return;
 	}
 
-	char buffer[50];
+	unsigned char buffer[50];
 	int i = 0;
 	while(num > 0){
 		buffer[i] = num % 16 < 10 ? num % 16 + '0' : num % 16 - 10 + 'A';
@@ -254,7 +254,7 @@ void simpleDrawNumber(uint64_t num){
 		return;
 	}
 
-	char buffer[50];
+	unsigned char buffer[50];
 	int i = 0;
 	while(num > 0){
 		buffer[i] = num % 10 + '0';

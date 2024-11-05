@@ -2,7 +2,7 @@
 #include <syscallCodes.h>
 #include <permissions.h>
 
-int strcmp(const char* a, const char* b) {
+int strcmp(const unsigned char* a, const unsigned char* b) {
     while (*a && *b && *a == *b) {
         a++;
         b++;
@@ -147,6 +147,14 @@ static Program programs[] = {
         DRAWING_PERMISSION,
         "Draws the Pietra meme",
         "usage: pietra \nPietra Meme v1 \n Draws the Pietra meme on the screen"
+    },
+    {
+        "ascii",
+        "Test ascii",
+        test_ascii_main,
+        0,
+        "Tests all ascii chars in stdout in a loop.",
+        "Usage: ascii\nTest ascii v1\n Tests all ascii chars in stdout in a loop."
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
@@ -162,7 +170,7 @@ int programs_count = sizeof(programs) / sizeof(Program);
 // int programs_count = 3;
 
 
-Program * get_program_entry(const char* command) {
+Program * get_program_entry(const unsigned char* command) {
     for (int i = 0; i < programs_count; i++) {
         if (strcmp(programs[i].command, command) == 0) {
             return &programs[i];
@@ -173,15 +181,15 @@ Program * get_program_entry(const char* command) {
 
 static int index_to_actual_program = 0;
 
-char * get_name(){
+unsigned char * get_name(){
     return programs[index_to_actual_program].name;
 }
 
-char * get_command(){
+unsigned char * get_command(){
     return programs[index_to_actual_program].command;
 }
 
-char * get_help(){
+unsigned char * get_help(){
     return programs[index_to_actual_program].help;
 }
 

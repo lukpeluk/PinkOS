@@ -12,7 +12,7 @@
 
 #define ISCTRLR() (isKeyPressed(0x1D, 0) && isKeyPressed(0x13, 0))
 
-extern char getKeyCode();
+extern unsigned char getKeyCode();
 
 
 // assumes scan code set is 1

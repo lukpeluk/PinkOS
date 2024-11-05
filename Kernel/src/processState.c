@@ -30,7 +30,7 @@ extern void loader();
 typedef struct ProcessState {
     int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process
-    char * currentProcess; // Name of the current process (for crash reporting and logging)
+    unsigned char * currentProcess; // Name of the current process (for crash reporting and logging)
     uint64_t systemStackBase; // Base of the system stack
 } ProcessState;
 
@@ -76,11 +76,11 @@ void setPermissions(uint32_t permissions) {
     processState.permissions = permissions;
 }
 
-char * getCurrentProcess() {
+unsigned char * getCurrentProcess() {
     return processState.currentProcess;
 }
 
-void setCurrentProcess(char * process) {
+void setCurrentProcess(unsigned char * process) {
     processState.currentProcess = process;
 }
 
@@ -95,7 +95,7 @@ void loadStackBase(uint64_t stackBase) {
 // Y si runProgram en vez de simplemente llamar a la función del programa, hiciera un iret?
 // O sea, que usara el systemStackBase y todo eso, de esa forma volviendo de la interrupción al "userspace"
 // Así no tenemos que activar a mano las interrupciones, porque no sé si siempre queremos tenerlas activadas (el tema del teclado y eso)
-void runProgram(Program * program, char * arguments) {
+void runProgram(Program * program, unsigned char * arguments) {
     desactivateRootMode();
     setPermissions(program->perms);
     setCurrentProcess(program->name);           // Save the name and not the command, because the purpose of this is to be used in crash reports and logs

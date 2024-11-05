@@ -64,7 +64,7 @@ void registerHandler(uint32_t handler_id, void * handler) {
 // functions to call each handler (wrapping the actual handler and testing for null first to avoid segfaults)
 // Also, it activates root mode before calling the handler
 
-void callKeyHandler(char event_type, int hold_times, char ascii, char scan_code) {
+void callKeyHandler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code) {
     CALL_IF_IMPLEMENTED(key_handler, event_type, hold_times, ascii, scan_code);
 }
 

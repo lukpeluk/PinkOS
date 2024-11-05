@@ -1,7 +1,7 @@
 #include <programs.h>
 #include <stdpink.h>
 
-void help_main(char * args){
+void help_main(unsigned char * args){
 
     do
     {

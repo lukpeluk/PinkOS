@@ -8,15 +8,15 @@
 // #define GRAPHICS_SCALE 38
 
 
-// void drawGameboard(char gameboard[20][20], int scale);
+// void drawGameboard(unsigned char gameboard[20][20], int scale);
 
-// static char gameboard[GAMEBOARD_SIZE][GAMEBOARD_SIZE]; //? No sé si va static acá
+// static unsigned char gameboard[GAMEBOARD_SIZE][GAMEBOARD_SIZE]; //? No sé si va static acá
 // static Point food;
 // static Point snakes[2][2];   // Matriz donde cada fila es una snake y cada columna es una parte de la snake (0 cabeza, 1 cola)
 
 
 
-void snake_main(char * args){
+void snake_main(unsigned char * args){
     return;
 }
 //     // initialize gameboard
@@ -57,7 +57,7 @@ void snake_main(char * args){
 // }
 
 // // Recibe que snake mover y la posición a la que se quiere mover
-// int moveSnake(char snake, Point position){
+// int moveSnake(unsigned char snake, Point position){
 //     // Chequeo que hay en la posición a la que se quiere mover
 //     int collision = checkCollision(position);
 //     if(collision == 1){  // Si choco murió
@@ -79,7 +79,7 @@ void snake_main(char * args){
 
 // // retorna 0 si no hubo colisión, 1 si hubo colisión con la pared o cuerpo (game over), 2 si hubo colisión con la comida
 // int checkCollision(Point position){
-//     char obj_in_position = gameboard[position.x][position.y];
+//     unsigned char obj_in_position = gameboard[position.x][position.y];
 //     if(obj_in_position == 0) {  // si no hay nada en la posición
 //         return 0;
 //     }
@@ -95,7 +95,7 @@ void snake_main(char * args){
 //     return -1; // si no es ninguna de las anteriores (no debería pasar) ???
 // }
 
-// Point findTail(char snake){
+// Point findTail(unsigned char snake){
 //     // Busco arriba, abajo, izquierda y derecha de la cola (snakes[snake][1]) para ver donde está la siguiente
 //     // parte de la cola, chequeando que no salgo de los bordes
 //     Point tail = snakes[snake][1];

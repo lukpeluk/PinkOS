@@ -44,7 +44,7 @@ void * getStackBase()
 
 void * initializeKernelBinary()
 {
-	char buffer[10];
+	unsigned char buffer[10];
 
 	ncPrint("[x64BareBones]");
 	ncNewline();
@@ -299,7 +299,7 @@ int main()
 	ncPrintHex((uint64_t)sampleDataModuleAddress);
 	ncNewline();
 	ncPrint("  Sample data module contents: ");
-	ncPrint((char*)sampleDataModuleAddress);
+	ncPrint((unsigned char*)sampleDataModuleAddress);
 	ncNewline();
 
 	// putPixel(0x00df8090, 0x00000025, 0x00000025);

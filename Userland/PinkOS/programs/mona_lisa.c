@@ -15,7 +15,7 @@
 extern uint64_t syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
 
-int str_to_int(char *str) {
+int str_to_int(unsigned char *str) {
     int result = 0;
     int i = 0;
     while (str[i] != '\0' && str[i] >= '0' && str[i] <= '9') {
@@ -43,7 +43,7 @@ Note * testChromaticScaleLigated[] = {
     0,
 };
 
-void mona_lisa_main(char *args) {
+void mona_lisa_main(unsigned char *args) {
     disableBackgroundAudio();
 
     if(args[0] == '\0'){
@@ -88,7 +88,7 @@ void mona_lisa_main(char *args) {
     }
 
     // Wait for key
-    char c = get_char_from_stdin();
+    unsigned char c = get_char_from_stdin();
     while(1){
         // if (c != 0) {
         //     break;

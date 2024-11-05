@@ -17,8 +17,8 @@ void drawPixel(uint32_t color, Point position);
 void drawRectangle(uint32_t color, int width, int height, Point position);
 void drawRectangleBorder(uint32_t color, int width, int height, int border_width, Point position);
 
-void drawChar(char c, uint32_t color, uint32_t bgColor, Point position);
-void drawString(char * string, uint32_t color, uint32_t bgColor, Point position);
+void drawChar(unsigned char c, uint32_t color, uint32_t bgColor, Point position);
+void drawString(unsigned char * string, uint32_t color, uint32_t bgColor, Point position);
 void drawNumber(uint64_t num, uint32_t color, uint32_t bgColor, Point position);
 void drawHex(uint64_t num, uint32_t color, uint32_t bgColor, Point position);
 

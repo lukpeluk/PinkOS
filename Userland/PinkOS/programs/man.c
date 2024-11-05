@@ -1,7 +1,7 @@
 #include <programs.h>
 #include <stdpink.h>
 
-void man_main(char * args){
+void man_main(unsigned char * args){
     if (args[0] == 0){
         printf("Welcome to the PinkOS manual\n");
         printf("Here you can find information about the different programs available in PinkOS\n");

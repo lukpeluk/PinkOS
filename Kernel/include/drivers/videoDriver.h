@@ -2,7 +2,7 @@
 #define _VIDEO_DRIVER_H__
 #include <stdint.h>
 
-#define IS_PRINTABLE_CHAR(ascii) ((unsigned char)ascii >= 32 && (unsigned char)ascii < 255)
+#define IS_PRINTABLE_CHAR(ascii) (ascii >= 32 && ascii < 255 && ascii != 127)
 
 typedef struct {
     uint64_t x;
@@ -22,9 +22,9 @@ void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t
 // sabe la posición del último caracter dibujado y dibuja el siguiente
 // hace wrapping automático, aunque debería ser configurable con un flag
 void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap);
-void drawString(char * string, uint32_t textColor, uint32_t bgColor);
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position);
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position);
+void drawString(unsigned char * string, uint32_t textColor, uint32_t bgColor);
+void drawCharAt(unsigned char c, uint32_t textColor, uint32_t bgColor, Point * position);
+void drawStringAt(unsigned char * string, uint32_t textColor, uint32_t bgColor, Point * position);
 
 void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap);
 void drawNumberAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position);

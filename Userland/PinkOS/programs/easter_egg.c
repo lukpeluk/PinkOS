@@ -196,7 +196,7 @@ uint32_t * rickroll_frames[] = {
 
 uint32_t rickroll_frame_count = sizeof(rickroll_frames) / sizeof(uint32_t *);
 
-void easter_egg_main(char *args){
+void easter_egg_main(unsigned char *args){
     
     Point position = {0};
     int scale = 20;
@@ -214,7 +214,7 @@ void easter_egg_main(char *args){
     // Wait for key
     int frame = 0;
     int direction = 1;
-    char c = get_char_from_stdin();
+    unsigned char c = get_char_from_stdin();
     while(1){
         if (c != 0) {
             break;

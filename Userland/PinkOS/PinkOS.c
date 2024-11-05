@@ -61,10 +61,10 @@ static Point time_position = {950, 0};
 static Point logo_position = {10, 0};
 
 
-static const char *command_not_found_msg = "Command not found\n";
-static const char *default_prompt = " > ";
+static const unsigned char *command_not_found_msg = "Command not found\n";
+static const unsigned char *default_prompt = " > ";
 
-char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
+unsigned char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
 uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's an output
 int current_string = 0;
 int current_position = 0;
@@ -121,7 +121,7 @@ int scroll = 0; // indica qué línea es la que está en la parte superior de la
 // cuando el buffer de escritura (el del str actual) llega al buffer de lectura (el del más viejo), se mueve el buffer de lectura
 // cuando quiero leer toda la terminal con su historial, empiezo desde el buffer de lectura y termino en el buffer de escritura
 // (obviamnte también al leer tengo que hacer un wrap around cuando llego al final del buffer)
-int save_char_to_buffer(char key)
+int save_char_to_buffer(unsigned char key)
 {
 	// if enter key is pressed, move to the next string
 	if (key == '\n')
@@ -176,7 +176,7 @@ int save_char_to_buffer(char key)
 	return 0;
 }
 
-int save_str_to_buffer(char *string)
+int save_str_to_buffer(unsigned char *string)
 {
 	for (int i = 0; string[i] != 0; i++)
 	{
@@ -186,7 +186,7 @@ int save_str_to_buffer(char *string)
 
 int save_number_to_buffer(uint64_t number)
 {
-	char buffer[12];
+	unsigned char buffer[12];
 	int i = 0;
 	if (number == 0)
 	{
@@ -257,28 +257,30 @@ void clear_console()
 }
 
 // prints and saves to the buffer
-void add_char_to_stdout(char *key)
+void add_char_to_stdout(unsigned char *character)
 {
+	if(!IS_ASCII(character)) return;
+
 	// presionar delete en la primera posición no hace nada
-	if (key == 8 && current_position == 0)
+	if (character == '\b' && current_position == 0)
 	{
 		return;
 	}
 
 	// si el caracter haría wrappeo, scrolleo una línea
 
-	int result = save_char_to_buffer(key);
+	int result = save_char_to_buffer(character);
 
-	// if the string limit is reached or the key is unsupported, it simply does nothing
+	// if the string limit is reached or the character is unsupported, it simply does nothing
 	if (result == -1)
 		return;
 
-	// print key to screen, if not in graphic mode
-	if(!graphics_mode) syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 1, 0);
+	// print character to screen, if not in graphic mode
+	if(!graphics_mode) syscall(DRAW_CHAR_SYSCALL, character, 0x00df8090, 0x00000000, 1, 0);
 }
 
 // prints and saves to the buffer
-void add_str_to_stdout(char *string)
+void add_str_to_stdout(unsigned char *string)
 {
 	for (int i = 0; string[i] != 0; i++)
 	{
@@ -288,7 +290,7 @@ void add_str_to_stdout(char *string)
 
 void add_number_to_stdout(uint64_t number)
 {
-	char buffer[12];
+	unsigned char buffer[12];
 	int i = 0;
 	if (number == 0)
 	{
@@ -310,11 +312,11 @@ void add_number_to_stdout(uint64_t number)
 	}
 }
 
-static char arguments[STRING_SIZE];
+static unsigned char arguments[STRING_SIZE];
 void execute_program(int input_line)
 {
 	// get the program name
-	char program_name[STRING_SIZE];
+	unsigned char program_name[STRING_SIZE];
 	int i = 0;
 	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0; i++)
 	{
@@ -368,12 +370,10 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 		clear_console();
 		break;
 	case PRINT_STRING_ENDPOINT:
-		if(IS_ASCII(arg1))
-			add_str_to_stdout(arg1);
+		add_str_to_stdout(arg1);
 		break;
 	case PRINT_CHAR_ENDPOINT:
-		if(IS_ASCII(arg1)) 
-			add_char_to_stdout(arg1);
+		add_char_to_stdout(arg1);
 		break;
 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
 		background_audio_enabled = 1;
@@ -386,7 +386,7 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 	}
 }
 
-void key_handler(char event_type, int hold_times, char ascii, char scan_code)
+void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
 {
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
@@ -638,7 +638,7 @@ void restoreContext(uint8_t was_graphic)
 }
 
 // message for debugging purposes
-void idle(char *message)
+void idle(unsigned char *message)
 {
 	while (1)
 	{
@@ -649,7 +649,7 @@ void idle(char *message)
 	}
 }
 
-void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
+void home_screen_exit_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
 {
 	show_home_screen = 0;
 }

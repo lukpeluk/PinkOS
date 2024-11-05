@@ -6,7 +6,7 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 
 #define BUFFER_SIZE 200
 
-void parrot_main(char * args){
+void parrot_main(unsigned char * args){
     unsigned char buffer[BUFFER_SIZE];
     unsigned char c;
 

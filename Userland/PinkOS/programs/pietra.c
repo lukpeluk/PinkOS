@@ -5,7 +5,7 @@
 #include <pictures.h>
 
 
-void pietra_main(char *args) {
+void pietra_main(unsigned char *args) {
     return;
 
     // Point position_image = {0};
@@ -29,7 +29,7 @@ void pietra_main(char *args) {
 
 
     // // Wait for key
-    // char c = get_char_from_stdin();
+    // unsigned char c = get_char_from_stdin();
     // while(1){
     //     if (c != 0) {
     //         break;

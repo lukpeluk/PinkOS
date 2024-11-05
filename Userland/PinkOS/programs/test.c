@@ -5,7 +5,7 @@
 extern void make_0x0_exception();
 extern void make_0x6_exception();
 
-void test_main(char * args){
+void test_main(unsigned char * args){
     if (strcmp(args, "0") == 0){    // Zero Division Exception
         printf("Testing Zero Division Exception...\n");
         make_0x0_exception();

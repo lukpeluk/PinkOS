@@ -4,14 +4,14 @@
 #include <songs.h>
 
 
-char tolower(char c) {
+unsigned char tolower(unsigned char c) {
     if (c >= 'A' && c <= 'Z') {
         return c - 'A' + 'a';
     }
     return c;
 }
 
-int strcasecmp(const char* a, const char* b) {
+int strcasecmp(const unsigned char* a, const unsigned char* b) {
     while (*a && *b && tolower(*a) == tolower(*b)) {
         a++;
         b++;
@@ -19,7 +19,7 @@ int strcasecmp(const char* a, const char* b) {
     return tolower(*a) - tolower(*b);
 }
 
-int calculate_similarity(const char* a, const char* b) {
+int calculate_similarity(const unsigned char* a, const unsigned char* b) {
     int matches = 0;
     int length = 0;
     while (*a && *b) {
@@ -39,7 +39,7 @@ int calculate_similarity(const char* a, const char* b) {
 
 
 // args should be a number representing the choosen song
-void spotify_main(char *args){
+void spotify_main(unsigned char *args){
     int i = 0;
     int background = 0;
     int song_found = 0;

@@ -49,11 +49,11 @@ void drawRectangleBorder(uint32_t color, int width, int height, int border_width
     syscall(DRAW_RECTANGLE_BORDER_SYSCALL, &start, &end, border_width, color, 0);
 }
 
-void drawChar(char c, uint32_t color, uint32_t bgColor, Point position){
+void drawChar(unsigned char c, uint32_t color, uint32_t bgColor, Point position){
     syscall(DRAW_CHAR_AT_SYSCALL, c, color, bgColor, &position, 0);
 }
 
-void drawString(char * string, uint32_t color, uint32_t bgColor, Point position){
+void drawString(unsigned char * string, uint32_t color, uint32_t bgColor, Point position){
     syscall(DRAW_STRING_AT_SYSCALL, string, color, bgColor, &position, 0);
 }
 

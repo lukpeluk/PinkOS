@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// 8 x 8 char
+// 8 x 8 unsigned char
 uint8_t unsupported_char[] = {
     0b00011100,
     0b00111110,

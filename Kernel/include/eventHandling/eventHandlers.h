@@ -19,7 +19,7 @@
 // To register and call handlers, eventHandlerManager.c is used
 
 // types for the differeng handler functions 
-typedef void (*KeyHandler)(char event_type, int hold_times, char ascii, char scan_code); // Key handler, to be called every key press
+typedef void (*KeyHandler)(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code); // Key handler, to be called every key press
 typedef void (*TickHandler)(unsigned long ticks); // Tick handler, to be called every tick
 typedef void (*RTCHandler)(RTC_Time * time); // RTC handler, to be called every RTC interrupt
 typedef void (*RestoreContextHandler)(uint8_t was_graphic); // Restore context handler, to be called when the context needs to be restored. Has a flag to indicate if the context was graphic
@@ -31,7 +31,7 @@ void registerHandler(uint32_t handler_id, void * handler);
 
 // functions to call a handler (one per handler, wrapping the actual handler and testing for null first)
 
-void callKeyHandler(char event_type, int hold_times, char ascii, char scan_code);
+void callKeyHandler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code);
 void callTickHandler(unsigned long ticks);
 void callRTCHandler(RTC_Time * time);
 void callRestoreContextHandler(uint8_t was_graphic);

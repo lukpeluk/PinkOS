@@ -144,7 +144,7 @@ void play_melody_in(int melody[], int notes) {
  
 int main()
 {
-    char* song_name = "pinkPanther";
+    unsigned char* song_name = "pinkPanther";
     printf("// Ligature always 0 coz it's not supported by the previous format, manually choose notes to ligate\n");
     printf("Note * %s[] = {\n", song_name);
     play_melody_in(melody_pink_panther, notes_pink_panther);

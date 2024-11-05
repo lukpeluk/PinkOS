@@ -10,7 +10,7 @@
  * @param string the string to print
  * @return void
 */ 
-void print(char * string);
+void print(unsigned char * string);
 
 /*
  * Prints a string with the given format to the console 
@@ -18,20 +18,20 @@ void print(char * string);
  * @param ... the arguments to replace in the format
  * @return void
 */
-void printf(char * format, ...);
+void printf(unsigned char * format, ...);
 
 /*
  * Prints a single character to the console
  * @param c the character to print
  * @return void
 */
-void putChar(char c);
+void putChar(unsigned char c);
 
 /*
  * Reads a character from the console
  * @return the character read
 */
-char getChar();
+unsigned char getChar();
 
 /*
  * Reads from the console strings
@@ -40,7 +40,7 @@ char getChar();
  * @param ... pointers to the variables to store the values
  * @return void
 */
-void scanf(char * format, ...);
+void scanf(unsigned char * format, ...);
 
 /*
  * Gives a random number between min and max

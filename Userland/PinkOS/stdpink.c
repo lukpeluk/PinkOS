@@ -3,9 +3,9 @@
 #include <stdin.h>
 #include <stdint.h>
 
-static char * invalid_format_message = "Invalid format, use %s for a string or %d for a int\n";
+static unsigned char * invalid_format_message = "Invalid format, use %s for a string or %d for a int\n";
 
-void print(char * string){
+void print(unsigned char * string){
     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
 }
 
@@ -14,8 +14,8 @@ void print(char * string){
 //----------------------------------------------------------------------------------------------
 
 // Internal function to convert a number to a string
-char * num_to_string(int num) {
-    static char buffer[12]; //? Cuanto deberia soportar?
+unsigned char * num_to_string(int num) {
+    static unsigned char buffer[12]; //? Cuanto deberia soportar?
     buffer[11] = '\0';      // Agregar el terminador
     int i = 10;
     int is_negative = 0;
@@ -41,7 +41,7 @@ char * num_to_string(int num) {
 // LIBRARY FUNCTIONS
 //----------------------------------------------------------------------------------------------
 
-void strcpy(char * dest, char * src) {
+void strcpy(unsigned char * dest, unsigned char * src) {
     while (*src) {
         *dest = *src;
         dest++;
@@ -50,10 +50,10 @@ void strcpy(char * dest, char * src) {
     *dest = 0;
 }
 
-void printf(char * format, ...) {
+void printf(unsigned char * format, ...) {
     va_list args;
     va_start(args, format);
-    char *str = format;
+    unsigned char *str = format;
 
     while (*str) {
         if (*str == '%') {
@@ -65,7 +65,7 @@ void printf(char * format, ...) {
                     break;
                 }
                 case 's': {
-                    char *string = va_arg(args, char *);
+                    unsigned char *string = va_arg(args, unsigned char *);
                     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
                     break;
                 }
@@ -76,7 +76,7 @@ void printf(char * format, ...) {
                         str++;
                     }
                     if (*str == 's') {
-                        char *string = va_arg(args, char *);
+                        unsigned char *string = va_arg(args, unsigned char *);
                         int len = 0;
                         while (string[len] != '\0') {
                             len++;
@@ -106,24 +106,24 @@ void printf(char * format, ...) {
     va_end(args);
 }
 
-void putChar(char c){
+void putChar(unsigned char c){
     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, c, 0, 0, 0);
 }
 
-void puts(char * string){
+void puts(unsigned char * string){
     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, '\n', 0, 0, 0);
 }
 
-char getChar(){
-    return (char)get_char_from_stdin();
+unsigned char getChar(){
+    return (unsigned char)get_char_from_stdin();
 }
 
 //TODO: arreglar el scanf
-void scanf(char * format, ...){
+void scanf(unsigned char * format, ...){
     va_list args;
     va_start(args, format);
-    char *str = format;
+    unsigned char *str = format;
 
     while (*str) {
         if (*str == '%') {
@@ -131,7 +131,7 @@ void scanf(char * format, ...){
             switch (*str) {
                 case 'd': {
                     int *num = va_arg(args, int *);
-                    char c;
+                    unsigned char c;
                     int sign = 1;
                     *num = 0;
 
@@ -147,8 +147,8 @@ void scanf(char * format, ...){
                     break;
                 }
                 case 's': {
-                    char *string = va_arg(args, char *);
-                    char c;
+                    unsigned char *string = va_arg(args, unsigned char *);
+                    unsigned char c;
                     int i = 0;
 
                     while ((c = getChar()) != '\n') {
