@@ -262,6 +262,31 @@ void clear_console()
 	redraw();
 }
 
+void scroll_if_out_of_bounds()
+{	
+	// --- AUTO SCROLL ---
+
+	int is_in_boundaries = -1;
+	uint8_t needs_redraw = 0;
+	do {
+		uint64_t cursor_line, cursor_col = 0;
+		syscall(GET_CURSOR_LINE_SYSCALL, &cursor_line, 0, 0, 0, 0);
+		syscall(GET_CURSOR_COL_SYSCALL, &cursor_col, 0, 0, 0, 0);
+		
+		syscall(IS_CURSOR_IN_BOUNDARIES_SYSCALL, cursor_line, cursor_col + 1, &is_in_boundaries, 0, 0);
+
+		if(!is_in_boundaries){
+			ADVANCE_INDEX(scroll);
+			needs_redraw = 1;
+			syscall(SET_CURSOR_LINE_SYSCALL, cursor_line - 1, 0, 0, 0, 0);
+		}
+	} while(!is_in_boundaries);
+	
+	if(needs_redraw){
+		redraw();
+	}
+}
+
 // prints and saves to the buffer
 void add_char_to_stdout(unsigned char *character)
 {
@@ -273,7 +298,7 @@ void add_char_to_stdout(unsigned char *character)
 		return;
 	}
 
-	// si el caracter haría wrappeo, scrolleo una línea
+	scroll_if_out_of_bounds();
 
 	int result = save_char_to_buffer(character);
 
@@ -633,6 +658,7 @@ void registers_handler(BackupRegisters *backup_registers)
 void newPrompt()
 {
 	// print the prompt
+	scroll_if_out_of_bounds();
 	is_input[current_string] = 1;
 	syscall(DRAW_STRING_SYSCALL, default_prompt, 0x00df8090, 0x00000000, 0, 0);
 }
@@ -640,6 +666,7 @@ void newPrompt()
 int i = 0;
 void restoreContext(uint8_t was_graphic)
 {
+	running_program = 0;
 	if (was_graphic)
 	{
 		graphics_mode = 0;
@@ -647,7 +674,6 @@ void restoreContext(uint8_t was_graphic)
 	}
 	add_char_to_stdout('\n');
 	newPrompt();
-	running_program = 0;
 	clear_stdin();
 
 	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo

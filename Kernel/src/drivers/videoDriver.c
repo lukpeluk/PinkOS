@@ -101,7 +101,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 	}
 
     // no tiene sentido un wrapping vertical, así que si se pasa del borde de la pantalla para abajo, no imprime nada
-    if(y > VBE_mode_info->height){
+    if(y + (CHAR_HEIGHT * font_size) > VBE_mode_info->height){
         return;
     }
     
@@ -294,11 +294,11 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * posi
 // CURSOR
 
 int isCursorInBoundaries(uint32_t line, uint32_t column){
-	return line * (CHAR_HEIGHT * font_size) + line * INTERLINE < VBE_mode_info->height && column * (CHAR_WIDTH * font_size) < VBE_mode_info->width;
+	return (column + 1) * (CHAR_WIDTH * font_size) >= VBE_mode_info->width ? (line + 2) * (CHAR_HEIGHT * font_size + INTERLINE) < VBE_mode_info->height : (line + 1) * (CHAR_HEIGHT * font_size + INTERLINE) < VBE_mode_info->height;
 }
 
 void setCursorLine(uint32_t line){
-    y = line * (CHAR_HEIGHT * font_size) + line * INTERLINE;
+    y = line * (CHAR_HEIGHT * font_size + INTERLINE);
 }
 
 void setCursorColumn(uint32_t column){
@@ -306,7 +306,7 @@ void setCursorColumn(uint32_t column){
 }
 
 uint32_t getCursorLine(){
-	return y / ((CHAR_HEIGHT * font_size) + INTERLINE);
+	return y / (CHAR_HEIGHT * font_size + INTERLINE);
 }
 
 uint32_t getCursorColumn(){
