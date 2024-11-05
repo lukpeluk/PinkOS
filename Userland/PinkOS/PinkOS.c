@@ -61,7 +61,8 @@ int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 #define STRING_SIZE 200		 // 199 usable characters and the null termination
 #define KEY_REPEAT_ENABLED 1 // 0 for disabling key repeat
 
-static char time_str[10] = "  00:00:00";
+static unsigned char logo_str[10] = "    PinkOS";
+static unsigned char time_str[10] = "  00:00:00";
 static Point time_position = {950, 0};
 static Point logo_position = {10, 0};
 
@@ -494,7 +495,8 @@ void draw_status_bar()
 	syscall(GET_SCREEN_WIDTH_SYSCALL, &screen_width, 0, 0, 0, 0);
 
 	time_position.x = getScreenWidth() - (11 * getCharWidth());
-	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
+	logo_str[2] = 169;
+	syscall(DRAW_STRING_AT_SYSCALL, logo_str, 0x00df8090, 0x00000000, &logo_position, 0);
 	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
 }
 
