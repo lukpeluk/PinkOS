@@ -16,7 +16,7 @@
 #define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE;
 #define DECREASE_INDEX(index) index = index ? (index - 1) : BUFFER_SIZE - 1;
 
-#define IS_PRINTABLE(ascii) ((ascii >= 32 && ascii <= 126) || ascii == '\n' || ascii == '\b')
+#define IS_ASCII(ascii) ((unsigned char)ascii > 0 && (unsigned char)ascii < 256)
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void *get_stack_pointer();
@@ -156,7 +156,7 @@ int save_char_to_buffer(char key)
 			buffer[current_string][current_position] = 0;
 		}
 	}
-	else if (IS_PRINTABLE(key))
+	else if (IS_ASCII(key))
 	{
 		// checks if the buffer is full, if it is, key presses are ignored
 		if (current_position == STRING_SIZE - 1)
@@ -257,7 +257,7 @@ void clear_console()
 }
 
 // prints and saves to the buffer
-void print_char_to_console(char *key)
+void add_char_to_stdout(char *key)
 {
 	// presionar delete en la primera posición no hace nada
 	if (key == 8 && current_position == 0)
@@ -273,20 +273,20 @@ void print_char_to_console(char *key)
 	if (result == -1)
 		return;
 
-	// print key to screen
-	syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 1, 0);
+	// print key to screen, if not in graphic mode
+	if(!graphics_mode) syscall(DRAW_CHAR_SYSCALL, key, 0x00df8090, 0x00000000, 1, 0);
 }
 
 // prints and saves to the buffer
-void print_str_to_console(char *string)
+void add_str_to_stdout(char *string)
 {
 	for (int i = 0; string[i] != 0; i++)
 	{
-		print_char_to_console(string[i]);
+		add_char_to_stdout(string[i]);
 	}
 }
 
-void print_number_to_console(uint64_t number)
+void add_number_to_stdout(uint64_t number)
 {
 	char buffer[12];
 	int i = 0;
@@ -306,7 +306,7 @@ void print_number_to_console(uint64_t number)
 
 	for (int j = i - 1; j >= 0; j--)
 	{
-		print_char_to_console(buffer[j]);
+		add_char_to_stdout(buffer[j]);
 	}
 }
 
@@ -368,18 +368,12 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 		clear_console();
 		break;
 	case PRINT_STRING_ENDPOINT:
-		save_str_to_buffer((char *)arg1);
-		if (!graphics_mode)
-		{
-			syscall(DRAW_STRING_SYSCALL, (char *)arg1, 0x00df8090, 0x00000000, 0, 0);
-		}
+		if(IS_ASCII(arg1))
+			add_str_to_stdout(arg1);
 		break;
 	case PRINT_CHAR_ENDPOINT:
-		save_char_to_buffer((char)arg1);
-		if (!graphics_mode)
-		{
-			syscall(DRAW_CHAR_SYSCALL, (char)arg1, 0x00df8090, 0x00000000, 1, 0);
-		}
+		if(IS_ASCII(arg1)) 
+			add_char_to_stdout(arg1);
 		break;
 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
 		background_audio_enabled = 1;
@@ -416,9 +410,9 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 	if(is_ctrl_pressed && !graphics_mode)
 	{
 		// --- FONT SIZE ---
-		if (ascii == '+')
+		if (ascii == '+' && hold_times == 1)
 			syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);  // If ctrl + '+' is pressed, zoom in
-		else if (ascii == '-')
+		else if (ascii == '-' && hold_times == 1)
 			syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);  // If ctrl + '-' is pressed, zoom out
 
 		// --- SCROLL ---
@@ -433,15 +427,13 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
 			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
 			else ADVANCE_INDEX(scroll);
+		}else{
+			return;
 		}
 
 		redraw();
 		return;
 	}
-
-	// --- ENTER TO EXECUTE ---
-	if (ascii == '\n' && !running_program) execute_program(PREV_STRING);
-
 
 	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
 	// 		El key repeat es configurable, 
@@ -449,11 +441,14 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_DEL)
 	{
 		// Solo guardo en el buffer de la terminal si estoy en modo CLI
-		if (!graphics_mode) print_char_to_console(ascii);
+		if (!graphics_mode) add_char_to_stdout(ascii);
 
 		// Si hay un programa corriendo y la entrada es ascii, se lo mando al programa por stdin
 		if (running_program && ascii)  add_char_to_stdin(ascii);
 	}
+	
+	// --- ENTER TO EXECUTE ---
+	if (ascii == '\n' && !running_program) execute_program(PREV_STRING);
 }
 
 void status_bar_handler(RTC_Time *time)
@@ -489,64 +484,64 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 
 	// TODO: Implementar Pantallazo Rosa
 	// print the exception id
-	print_str_to_console("Exception: ");
-	print_char_to_console(exception_id + '0');
-	print_char_to_console('\n');
+	add_str_to_stdout("Exception: ");
+	add_char_to_stdout(exception_id + '0');
+	add_char_to_stdout('\n');
 	// print the backup registers
-	print_str_to_console("rax: ");
-	print_number_to_console(backup_registers->registers.rax);
-	print_char_to_console('\n');
-	print_str_to_console("rbx: ");
-	print_number_to_console(backup_registers->registers.rbx);
-	print_char_to_console('\n');
-	print_str_to_console("rcx: ");
-	print_number_to_console(backup_registers->registers.rcx);
-	print_char_to_console('\n');
-	print_str_to_console("rdx: ");
-	print_number_to_console(backup_registers->registers.rdx);
-	print_char_to_console('\n');
-	print_str_to_console("rsi: ");
-	print_number_to_console(backup_registers->registers.rsi);
-	print_char_to_console('\n');
-	print_str_to_console("rdi: ");
-	print_number_to_console(backup_registers->registers.rdi);
-	print_char_to_console('\n');
-	print_str_to_console("rbp: ");
-	print_number_to_console(backup_registers->registers.rbp);
-	print_char_to_console('\n');
-	print_str_to_console("r8: ");
-	print_number_to_console(backup_registers->registers.r8);
-	print_char_to_console('\n');
-	print_str_to_console("r9: ");
-	print_number_to_console(backup_registers->registers.r9);
-	print_char_to_console('\n');
-	print_str_to_console("r10: ");
-	print_number_to_console(backup_registers->registers.r10);
-	print_char_to_console('\n');
-	print_str_to_console("r11: ");
-	print_number_to_console(backup_registers->registers.r11);
-	print_char_to_console('\n');
-	print_str_to_console("r12: ");
-	print_number_to_console(backup_registers->registers.r12);
-	print_char_to_console('\n');
-	print_str_to_console("r13: ");
-	print_number_to_console(backup_registers->registers.r13);
-	print_char_to_console('\n');
-	print_str_to_console("r14: ");
-	print_number_to_console(backup_registers->registers.r14);
-	print_char_to_console('\n');
-	print_str_to_console("r15: ");
-	print_number_to_console(backup_registers->registers.r15);
-	print_char_to_console('\n');
-	print_str_to_console("cri_rip: ");
-	print_number_to_console(backup_registers->cri_rip);
-	print_char_to_console('\n');
-	print_str_to_console("cri_rsp: ");
-	print_number_to_console(backup_registers->cri_rsp);
-	print_char_to_console('\n');
-	print_str_to_console("cri_rflags: ");
-	print_number_to_console(backup_registers->cri_rflags);
-	print_char_to_console('\n');
+	add_str_to_stdout("rax: ");
+	add_number_to_stdout(backup_registers->registers.rax);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rbx: ");
+	add_number_to_stdout(backup_registers->registers.rbx);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rcx: ");
+	add_number_to_stdout(backup_registers->registers.rcx);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rdx: ");
+	add_number_to_stdout(backup_registers->registers.rdx);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rsi: ");
+	add_number_to_stdout(backup_registers->registers.rsi);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rdi: ");
+	add_number_to_stdout(backup_registers->registers.rdi);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rbp: ");
+	add_number_to_stdout(backup_registers->registers.rbp);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r8: ");
+	add_number_to_stdout(backup_registers->registers.r8);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r9: ");
+	add_number_to_stdout(backup_registers->registers.r9);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r10: ");
+	add_number_to_stdout(backup_registers->registers.r10);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r11: ");
+	add_number_to_stdout(backup_registers->registers.r11);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r12: ");
+	add_number_to_stdout(backup_registers->registers.r12);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r13: ");
+	add_number_to_stdout(backup_registers->registers.r13);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r14: ");
+	add_number_to_stdout(backup_registers->registers.r14);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r15: ");
+	add_number_to_stdout(backup_registers->registers.r15);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("cri_rip: ");
+	add_number_to_stdout(backup_registers->cri_rip);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("cri_rsp: ");
+	add_number_to_stdout(backup_registers->cri_rsp);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("cri_rflags: ");
+	add_number_to_stdout(backup_registers->cri_rflags);
+	add_char_to_stdout('\n');
 }
 
 void registers_handler(BackupRegisters *backup_registers)
@@ -627,7 +622,7 @@ void restoreContext(uint8_t was_graphic)
 		graphics_mode = 0;
 		redraw();
 	}
-	print_char_to_console('\n');
+	add_char_to_stdout('\n');
 	newPrompt();
 	running_program = 0;
 	clear_stdin();
@@ -711,7 +706,7 @@ int main()
 	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
 
-	print_str_to_console("\nType help for help\n");
+	add_str_to_stdout("\nType help for help\n");
 	newPrompt();
 
 	idle("idle from main");

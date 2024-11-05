@@ -112,7 +112,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
     }
 
     // si es el caracter de borrar, muevo el cursor para atrás, seteo el flag para después dejarlo quieto y cambio el caracter a espacio
-    if(c == 8){
+    if(c == '\b'){
         is_deleting = 1;
         c = ' ';
 
@@ -122,7 +122,11 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
         } else {
             x -= (CHAR_WIDTH * font_size);
         }
-    }
+    }else if(c == '\t'){
+		x += (4 * CHAR_WIDTH * font_size);
+	}
+
+	if(!IS_PRINTABLE_CHAR(c)) return;
 
 	// Obtener el puntero al array de bytes del carácter
     uint8_t *character = font[c];

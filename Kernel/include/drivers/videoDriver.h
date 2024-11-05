@@ -2,6 +2,8 @@
 #define _VIDEO_DRIVER_H__
 #include <stdint.h>
 
+#define IS_PRINTABLE_CHAR(ascii) ((unsigned char)ascii >= 32 && (unsigned char)ascii <= 126)
+
 typedef struct {
     uint64_t x;
     uint64_t y;
