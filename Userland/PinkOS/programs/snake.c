@@ -1,40 +1,100 @@
 // #include <programs.h>
 // #include <stdpink.h>
 // #include <graphicsLib.h>
+// #include <keyboard.h>
 // #include <stdint.h>
 
 // #define GAMESCREEN_SIZE 760
 // #define GAMEBOARD_SIZE 20
 // #define GRAPHICS_SCALE 38
 
+// #define REFRESH_RATE 500
+
+// typedef enum {
+//     UP,
+//     DOWN,
+//     LEFT,
+//     RIGHT
+// } Direction;
+// typedef struct {
+//     Point head;
+//     Point tail;
+//     Direction dir;
+//     char controlls[4];
+//     char type;
+// } Snake;
 
 // void drawGameboard(unsigned char gameboard[20][20], int scale);
 
-// static unsigned char gameboard[GAMEBOARD_SIZE][GAMEBOARD_SIZE]; //? No sé si va static acá
+// static uint64_t last_draw_time = 0;
+
+// static unsigned int gameboard[GAMEBOARD_SIZE][GAMEBOARD_SIZE]; //? No sé si va static acá
 // static Point food;
-// static Point snakes[2][2];   // Matriz donde cada fila es una snake y cada columna es una parte de la snake (0 cabeza, 1 cola)
-
-
+// static Snake snakes[2] = {
+//     {
+//         .head = {0, 0},
+//         .tail = {0, 0},
+//         .dir = RIGHT,
+//         .controlls = {'w', 's', 'a', 'd'},
+//         .type = 0
+//     },
+//     {
+//         .head = {0, 0},
+//         .tail = {0, 0},
+//         .dir = RIGHT,
+//         .controlls = {'i', 'k', 'j', 'l'},
+//         .type = 1
+//     }
+// };
 
 void snake_main(unsigned char * args){
-    return;
 }
+
 //     // initialize gameboard
 //     for(int i = 0; i < 20; i++){
 //         for(int j = 0; j < 20; j++){
 //             gameboard[i][j] = 0;
 //         }
 //     }
+//     // initialize snakes
+//     gameboard[5][10] = 1;
+//     gameboard[6][10] = 3;
+//     gameboard[7][10] = 5;
+//     snakes[0].head = (Point){7, 10};
+//     snakes[0].tail = (Point){5, 10};
 
 
-//     drawRectangleBorder(0x0000FF, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){4, 4});
+
+//     gameboard[15][10] = 6;
+//     gameboard[16][10] = 4;
+//     gameboard[17][10] = 2;
+//     snakes[1].head = (Point){15, 10};
+//     snakes[1].tail = (Point){17, 10};
+
+
+
+//     // drawRectangleBorder(0x0000FF, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){4, 4});
 //     while(1){
+//         while (getMillisElapsed() - last_draw_time < REFRESH_RATE){
+//             KeyboardEvent event = getKeyboardEvent();
+//             if(event.event_type == 1){
+//                 Direction dir = getDirection(snakes[0].controlls, event);
+//                 if(dir != -1){
+//                     snakes[0].dir = dir;
+//                 }
+//                 dir = getDirection(snakes[1].controlls, event);
+//                 if(dir != -1){
+//                     snakes[1].dir = dir;
+//                 }
+//             }
+//         }
+
 //         moveCherry();
 
 //         // Falta la lógica de encontrar para donde se quiere mover la snake para pasarlo
 //         moveSnake(1, (Point){0, 0});
 //         moveSnake(2, (Point){0, 0});
-//         drawGameboard(gameboard, GRAPHICS_SCALE);
+//         // drawGameboard(gameboard, GRAPHICS_SCALE);
 //         syscall(SLEEP_SYSCALL, 1000, 0, 0, 0, 0);
 //     }
 // }
@@ -95,10 +155,10 @@ void snake_main(unsigned char * args){
 //     return -1; // si no es ninguna de las anteriores (no debería pasar) ???
 // }
 
-// Point findTail(unsigned char snake){
+// Point findTail(Snake snake){
 //     // Busco arriba, abajo, izquierda y derecha de la cola (snakes[snake][1]) para ver donde está la siguiente
 //     // parte de la cola, chequeando que no salgo de los bordes
-//     Point tail = snakes[snake][1];
+//     Point tail = snake.tail;
 //     Point next_tail = tail;
 //     if(tail.x > 0 && gameboard[tail.x - 1][tail.y] == snake){
 //         next_tail = (Point){tail.x - 1, tail.y};
@@ -124,4 +184,42 @@ void snake_main(unsigned char * args){
 //     } while(gameboard[new_cherry.x][new_cherry.y] != 0);
 //     food = new_cherry;
 //     gameboard[new_cherry.x][new_cherry.y] = 3;
+// }
+
+// // Me devuelve la posición del menor (par o impar seugn corresponda) a los alrededores de pos (Solo arriva, abajo, izquierda y derecha)
+// Point searchMinor(Point pos, int parity)
+// {
+//     Point minor = pos;
+//     if (parity == 0)
+//     {
+//         if (pos.x > 0 && gameboard[pos.x - 1][pos.y] < gameboard[minor.x][minor.y])
+//         {
+//             minor = (Point){pos.x - 1, pos.y};
+//         }
+//         if (pos.x < GAMEBOARD_SIZE - 1 && gameboard[pos.x + 1][pos.y] < gameboard[minor.x][minor.y])
+//         {
+//             minor = (Point){pos.x + 1, pos.y};
+//         }
+//     }
+//     else
+//     {
+//         if (pos.y > 0 && gameboard[pos.x][pos.y - 1] < gameboard[minor.x][minor.y])
+//         {
+//             minor = (Point){pos.x, pos.y - 1};
+//         }
+//         if (pos.y < GAMEBOARD_SIZE - 1 && gameboard[pos.x][pos.y + 1] < gameboard[minor.x][minor.y])
+//         {
+//             minor = (Point){pos.x, pos.y + 1};
+//         }
+//     }
+//     return minor;
+// }
+
+// Direction getDirection(const char *controlls, KeyboardEvent event)
+// {
+//     for (int i = 0; i < 4; i++)
+//         if (event.ascii == controlls[i])
+//             return i;
+    
+//     return -1;
 // }

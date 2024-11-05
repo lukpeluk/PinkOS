@@ -15,7 +15,7 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
 void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-
+void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
 void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     if(syscall < 1000)
@@ -25,7 +25,7 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
     else if(syscall < 1200)
         rtcDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1300)
-        return;
+        pitDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1400)
         keyboardDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1500)
@@ -51,9 +51,6 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
             break;
         case USER_ENVIRONMENT_API_SYSCALL:
             callUserEnvironmentApiHandler(arg1, arg2, arg3, arg4, arg5);
-            break;
-        case SLEEP_SYSCALL:
-            sleep(arg1);
             break;
         case SET_SYSTEM_STACK_BASE_SYSCALL:
             loadStackBase(arg1);
@@ -184,6 +181,22 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             setFont((Font)arg1);
             break;
     
+        default:
+            break;
+    }
+}
+
+// --- PIT DRIVER SYSCALLS ---
+void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+    switch (syscall)
+    {
+        case SLEEP_SYSCALL:
+            sleep(arg1);
+            break;
+        case GET_MILLIS_ELAPSED_SYSCALL:
+            uint64_t millis = milliseconds_elapsed();
+            *(uint64_t *)arg1 = millis;
+            break;
         default:
             break;
     }

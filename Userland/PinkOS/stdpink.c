@@ -185,3 +185,9 @@ void clear(){
 void sleep(uint64_t millis){
     syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
 }
+
+uint64_t getMillisElapsed(){
+    uint64_t millis;
+    syscall(GET_MILLIS_ELAPSED_SYSCALL, &millis, 0, 0, 0, 0);
+    return millis;
+}

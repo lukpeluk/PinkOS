@@ -57,4 +57,6 @@ void clear();
 
 void sleep(uint64_t millis);
 
+uint64_t getMillisElapsed();
+
 #endif

@@ -7,8 +7,7 @@
 #define RUN_PROGRAM_SYSCALL 1
 #define QUIT_PROGRAM_SYSCALL 2
 #define USER_ENVIRONMENT_API_SYSCALL 3
-#define SLEEP_SYSCALL 4
-#define SET_SYSTEM_STACK_BASE_SYSCALL 5
+#define SET_SYSTEM_STACK_BASE_SYSCALL 4
 
 // 1000 - 1999 reserved for DRIVER syscalls
 // ========================================
@@ -49,6 +48,10 @@
 // 1100 - 1199 reserved for RTC DRIVER syscalls
 #define GET_RTC_TIME_SYSCALL 1100
 #define SET_TIMEZONE_SYSCALL 1110
+
+// 1200 - 1299 reserved for PIT DRIVER syscalls
+#define SLEEP_SYSCALL 1200
+#define GET_MILLIS_ELAPSED_SYSCALL 1205
 
 // 1300 - 1399 reserved for keyboard DRIVER syscalls
 #define GET_KEY_EVENT_SYSCALL 1300

@@ -8,4 +8,6 @@ typedef struct KeyboardEvent{
     unsigned char scan_code;
 } KeyboardEvent;
 
+KeyboardEvent getKeyboardEvent();
+
 #endif
