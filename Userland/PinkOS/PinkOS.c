@@ -394,131 +394,65 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 
 void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 {
-	if (event_type != 1 && event_type != 3)
+	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
-	int is_ctrl_pressed = 0;
-	int is_shift_pressed = 0;
+	// syscall(DRAW_HEX_SYSCALL, scan_code, 0x00df8090, 0x00000000, 0, 0);  // For debugging
+	// return;
+
+
+	// --- HOLDING ESC FORCE QUITS THE CURRENT PROGRAM ---
+	if (ascii == ASCII_ESC && running_program && hold_times > 1)
+	{
+		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
+		return;
+	}
+	
+	int is_ctrl_pressed, is_shift_pressed = 0;
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, &is_ctrl_pressed, 0, 0);
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, &is_shift_pressed, 0, 0);
 
-	// for testing purposes:
-	// <1> will scroll the current line to the top,
-	// <2> will scroll up the buffer one line,
-	// <3> will scroll the buffer all the way up,
-	// <4> will redraw the screen
-	// <5> will clear the buffer and the screen
-
-	if (ascii == '2' && hold_times > 3)
+	// --- HANDLE SHELL KEYBOARD SHORTCUTS ---
+	if(is_ctrl_pressed && !graphics_mode)
 	{
-		if (scroll == oldest_string)
-			return;
+		// --- FONT SIZE ---
+		if (ascii == '+')
+			syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);  // If ctrl + '+' is pressed, zoom in
+		else if (ascii == '-')
+			syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);  // If ctrl + '-' is pressed, zoom out
 
-		if (scroll == 0)
-			scroll = BUFFER_SIZE;
-		scroll = scroll - 1;
-
-		redraw();
-		return;
-	}
-	if (ascii == '3' && hold_times > 3)
-	{
-		scroll = oldest_string;
-		redraw();
-		return;
-	}
-	if (ascii == '4' && hold_times > 3)
-	{
-		redraw();
-		return;
-	}
-	if (ascii == '5' && hold_times > 3)
-	{
-		clear_buffer();
-		redraw();
-		return;
-	}
-
-
-	// syscall(DRAW_HEX_SYSCALL, scan_code, 0x00df8090, 0x00000000, 0, 0);
-	// return;
-
-	// Scroll with ctrl + arrows, also shift + ctrl + arrows for top and bottom
-	if(scan_code == 0x48 && event_type == 3 && is_ctrl_pressed)
-	{
-		if(scroll == oldest_string) return;  // don't scroll up if the oldest line is at the top
-
-		if(is_shift_pressed){
-			scroll = oldest_string;			 // with shift + ctrl + up, scroll to the top
-		} else {
-			DECREASE_INDEX(scroll);
-		}
-		redraw();
-		return;
-	}
-	if(scan_code == 0x50 && event_type == 3 && is_ctrl_pressed)
-	{
-		if(scroll == current_string) return;  // don't scroll down if the current line is at the bottom
-
-		if(is_shift_pressed){
-			scroll = current_string;  		  // whith shift + ctrl + down, scroll to the bottom
-		} else{
-			ADVANCE_INDEX(scroll);
-		}
-
-		redraw();
-		return;
-	}
-
-
-	// If ctrl + + is pressed, zoom in
-	if (ascii == '+' && is_ctrl_pressed)
-	{
-		syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
-
-		redraw();
-		return;
-	}
-
-	// If ctrl + - is pressed, zoom out
-	if (ascii == '-' && is_ctrl_pressed)
-	{
-		syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
-		redraw();
-		return;
-	}
-
-	// quit program when esc is pressed
-	if (ascii == ASCII_ESC && running_program)
-	{
-		if (hold_times > 1)
-			syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
-		return;
-	}
-	if (ascii == 'l' && is_ctrl_pressed)
-	{
-		scroll = current_string;
-		redraw();
-		return;
-	}
-
-	if (hold_times == 1 || KEY_REPEAT_ENABLED)
-	{
-		if (!graphics_mode)
+		// --- SCROLL ---
+		else if(ascii == 'l' || (scan_code == 0x48 && event_type == 3))
 		{
-			print_char_to_console(ascii);
+			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
+			if(is_shift_pressed) scroll = oldest_string;	// with shift + ctrl + up, scroll to the top
+			else DECREASE_INDEX(scroll);
+		}
+		else if(scan_code == 0x50 && event_type == 3)
+		{
+			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
+			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
+			else ADVANCE_INDEX(scroll);
 		}
 
-		// si el char es imprimible, lo guardo en stdin para que lo pueda leer el programa
-		if (running_program && IS_PRINTABLE(ascii))
-		{
-			add_char_to_stdin(ascii);
-		}
+		redraw();
+		return;
 	}
 
-	if (ascii == '\n' && !running_program)
+	// --- ENTER TO EXECUTE ---
+	if (ascii == '\n' && !running_program) execute_program(PREV_STRING);
+
+
+	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
+	// 		El key repeat es configurable, 
+	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
+	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_DEL)
 	{
-		execute_program(PREV_STRING);
+		// Solo guardo en el buffer de la terminal si estoy en modo CLI
+		if (!graphics_mode) print_char_to_console(ascii);
+
+		// Si hay un programa corriendo y la entrada es ascii, se lo mando al programa por stdin
+		if (running_program && ascii)  add_char_to_stdin(ascii);
 	}
 }
 
