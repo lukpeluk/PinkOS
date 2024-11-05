@@ -101,12 +101,12 @@ static Program programs[] = {
         "usage: snake \nSnake v1 \n Use this program to play the snake game"
     },
     {
-        "sing",
-        "Sing",
-        sing_main,
+        "spotify",
+        "Spotify",
+        spotify_main,
         PLAY_AUDIO_PERMISSION,
-        "Plays music",
-        "Usage: sing [-b] <song number>\nSing v1.6\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t0: Pink Panther theme\n\t1: Mario bros theme\n\t2: Fur Elise\n\nIf not in background mode, you can use space to pause/resume the song.\n"
+        "Plays a song",
+        "Usage: spotify [-b] <song name>\nSpotify v2.0\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t * Pink Panther theme\n\t* Super Mario Bros theme\n\t* Fur Elise\n\t* Never Gonna Give You Up\n\nIf not in background mode, you can use space to pause/resume the song.\n"
     },
     {
         "pause",
@@ -139,6 +139,14 @@ static Program programs[] = {
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
         "List files",
         "usage: ls \nList v1 \n List files in the current directory"
+    },
+    {
+        "pietra",
+        "Pietra Meme",
+        pietra_main,
+        DRAWING_PERMISSION,
+        "Draws the Pietra meme",
+        "usage: pietra \nPietra Meme v1 \n Draws the Pietra meme on the screen"
     }
     // TODO: ↓↓↓↓↓↓
     // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},

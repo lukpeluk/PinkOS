@@ -32,12 +32,13 @@ void help_main(char *args);
 void man_main(char *args);
 void test_main(char *args);
 void ps_main(char *args);
-void sing_main(char *args);
+void spotify_main(char *args);
 void pause_main(char *args);
 void clear_main(char *args);
 void resume_main(char *args);
 void snake_main(char *args);
 void easter_egg_main(char *args);
+void pietra_main(char *args);
 
 
 #endif

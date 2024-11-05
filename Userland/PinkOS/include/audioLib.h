@@ -102,6 +102,12 @@ typedef struct Note{
     uint8_t ligated;     // 1 if the note is ligated with the next one, 0 otherwise
 } Note;
 
+typedef struct Song{
+    char * name;
+    Note** notes;       // null terminated
+    uint64_t tempo;
+} Song;
+
 typedef struct AudioState {
     uint8_t playing;
     uint8_t loop;
