@@ -44,8 +44,6 @@ Note * testChromaticScaleLigated[] = {
 };
 
 void mona_lisa_main(unsigned char *args) {
-    disableBackgroundAudio();
-
     if(args[0] == '\0'){
 		print("Usage: mona_lisa <scale (range 1-15)>\n");
         return;

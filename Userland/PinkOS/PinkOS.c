@@ -24,6 +24,11 @@ extern void *get_stack_pointer();
 extern void _hlt();
 
 static int background_audio_enabled = 0;
+static struct PreviousAudioState{
+	uint8_t restoring_audio;
+	uint8_t playing;
+	AudioState state;
+} previousAudioState = {0};
 
 static int show_home_screen = 1;
 
@@ -351,10 +356,21 @@ void execute_program(int input_line)
 	else
 	{
 		running_program = 1;
+
 		if (program->perms & DRAWING_PERMISSION)
 		{
 			graphics_mode = 1;
 			syscall(CLEAR_SCREEN_SYSCALL, 0x00000000, 0, 0, 0, 0);
+		}
+		if ((program->perms & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
+		{
+			// Si voy a ejecutar un programa con permisos de audio, y se estaba reproduciendo algo en segundo plano, guardo el estado
+			// E indico que luego de terminar la ejecución debe restaurarse el estado guardado
+			disableBackgroundAudio();
+			previousAudioState.restoring_audio = 1;
+			previousAudioState.playing = is_audio_playing();
+			pause_audio();
+			previousAudioState.state = get_audio_state();
 		}
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 		syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
@@ -485,6 +501,7 @@ void draw_status_bar()
 void exception_handler(int exception_id, BackupRegisters *backup_registers)
 {
 	stop_audio();
+	disableBackgroundAudio();
 
 	// TODO: Implementar Pantallazo Rosa
 	// print the exception id
@@ -631,8 +648,17 @@ void restoreContext(uint8_t was_graphic)
 	running_program = 0;
 	clear_stdin();
 
-	if (!background_audio_enabled)
+	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
+	// Si en el estado anterior a la ejecución del programa se estaba reproduciendo audio en segundo plano, continuar la reproducción
+	if (!background_audio_enabled){
 		stop_audio();
+		if(previousAudioState.restoring_audio){
+			enableBackgroundAudio();
+			load_audio_state(previousAudioState.state);
+			if(previousAudioState.playing) resume_audio();
+		}
+	}
+	previousAudioState.restoring_audio = 0;
 
 	idle("idle from restoreContext");
 }
