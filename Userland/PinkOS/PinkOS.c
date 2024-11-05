@@ -55,11 +55,10 @@ int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 #define STRING_SIZE 200		 // 199 usable characters and the null termination
 #define KEY_REPEAT_ENABLED 1 // 0 for disabling key repeat
 
-static char time_str[9] = "00:00:00";
+static char time_str[11] = "  00:00:00 ";
 static Point time_position = {950, 0};
 static Point logo_position = {10, 0};
 
-#define TIME_PADDING 10
 
 static const char *command_not_found_msg = "Command not found\n";
 static const char *default_prompt = " > ";
@@ -453,13 +452,15 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 
 void status_bar_handler(RTC_Time *time)
 {
+	if(is_audio_playing)
+		time_str[0] = 128; 		// Music note icon
 
-	time_str[0] = time->hours / 10 + '0';
-	time_str[1] = time->hours % 10 + '0';
-	time_str[3] = time->minutes / 10 + '0';
-	time_str[4] = time->minutes % 10 + '0';
-	time_str[6] = time->seconds / 10 + '0';
-	time_str[7] = time->seconds % 10 + '0';
+	time_str[2] = time->hours / 10 + '0';
+	time_str[3] = time->hours % 10 + '0';
+	time_str[5] = time->minutes / 10 + '0';
+	time_str[6] = time->minutes % 10 + '0';
+	time_str[8] = time->seconds / 10 + '0';
+	time_str[9] = time->seconds % 10 + '0';
 
 	draw_status_bar();
 }
@@ -473,8 +474,9 @@ void draw_status_bar()
 	syscall(GET_SCREEN_WIDTH_SYSCALL, &screen_width, 0, 0, 0, 0);
 
 	time_position.x = getScreenWidth() - (9 * getCharWidth());
-
 	syscall(DRAW_STRING_AT_SYSCALL, "PinkOS :)", 0x00df8090, 0x00000000, &logo_position, 0);
+	syscall(DRAW_CHAR_AT_SYSCALL, 128, 0x00df8090, 0x00000000, &logo_position, 0);
+
 	syscall(DRAW_STRING_AT_SYSCALL, time_str, 0x00df8090, 0x00000000, &time_position, 0);
 }
 
