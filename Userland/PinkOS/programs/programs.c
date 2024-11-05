@@ -96,7 +96,7 @@ static Program programs[] = {
         "snake",
         "Snake",
         snake_main,
-        1,
+        DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
         "Snake game",
         "usage: snake \nSnake v1 \n Use this program to play the snake game"
     },

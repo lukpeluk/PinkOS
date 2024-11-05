@@ -63,7 +63,7 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 void drawRectangle(Point * start, Point * end, uint32_t hexColor){
 	for(uint64_t i = start->x; i < end->x; i++){
 		for(uint64_t j = start->y; j < end->y; j++){
-			putPixel(hexColor, j, i);
+			putPixel(hexColor, i, j);
 		}
 	}
 }

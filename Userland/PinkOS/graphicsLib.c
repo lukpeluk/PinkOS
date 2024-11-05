@@ -69,6 +69,14 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point positi
     syscall(DRAW_BITMAP_SYSCALL, bitmap, width, height, &position, scale);
 }
 
+void incFontSize(){
+    syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
+}
+
+void decFontSize(){
+    syscall(DEC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
+}
+
 // void drawBitmapTransparent(uint32_t * bitmap, uint64_t width, uint64_t height, Point position, uint32_t scale){
 //     syscall(DRAW_BITMAP_TRANSPARENT_SYSCALL, bitmap, width, height, &position, scale);
 // }
