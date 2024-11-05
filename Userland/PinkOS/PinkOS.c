@@ -319,10 +319,15 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 		break;
 	case PRINT_STRING_ENDPOINT:
 		save_str_to_buffer((char *)arg1);
-		syscall(DRAW_STRING_SYSCALL, (char *)arg1, 0x00df8090, 0x00000000, 0, 0);
+		if(!graphics_mode){
+			syscall(DRAW_STRING_SYSCALL, (char *)arg1, 0x00df8090, 0x00000000, 0, 0);
+		}
 		break;
 	case PRINT_CHAR_ENDPOINT:
-		print_char_to_console((char)arg1);
+		save_char_to_buffer((char)arg1);
+		if(!graphics_mode){
+			syscall(DRAW_CHAR_SYSCALL, (char)arg1, 0x00df8090, 0x00000000, 1, 0);
+		}
 		break;
 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
 		background_audio_enabled = 1;
