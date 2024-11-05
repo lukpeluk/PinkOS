@@ -199,7 +199,7 @@ uint32_t rickroll_frame_count = sizeof(rickroll_frames) / sizeof(uint32_t *);
 void easter_egg_main(char *args){
     
     Point position = {0};
-    int scale = 40;
+    int scale = 20;
     int screen_width = getScreenWidth();
     int screen_height = getScreenHeight();
 

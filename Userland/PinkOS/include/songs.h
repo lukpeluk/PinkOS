@@ -1023,7 +1023,6 @@ const static Note * superMarioBros[] = {
     0,
 };
 
-
 const static Note * neverGonnaGiveYouUp[] = {
     &(Note) {440, 16, 0},
     &(Note) {0, 32, 0},
