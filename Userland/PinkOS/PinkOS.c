@@ -1,6 +1,6 @@
 /* PinkOS.c */
 #include <stdint.h>
-#include <stdint.h>
+#include <handlerIds.h>
 #include <syscallCodes.h>
 #include <programs.h>
 #include <permissions.h>
@@ -752,7 +752,7 @@ void home_screen_exit_handler(unsigned char event_type, int hold_times, unsigned
 void home_screen()
 {
 
-	syscall(SET_HANDLER_SYSCALL, 0, home_screen_exit_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, home_screen_exit_handler, 0, 0, 0);
 
 	Point position = {0};
 	int scale = 12;
@@ -798,12 +798,12 @@ int main()
 	redraw();
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
-	syscall(SET_HANDLER_SYSCALL, 5, exception_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 6, registers_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 4, api_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 0, key_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 2, status_bar_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, 3, restoreContext, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, EXCEPTION_HANDLER, exception_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, REGISTERS_HANDLER, registers_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, USER_ENVIRONMENT_API_HANDLER, api_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, key_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, RTC_HANDLER, status_bar_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, RESTORE_CONTEXT_HANDLER, restoreContext, 0, 0, 0);
 
 	add_str_to_stdout("\n * This system has a * 90% humor setting * ...\n * but only 100% style.\n");
 	add_str_to_stdout("\n * Type help for help\n");
