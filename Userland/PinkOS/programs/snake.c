@@ -76,7 +76,9 @@ void snake_main(unsigned char *args) {
         print("Invalid number of players. Please use 1 or 2 players\n");
         return;
     }
+    if (args[0] == '1') num_players = 1;
     if (args[0] == '2') num_players = 2;
+    
 
 
 

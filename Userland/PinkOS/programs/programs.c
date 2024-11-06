@@ -141,14 +141,6 @@ static Program programs[] = {
         "usage: ls \nList v1 \n List files in the current directory"
     },
     {
-        "pietra",
-        "Pietra Meme",
-        pietra_main,
-        DRAWING_PERMISSION,
-        "Draws the Pietra meme",
-        "usage: pietra \nPietra Meme v1 \n Draws the Pietra meme on the screen"
-    },
-    {
         "ascii",
         "Test ascii",
         test_ascii_main,
