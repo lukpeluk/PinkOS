@@ -1,7 +1,5 @@
 #include <drivers/rtcDriver.h>
 
-// TODO: OJO, EL CÓDIGO DE INTERRUPTS Y DE DRIVERS AHORA ESTÁ SEPARADO 
-
 extern void get_time_utc(RTC_Time * time);
 
 static RTC_Time time;
