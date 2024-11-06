@@ -98,7 +98,7 @@ static Program programs[] = {
         snake_main,
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
         "Snake game",
-        "usage: snake \nSnake v1 \n Use this program to play the snake game"
+        "usage: snake <players> \nSnake v3.9 \n Use this program to play the snake game. \n You can play with 1 or 2 players. \n Player 1 controls: WASD \n Player 2 controls: IJKL \n Press ESC to exit the game. \n Have fun!"
     },
     {
         "spotify",

@@ -52,9 +52,9 @@ void spotify_main(unsigned char *args){
         print("Usage: spotify [-b] <song name>\nWill play the Pink Panther theme while you think about it.\n\n");
         args = "pink panther";
         play_audio(songs[0].notes, background, songs[0].tempo);
+        song_found = 1;
 
     }
-    print("You can use space to pause/resume :)\n\n");
 
     for (int j = 0; j < num_songs; j++) {
         if (calculate_similarity(args + i, songs[j].name) > 50) {
@@ -71,6 +71,7 @@ void spotify_main(unsigned char *args){
         // print("Song not found. Playing Pink Panther theme instead.\n");
         // play_audio(songs[0].notes, background, songs[0].tempo);
     }
+    print("You can use space to pause/resume :)\n\n");
 
     if(background){
         enableBackgroundAudio();
