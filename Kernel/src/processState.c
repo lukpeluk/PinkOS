@@ -88,13 +88,7 @@ void loadStackBase(uint64_t stackBase) {
     processState.systemStackBase = stackBase;
 }
 
-// TODO: para mí macic_recover debería recibir ambos el stack y el IP como args, y un tercer arg. que le pasaría como arg. a la función que llame
-// Esto para que nos sirva también en excepciones y para el runProgram
-// El arg. te sirve en el recover para el was_graphic, en el runProgram para el arg. del programa y en excepciones para lo que sea que use el exceptionHandler
 
-// Y si runProgram en vez de simplemente llamar a la función del programa, hiciera un iret?
-// O sea, que usara el systemStackBase y todo eso, de esa forma volviendo de la interrupción al "userspace"
-// Así no tenemos que activar a mano las interrupciones, porque no sé si siempre queremos tenerlas activadas (el tema del teclado y eso)
 void runProgram(Program * program, unsigned char * arguments) {
     desactivateRootMode();
     setPermissions(program->perms);

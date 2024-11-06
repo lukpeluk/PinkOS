@@ -149,13 +149,8 @@ static Program programs[] = {
         "Usage: ascii\nTest ascii v1\n Tests all ascii chars in stdout in a loop."
     }
     // TODO: ↓↓↓↓↓↓
-    // {"help", "help", 0, 0, "usage: help <command>", "Help v1 \n use this program to get help on a command"},
-    // {"clear", "clear", 0, 0, "usage: clear", "clear v1 \n use this program to clear the screen"},
-    // {"date", "date", 0, 0, "usage: date", "date v1 \n use this program to print the current date"},
-    // {"time", "time", 0, 0, "usage: time", "time v1 \n use this program to print the current time"},
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
     // {"reboot", "reboot", 0, 0, "usage: reboot", "reboot v1 \n use this program to reboot the system"},
-    // {"ps", "ps", 0, 0,  "usage: ps", "ps v1 \n use this program to list all running processes ;)"}
 };
 
 int programs_count = sizeof(programs) / sizeof(Program);

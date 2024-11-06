@@ -4,8 +4,6 @@ GLOBAL init_rtc
 GLOBAL rtc_acknowledge_interrupt
 GLOBAL get_time_utc
 
-; TODO: Ver tema de uso de registros. Habria que backuppearlos antes de usarlos
-
 init_rtc:
     ; Configurar el RTC para interrupciones periódicas
 
