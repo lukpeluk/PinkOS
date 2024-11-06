@@ -44,52 +44,17 @@ void * getStackBase()
 
 void * initializeKernelBinary()
 {
-	unsigned char buffer[10];
-
-	ncPrint("[x64BareBones]");
-	ncNewline();
-
-	ncPrint("CPU Vendor:");
-	ncPrint(cpuVendor(buffer));
-	ncNewline();
-
-	ncPrint("[Loading modules]");
-	ncNewline();
-
+    
 	void * moduleAddresses[] = {
 		PinkOSAddress,
 		sampleDataModuleAddress // creo que esto habría que sacarlo
 	};
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
-	ncPrint("[Done]");
-	ncNewline();
-	ncNewline();
-
-	ncPrint("[Initializing kernel's binary]");
-	ncNewline();
 
 	clearBSS(&bss, &endOfKernel - &bss);
 
-	ncPrint("  text: 0x");
-	ncPrintHex((uint64_t)&text);
-	ncNewline();
-	ncPrint("  rodata: 0x");
-	ncPrintHex((uint64_t)&rodata);
-	ncNewline();
-	ncPrint("  data: 0x");
-	ncPrintHex((uint64_t)&data);
-	ncNewline();
-	ncPrint("  bss: 0x");
-	ncPrintHex((uint64_t)&bss);
-	ncNewline();
-
-	ncPrint("[Done]");
-	ncNewline();
-	ncNewline();
-
 	void * stackBase = getStackBase();
-	// setSystemStackBase(stackBase);
 
 	return stackBase;
 }
@@ -284,31 +249,8 @@ int main()
 	// testScreen();
 	// testAudio();
 
-	ncPrint("[Kernel Main]");
-	ncNewline();
-	ncPrint("  Sample code module at 0x");
-	ncPrintHex((uint64_t)PinkOSAddress);
-	ncNewline();
-	ncPrint("  Calling the sample code module returned: ");
-	ncPrintHex(((EntryPoint)PinkOSAddress)());
-	ncNewline();
-	ncNewline();
+    ((EntryPoint)PinkOSAddress)();
 
-	ncPrint("  Sample data module at 0x");
-	ncPrint(" laksjfdlkasjdflkjsadlkf jlkjsdlkfjsaldfkjskd ");
-	ncPrintHex((uint64_t)sampleDataModuleAddress);
-	ncNewline();
-	ncPrint("  Sample data module contents: ");
-	ncPrint((unsigned char*)sampleDataModuleAddress);
-	ncNewline();
-
-	// putPixel(0x00df8090, 0x00000025, 0x00000025);
-
-	ncClear();
-
-	while(1);
-
-	ncPrint("[Finished]");
 	return 0;
 }
 
