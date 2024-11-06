@@ -21,7 +21,7 @@
 
 // Macros para verificar límites y obtener valores del tablero
 #define IN_BOUNDS(x, y) ((x) >= 0 && (x) < GAMEBOARD_SIZE && (y) >= 0 && (y) < GAMEBOARD_SIZE)
-#define BOARD(x, y) gameboard[(y)][(x)]                                         //! ESTO ES UNA FUCKING MATRIZ ENTONCES VA AL REVÉS X E Y
+#define BOARD(x, y) gameboard[(y)][(x)]                                       
 #define IS_EMPTY(x, y) (IN_BOUNDS((x), (y)) && BOARD((x), (y)) == EMPTY)
 
 // Tamaño máximo de la serpiente (ajústalo según tus necesidades)
@@ -222,7 +222,6 @@ int moveSnake(Snake *snake) {
     // Si colisiona quiero que quede el juego estático
     if(collision == 1) return 1;
 
-    //! COMENTO ESTO ASI HAGO MOVER LA MF VIBORITA PRIMERO
     // Si la serpiente ha comido, aumenta la longitud y coloca la comida en otra parte
     if (collision == 2) {
         snake->score++;

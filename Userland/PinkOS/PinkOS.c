@@ -792,7 +792,7 @@ int main()
 {
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer(), 0, 0, 0, 0);
-	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt)
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
 	home_screen();
 	redraw();
