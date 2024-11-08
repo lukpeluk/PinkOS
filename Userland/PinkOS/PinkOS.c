@@ -636,63 +636,73 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 
 void registers_handler(BackupRegisters *backup_registers)
 {
+	RTC_Time time;
+	syscall(GET_RTC_TIME_SYSCALL, &time, 0, 0, 0, 0);
+	add_str_to_stdout("Registers at time: ");
+	add_number_to_stdout(time.hours);
+	add_char_to_stdout(':');
+	add_number_to_stdout(time.minutes);
+	add_char_to_stdout(':');
+	add_number_to_stdout(time.seconds);
+	add_char_to_stdout('\n');
+
 	// print the backup registers
-	save_str_to_buffer("rax: ");
-	save_number_to_buffer(backup_registers->registers.rax);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rbx: ");
-	save_number_to_buffer(backup_registers->registers.rbx);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rcx: ");
-	save_number_to_buffer(backup_registers->registers.rcx);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rdx: ");
-	save_number_to_buffer(backup_registers->registers.rdx);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rsi: ");
-	save_number_to_buffer(backup_registers->registers.rsi);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rdi: ");
-	save_number_to_buffer(backup_registers->registers.rdi);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rbp: ");
-	save_number_to_buffer(backup_registers->registers.rbp);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r8: ");
-	save_number_to_buffer(backup_registers->registers.r8);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r9: ");
-	save_number_to_buffer(backup_registers->registers.r9);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r10: ");
-	save_number_to_buffer(backup_registers->registers.r10);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r11: ");
-	save_number_to_buffer(backup_registers->registers.r11);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r12: ");
-	save_number_to_buffer(backup_registers->registers.r12);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r13: ");
-	save_number_to_buffer(backup_registers->registers.r13);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r14: ");
-	save_number_to_buffer(backup_registers->registers.r14);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("r15: ");
-	save_number_to_buffer(backup_registers->registers.r15);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rip: ");
-	save_number_to_buffer(backup_registers->cri_rip);
-	save_char_to_buffer('\n');
-	save_str_to_buffer("rsp: ");
-	save_number_to_buffer(backup_registers->cri_rsp);
-	save_char_to_buffer('\n');
+	add_str_to_stdout("rax: ");
+	add_number_to_stdout(backup_registers->registers.rax);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rbx: ");
+	add_number_to_stdout(backup_registers->registers.rbx);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rcx: ");
+	add_number_to_stdout(backup_registers->registers.rcx);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rdx: ");
+	add_number_to_stdout(backup_registers->registers.rdx);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rsi: ");
+	add_number_to_stdout(backup_registers->registers.rsi);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rdi: ");
+	add_number_to_stdout(backup_registers->registers.rdi);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rbp: ");
+	add_number_to_stdout(backup_registers->registers.rbp);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r8: ");
+	add_number_to_stdout(backup_registers->registers.r8);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r9: ");
+	add_number_to_stdout(backup_registers->registers.r9);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r10: ");
+	add_number_to_stdout(backup_registers->registers.r10);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r11: ");
+	add_number_to_stdout(backup_registers->registers.r11);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r12: ");
+	add_number_to_stdout(backup_registers->registers.r12);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r13: ");
+	add_number_to_stdout(backup_registers->registers.r13);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r14: ");
+	add_number_to_stdout(backup_registers->registers.r14);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("r15: ");
+	add_number_to_stdout(backup_registers->registers.r15);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rip: ");
+	add_number_to_stdout(backup_registers->cri_rip);
+	add_char_to_stdout('\n');
+	add_str_to_stdout("rsp: ");
+	add_number_to_stdout(backup_registers->cri_rsp);
+	add_char_to_stdout('\n');
 
 	if (!graphics_mode)
 	{
 		redraw();
-		newPrompt();
+		if(!running_program) newPrompt();
 	}
 }
 
