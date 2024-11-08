@@ -574,7 +574,8 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 	// TODO: Implementar Pantallazo Rosa
 	// print the exception id
 	add_str_to_stdout("Exception: ");
-	add_char_to_stdout(exception_id + '0');
+	add_number_to_stdout(exception_id);
+	// add_char_to_stdout(exception_id + '0');
 	add_char_to_stdout('\n');
 	// print the backup registers
 	add_str_to_stdout("rax: ");
