@@ -33,6 +33,13 @@ void resume_audio();
 
 int is_audio_playing();
 
+int get_milliseconds_delayed();  // useful for debugging, tells you how many milliseconds the audio was delayed
+
+uint64_t get_tempo();
+void set_tempo(uint64_t tempo);
+void inc_tempo(int amount);     // negative values to decrease tempo
+
+
 // audio state 
 AudioState get_audio_state();
 void load_audio_state(AudioState state);

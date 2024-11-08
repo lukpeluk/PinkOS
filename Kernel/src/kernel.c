@@ -222,21 +222,48 @@ void testAudio(){
 	// sleep(1000);
 	// stop_sound();
 
-	play_audio(pinkPanther, 1, 140);
-    sleep(6000);
-    pause_audio();
-    AudioState prev_audio = get_audio_state();
+	// play_audio(pinkPanther, 1, 140);
+    // sleep(6000);
+    // pause_audio();
+    // AudioState prev_audio = get_audio_state();
 
-    play_audio(testAudioNotes, 1, 60);
-    sleep(10000);
+    // play_audio(testAudioNotes, 1, 60);
+    // sleep(10000);
 
-    load_audio_state(prev_audio);
-    resume_audio();
-    sleep(6000);
+    // load_audio_state(prev_audio);
+    // resume_audio();
+    // sleep(6000);
 
-    play_audio(testChromaticScale, 1, 120);
-    sleep(10000);
-    play_audio(testChromaticScaleLigated, 1, 120);
+    // play_audio(testChromaticScale, 1, 120);
+    // sleep(10000);
+    // play_audio(testChromaticScaleLigated, 1, 120);
+
+    // test rapid notes to see if the delay is registered
+    Note * rapidNotes[] = {
+        &(Note) {660, 32, 0},
+        &(Note) {440, 32, 0},
+        &(Note) {440, 32, 0},
+        &(Note) {440, 32, 0},
+        0,
+        &(Note) {660, 4, 0},
+        &(Note) {440, 4, 0},
+        &(Note) {440, 4, 0},
+        &(Note) {440, 4, 0},
+        &(Note) {660, 4, 0},
+        &(Note) {440, 4, 0},
+        &(Note) {440, 4, 0},
+        &(Note) {440, 4, 0},
+        0,
+    };
+
+    play_audio(rapidNotes, 1, 135);
+    sleep(5000);
+    stop_audio();
+
+    // print the delay
+    drawString("Delay: ", 0x00ffffff, 0x00000000);
+    drawNumber(get_milliseconds_delayed(), 0x00ffffff, 0x00000000, 0);
+    sleep(5000);
 }
 
 int main()

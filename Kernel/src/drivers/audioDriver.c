@@ -12,6 +12,7 @@ extern void play_sound(uint32_t nFrequence);
 extern void stop_sound();
 
 static AudioState audioState = {0};
+static int milliseconds_delayed = 0;
 
 uint64_t getNoteDuration(Note * note) {
     int duration = note->duration;
@@ -22,8 +23,6 @@ uint64_t getNoteDuration(Note * note) {
         return WHOLE_NOTE() / duration;
     }
 }
-
-static current_note;
 
 // main loop (intended to be called every timer tick, to manage the audio stream)
 
@@ -56,6 +55,7 @@ void audioLoop() {
 
     audioState.current_note_start = milliseconds_elapsed();
     int duration = getNoteDuration(CURRENT_NOTE()) - time_difference;
+    if(duration < 0) milliseconds_delayed += -duration;  // keeps track of the delay, not used yet
     audioState.current_note_duration = duration > 0 ? duration : 0;
 
     play_sound_wrapper(CURRENT_NOTE()->freq);
@@ -66,6 +66,8 @@ void audioLoop() {
 
 void play_audio(Note** notes, uint8_t loop, uint64_t tempo) {
     if(notes[0] == 0) return;
+    milliseconds_delayed = 0;
+
     audioState.playing = 1;
     audioState.tempo = tempo;
     audioState.loop = loop;
@@ -95,6 +97,7 @@ void resume_audio() {
     if(audioState.playing || audioState.notes == 0) return;
 
     audioState.playing = 1;
+    milliseconds_delayed = 0;
 
     audioState.current_note_start = milliseconds_elapsed();
     play_sound_wrapper(CURRENT_NOTE()->freq);
@@ -118,6 +121,24 @@ void load_audio_state(AudioState state) {
 
 int is_audio_playing() {
     return audioState.playing;
+}
+
+int get_milliseconds_delayed() {
+    return milliseconds_delayed;
+}
+
+uint64_t get_tempo() {
+    return audioState.tempo;
+}
+
+void set_tempo(uint64_t tempo) {
+    audioState.tempo = tempo;
+}
+
+// negative values to decrease tempo
+void inc_tempo(int amount) {
+    if(audioState.tempo + amount > 0)
+        audioState.tempo += amount;
 }
 
 // ============================================
