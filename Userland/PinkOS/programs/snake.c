@@ -80,11 +80,6 @@ void snake_main(unsigned char *args) {
     if (args[0] == '2') num_players = 2;
     
 
-
-
-    
-
-
     init();
     last_draw_time = getMillisElapsed();
     
@@ -298,6 +293,7 @@ Point getNewTail(Snake *snake) {
     int min = 1000000;
     for (int i = 0; i < 4; i++) {
         Point new_pos = getNewPosition(old_tail, i);
+        if(!IN_BOUNDS(new_pos.x, new_pos.y)) continue;
         if (BOARD(new_pos.x, new_pos.y) != 0 && BOARD(new_pos.x, new_pos.y) % 2 != snake->type && BOARD(new_pos.x, new_pos.y) < min && BOARD(new_pos.x, new_pos.y) != FOOD) {
             min = BOARD(new_pos.x, new_pos.y);
             new_tail = new_pos;
