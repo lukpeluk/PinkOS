@@ -41,4 +41,6 @@ void easter_egg_main(unsigned char *args);
 void pietra_main(unsigned char *args);
 void test_ascii_main(unsigned char *args);
 
+void demo_main(unsigned char *args);
+
 #endif

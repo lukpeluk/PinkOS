@@ -147,7 +147,15 @@ static Program programs[] = {
         0,
         "Tests all ascii chars in stdout in a loop.",
         "Usage: ascii\nTest ascii v1\n Tests all ascii chars in stdout in a loop."
-    }
+    },
+    {
+        "demo",
+        "Demo",
+        demo_main,
+        DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION, // | 0b10000000000000000000000000000000 ,
+        "Demo program for showcasing permissions",
+        "usage: demo \nDemo v1 \n Use this program to showcase the permission system of PinkOS in the demonstration."
+    }, 
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
     // {"reboot", "reboot", 0, 0, "usage: reboot", "reboot v1 \n use this program to reboot the system"},
