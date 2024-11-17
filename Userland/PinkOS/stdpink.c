@@ -52,6 +52,15 @@ void strcpy(unsigned char * dest, unsigned char * src) {
     *dest = 0;
 }
 
+uint32_t strlen(unsigned char * string) {
+    int len = 0;
+    while (*string) {
+        len++;
+        string++;
+    }
+    return len;
+}
+
 void printf(unsigned char * format, ...) {
     va_list args;
     va_start(args, format);

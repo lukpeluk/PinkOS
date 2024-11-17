@@ -12,6 +12,7 @@
 #include <audioLib.h>
 #include <pictures.h>
 #include <colors.h>
+#include <homeScreen.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index, array_size) index = (index + 1) % array_size;
@@ -31,7 +32,6 @@ static struct PreviousAudioState{
 	AudioState state;
 } previousAudioState = {0};
 
-static int show_home_screen = 1;
 
 typedef struct
 {
@@ -823,51 +823,6 @@ void idle(unsigned char *message)
 	}
 }
 
-void home_screen_exit_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
-{
-	show_home_screen = 0;
-}
-
-void home_screen()
-{
-
-	syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, home_screen_exit_handler, 0, 0, 0);
-
-	Point position = {0};
-	int scale = 12;
-
-	int screen_width = getScreenWidth();
-	int screen_height = getScreenHeight();
-
-	position.x = (screen_width - MONA_LISA_WIDTH * scale) / 2;
-	position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
-
-	drawBitmap(mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
-
-	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
-	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
-
-	// center the text
-	position.x = 0;
-	position.y = 400;
-
-	drawRectangle(PinkOSColors.background, screen_width, 140, position);
-	position.x += 50;
-	position.y += 25;
-	syscall(DRAW_STRING_AT_SYSCALL, "Welcome to PinkOS!", PinkOSColors.text, PinkOSColors.background, &position, 0);
-
-	position.y += 50;
-
-	syscall(DRAW_STRING_AT_SYSCALL, "Press any key to continue", PinkOSColors.text, PinkOSColors.background, &position, 0);
-
-	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
-	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
-
-	while (show_home_screen)
-	{
-		_hlt();
-	}
-}
 
 int main()
 {

@@ -7,6 +7,8 @@
 
 void strcpy(unsigned char * dest, unsigned char * src);
 
+uint32_t strlen(unsigned char * string);
+
 /*
  * Prints a string to the console
  * @param string the string to print
