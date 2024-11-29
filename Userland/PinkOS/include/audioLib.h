@@ -95,8 +95,8 @@
 
 
 typedef struct Note{
-    uint64_t freq;      // 0 for a rest
-    int duration;       // represents the duration of the note (1 for whole note, 2 for half note, 4 for quarter note, etc)
+    uint16_t freq;      // 0 for a rest
+    int8_t duration;       // represents the duration of the note (1 for whole note, 2 for half note, 4 for quarter note, etc)
                         // negative values represent dotted notes (e.g. -4 for a dotted quarter note)
                         // the duration is relative to the tempo of the song
     uint8_t ligated;     // 1 if the note is ligated with the next one, 0 otherwise
