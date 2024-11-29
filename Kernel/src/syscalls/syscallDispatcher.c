@@ -8,6 +8,7 @@
 #include <drivers/keyboardDriver.h>
 #include <drivers/rtcDriver.h>
 #include <drivers/audioDriver.h>
+#include <drivers/serialDriver.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
@@ -16,6 +17,7 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
 void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+void serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
 void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     if(syscall < 1000)
@@ -30,6 +32,8 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
         keyboardDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1500)
         audioDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+    else if(syscall < 1600)
+        serialDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else
         return;
 }
@@ -277,3 +281,15 @@ void audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
     }
 }
 
+// --- SERIAL DRIVER SYSCALLS ---
+void serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+    switch (syscall)
+    {
+        case MAKE_ETHEREAL_REQUEST_SYSCALL:
+            VALIDATE_PERMISSIONS(MAKE_ETHEREAL_REQUEST_PERMISSION);
+            make_ethereal_request((unsigned char *)arg1, (EtherPinkResponse *)arg2);
+            break;
+        default:
+            break;
+    }
+}

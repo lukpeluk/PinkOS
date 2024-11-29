@@ -1,6 +1,6 @@
 section .text
 
-GLOBAL init_serial, test_serial, int_23
+GLOBAL init_serial, test_serial, read_serial, write_serial
 
 ; Serial port initialization routine
 init_serial:
@@ -35,20 +35,21 @@ init_serial:
 
 
 ; Define the handler for IRQ3 (COM1)
-int_23:
-    ; Acknowledge interrupt by sending EOI (End of Interrupt)
-    mov al, 0x20
-    out 0x20, al   ; Send EOI to the Master PIC
-    
+; Returns
+read_serial:
+    xor rax, rax
     ; Handle received data from COM1
     mov dx, 0x3F8  ; COM1 Data Register
     in al, dx      ; Read the received byte into AL
-    ; You can store or process the received byte here
-    ; For example, just echoing it back to the serial port:
-    mov dx, 0x3F8  ; COM1 Data Register
-    out dx, al     ; Send received byte back
+    
+    ret
 
-    ; Return from interrupt (interrupt is acknowledged)
+; Write a byte to the serial port, received in RDI
+write_serial:
+    mov dx, 0x3F8  ; COM1 Data Register
+    mov al, dil    ; Character to send
+    out dx, al     ; Send the character to the serial port
+     
     ret
 
 

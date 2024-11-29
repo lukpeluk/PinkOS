@@ -69,4 +69,7 @@
 
 #define IS_AUDIO_PLAYING_SYSCALL 1430
 
+// 1500 - 1599 reserved for SERIAL DRIVER syscalls
+#define MAKE_ETHEREAL_REQUEST_SYSCALL 1500
+
 #endif

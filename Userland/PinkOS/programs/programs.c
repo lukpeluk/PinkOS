@@ -156,6 +156,15 @@ static Program programs[] = {
         "Demo program for showcasing permissions",
         "usage: demo \nDemo v1 \n Use this program to showcase the permission system of PinkOS in the demonstration."
     }, 
+    {
+        "whatsapp",
+        "Whatsapp",
+        whatsapp_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION,
+        "Mandate mensajitos con el puerto serial",
+        "usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
+    },
+    
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
     // {"reboot", "reboot", 0, 0, "usage: reboot", "reboot v1 \n use this program to reboot the system"},
