@@ -126,6 +126,11 @@ unsigned char getChar(){
     return (unsigned char)get_char_from_stdin();
 }
 
+void clearStdinBuffer(){
+    clear_stdin();
+}
+
+
 //TODO: arreglar el scanf
 void scanf(unsigned char * format, ...){
     va_list args;

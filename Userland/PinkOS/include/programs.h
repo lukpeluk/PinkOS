@@ -42,5 +42,6 @@ void pietra_main(unsigned char *args);
 void test_ascii_main(unsigned char *args);
 void demo_main(unsigned char *args);
 void whatsapp_main(unsigned char *args);
+void francis_main(unsigned char *args);
 
 #endif

@@ -17,7 +17,7 @@ void whatsapp_main(unsigned char * args){
 
         int i = 0;
         do{
-            c = get_char_from_stdin();
+            c = getChar();
             if(i < BUFFER_SIZE - 1 && c){
                 buffer[i] = c;
                 i++;
@@ -26,7 +26,7 @@ void whatsapp_main(unsigned char * args){
         
         buffer[i] = 0;
         make_ethereal_request(buffer, &response);
-        print(buffer);
+        // print(buffer);
 
         while(response.code == 0){
             // wait for response

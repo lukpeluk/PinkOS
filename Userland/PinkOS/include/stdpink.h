@@ -36,6 +36,11 @@ void putChar(unsigned char c);
 unsigned char getChar();
 
 /*
+ * Clears the stdin buffer so that future reads are not yelding previously inserted chars
+*/
+void clearStdinBuffer();
+
+/*
  * Reads from the console strings
  * and numbers given a certain format
  * @param format the format of the string

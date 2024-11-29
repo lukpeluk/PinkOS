@@ -12,7 +12,7 @@ void process_serial(unsigned char c){
         current++;
         clientResponse->size++;
 
-        if(c == '\n'){
+        if( clientResponse->size == 300*300*4){
             current = 0;
             clientResponse->code = 1;
             clientResponse->type = 1;
@@ -34,5 +34,8 @@ void make_ethereal_request(unsigned char * request, EtherPinkResponse * response
     while(*request){
         write_serial(*request);
         request++;
-    }    
+    } 
+    // while(clientResponse){
+    //     process_serial(read_serial());
+    // }   
 }

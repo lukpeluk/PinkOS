@@ -164,6 +164,14 @@ static Program programs[] = {
         "Mandate mensajitos con el puerto serial",
         "usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
     },
+    {
+        "francis",
+        "Francis",
+        francis_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
+        "LO AMO",
+        "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
+    },
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
