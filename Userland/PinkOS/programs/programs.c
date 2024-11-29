@@ -172,6 +172,14 @@ static Program programs[] = {
         "LO AMO",
         "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
     },
+    {
+        "pietra",
+        "Pietra",
+        pietra_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
+        "Dibujar un bitmap",
+        "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
+    },
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},

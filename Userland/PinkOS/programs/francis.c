@@ -8,8 +8,6 @@
 #define FRANCIS_WIDTH 300
 #define FRANCIS_HEIGHT 300
 
-#define MAGIC_NUMBER "FRAN"
-
 uint64_t memcmp(const void *s1, const void *s2, uint64_t n) {
     const unsigned char *p1 = s1, *p2 = s2;
     while (n--) {
