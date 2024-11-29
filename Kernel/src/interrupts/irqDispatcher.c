@@ -22,7 +22,6 @@ void irqDispatcher(uint64_t irq) {
 			int_28();
 			break;
 		case 3:
-			drawString("godeee", 0xffffff, 0);
 			int_23();
 			break;
 

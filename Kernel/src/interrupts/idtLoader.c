@@ -66,7 +66,7 @@ void load_idt() {
 
 
 	
-	picMasterMask(11110000); 
+	picMasterMask(11100000); 
 	picSlaveMask(0xFE);
 
 	_sti();

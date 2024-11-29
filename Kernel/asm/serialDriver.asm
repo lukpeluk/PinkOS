@@ -49,7 +49,7 @@ int_23:
     out dx, al     ; Send received byte back
 
     ; Return from interrupt (interrupt is acknowledged)
-    iret
+    ret
 
 
 test_serial:
