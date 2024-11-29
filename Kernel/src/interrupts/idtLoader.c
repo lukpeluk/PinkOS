@@ -60,6 +60,11 @@ void load_idt() {
 	setup_IDT_entry (0x21, (uint64_t)&_irq01Handler);
   setup_IDT_entry (0x28, (uint64_t)&_irq08Handler);
 	setup_IDT_entry (0x80, (uint64_t)&_irq80Handler);
+
+  setup_IDT_entry(0x23, (uint64_t)&_irq03Handler); // IRQ3 is for COM1, para el serial
+  setup_IDT_entry(0x24, (uint64_t)&_irq03Handler); // IRQ3 is for COM1, para el serial
+
+
 	
 	picMasterMask(11110000); 
 	picSlaveMask(0xFE);

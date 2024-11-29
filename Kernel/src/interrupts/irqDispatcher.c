@@ -3,6 +3,7 @@
 #include <naiveConsole.h>
 #include <interrupts/keyboardInterrupt.h>
 #include <drivers/videoDriver.h>
+#include <drivers/serialDriver.h>
 
 static void int_20();
 static void int_28();
@@ -20,6 +21,11 @@ void irqDispatcher(uint64_t irq) {
 		case 8:
 			int_28();
 			break;
+		case 3:
+			drawString("godeee", 0xffffff, 0);
+			int_23();
+			break;
+
 		case 80:
 			// las syscals no se gestionan acá, tienen un handler distinto en interrupts.asm
 			// esto es para poder pasar los argumentos directo a syscallHandler

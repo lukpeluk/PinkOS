@@ -7,6 +7,7 @@
 
 #include <drivers/videoDriver.h>
 #include <drivers/rtcDriver.h>
+#include <drivers/serialDriver.h>
 #include <drivers/pitDriver.h>
 #include <drivers/audioDriver.h>
 
@@ -266,12 +267,19 @@ void testAudio(){
     sleep(5000);
 }
 
+// void testSerial(){
+
+// }
+
 int main()
 {	
 	initProcessState();
 	init_rtc();
 	set_timezone(-3);
 	load_idt();
+    init_serial();
+
+    test_serial();
 
 	// testScreen();
 	// testAudio();
