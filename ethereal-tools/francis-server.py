@@ -1,6 +1,7 @@
 import socket
 import requests
 import json
+import struct
 
 # Prompt constante o inicial
 CONSTANT_PROMPT = "No uses emojis, por favor responde únicamente con texto en ASCII reducido. Sé conciso."
@@ -24,7 +25,14 @@ def send_to_google_api(user_prompt):
         }
         response = requests.post(f"{API_URL}?key={API_KEY}", headers=headers, data=json.dumps(data))
         response.raise_for_status()  # Lanza un error si la respuesta no es 2xx
-        return response.json().get("contents", [{}])[0].get("parts", [{}])[0].get("text", "Sin respuesta de la API.")
+        print(f"API response: {response.json()}")
+        text =  response.json().get("candidates", [])[0].get("content", {}).get("parts", [])[0].get("text", "") 
+        # Convert tildes ands special characters (without extended ASCII)
+        text = text.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+        text = text.replace("Á", "A").replace("É", "E").replace("Í", "I").replace("Ó", "O").replace("Ú", "U")
+        text = text.replace("ñ", "n").replace("Ñ", "N").replace("ü", "u").replace("Ü", "U")
+        text = ''.join([c for c in text if ord(c) < 128])
+        return text
     except Exception as e:
         return f"Error al comunicarse con la API: {str(e)}"
 
@@ -62,6 +70,10 @@ def main():
                         try:
                             with open("./ethereal-tools/francis.bin", "rb") as f:
                                 data = f.read()
+                                length = len(data)
+                                # header = 0x00 01 00 00 00 05 7E 40 (but remember to convert to 64-bit little-endian)
+                                header = struct.pack("<Q", 0x00010000057E40) + length.to_bytes(4, byteorder='big')
+                                client_socket.sendall(header)
                                 client_socket.sendall(data)
                                 print("Enviado francis.bin")
                         except FileNotFoundError:
@@ -75,6 +87,9 @@ def main():
                         try:
                             with open("./ethereal-tools/pietra.bin", "rb") as f:
                                 data = f.read()
+                                length = len(data)
+                                header = b'\x00\x00\x01\x00\x00\x00\x00\x00' + length.to_bytes(4, byteorder='big')
+                                client_socket.sendall(header)
                                 client_socket.sendall(data)
                                 print("Enviado pietra.bin")
                         except FileNotFoundError:
@@ -84,10 +99,16 @@ def main():
 
                     # Manejar comandos con prefijo "chatgpt"
                     if line.startswith("chatgpt "):
+                        # 16 bits del codigo de respuesta, 8 bits del tipo del contenido, 8 bits del tipo de respuesta y 32 bits del tamaño del contenido
                         user_prompt = line[len("chatgpt "):].strip()
                         print(f"Enviando a la API: {user_prompt}")
                         api_response = send_to_google_api(user_prompt)
+                        # length = len(api_response)
+                        # header = b'\x00\x00\x00\x00' + bytes([0, 0, 0, 0]) + length.to_bytes(4, byteorder='big')
+                        # client_socket.sendall(header)
                         client_socket.sendall(f"{api_response}\n".encode('utf-8'))
+                        # Send \0
+                        client_socket.sendall(b'\x00')
                         print(f"Respuesta de la API enviada: {api_response}")
                         continue
 

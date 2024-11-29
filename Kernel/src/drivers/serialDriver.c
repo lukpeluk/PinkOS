@@ -1,21 +1,23 @@
 #include <drivers/serialDriver.h>
+#include <drivers/videoDriver.h>
 
 #define RAW_DATA_ADDRESS 0x600000
 #define MAX_RAW_DATA_ADDRESS 0xFFFFFF // para pensar
 
 static EtherPinkResponse * clientResponse;
 static unsigned char * current = 0;
+static uint32_t total_size = -1;
 
 void process_serial(unsigned char c){
     if(current && clientResponse){
         *current = c;
         current++;
         clientResponse->size++;
+        // process_header();
 
-        if( clientResponse->size == 640*640*4){
+        if( c == 0 ){
             current = 0;
-            clientResponse->code = 1;
-            clientResponse->type = 1;
+            clientResponse->code = SUCCESS;
             clientResponse->raw_data = (unsigned char *)RAW_DATA_ADDRESS;
             clientResponse = 0;
             // process response
@@ -41,7 +43,11 @@ void make_ethereal_request(unsigned char * request, EtherPinkResponse * response
 }
 
 void process_header(){
-    while (clientResponse->size < 8){
-        process_serial(read_serial());
+    if(clientResponse->size > HEADER_SIZE && clientResponse->code == NO_DATA_YET){
+        clientResponse->code = LOADING;
+        clientResponse->type = *(uint8_t*)(RAW_DATA_ADDRESS + 16);
+        clientResponse->size = 0;
+        total_size = *(uint32_t*)(RAW_DATA_ADDRESS + 32);
+        current = RAW_DATA_ADDRESS; 
     }
 }

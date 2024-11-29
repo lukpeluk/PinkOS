@@ -27,7 +27,7 @@ void francis_main(unsigned char * args){
   
     make_ethereal_request("francis\n", &response);
 
-    while(response.code == 0){
+    while(response.code != 2){
         // wait for response
         sleep(100);
     }

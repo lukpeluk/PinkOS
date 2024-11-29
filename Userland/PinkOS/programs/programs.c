@@ -180,6 +180,14 @@ static Program programs[] = {
         "Dibujar un bitmap",
         "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
     },
+    {
+        "chatgpt",
+        "ChatGPT",
+        chatgpt_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION,
+        "Chat with GPT-3",
+        "usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
+    }
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
