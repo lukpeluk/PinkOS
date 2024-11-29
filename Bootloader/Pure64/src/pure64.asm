@@ -584,9 +584,9 @@ nextIOAPIC:
 	call os_print_string
 
 ; Move the trailing binary to its final location
-	mov rsi, 0x60000+6144		; Memory offset to end of pure64.sys
+	mov rsi, 0x50000+6144		; Memory offset to end of pure64.sys
 	mov rdi, 0x100000		; Destination address at the 1MiB mark
-	mov rcx, 0x8000			; For up to 256KiB kernel (262144 / 8)
+	mov rcx, 0xF000			; For up to 256KiB kernel (262144 / 8)
 	rep movsq			; Copy 8 bytes at a time
 
 ; Print a message that the kernel is being started

@@ -28,7 +28,7 @@ entry:
 	mov si, msg_Load
 	call print_string_16
 
-	mov eax, 512		; Number of sectors to load. 512 sectors = 262144 bytes = 256 KiB
+	mov eax, 1024		; Number of sectors to load. 512 sectors = 262144 bytes = 256 KiB
 	mov ebx, 16			; Start immediately after directory (offset 8192)
 	mov cx, 0x8000		; Pure64 expects to be loaded at 0x8000
 
@@ -43,7 +43,7 @@ load_nextsector:
 	jne magic_fail
 
 	mov ax, 0x0800		; Segment where the bootloader and payload are loaded
-	mov cx, 0x6000		; Segment where the bootloader and payload will be copied
+	mov cx, 0x5000		; Segment where the bootloader and payload will be copied
 
 copy_payload_to_free_mem:	; Move bootloader and payload to 0x60000
 	mov fs, ax				; From segment
