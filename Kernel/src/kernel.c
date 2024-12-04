@@ -53,9 +53,23 @@ void * initializeKernelBinary()
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
 
+    ncPrint("all modules loaded, clearing bss\n");
+
+    ncPrint("bssAddress: ");
+    ncPrintHex((uint64_t)bss);
+    ncPrint("   bssSize: ");
+    ncPrintHex((uint64_t)(&endOfKernel - &bss));
+    ncPrint("   endOfKernel: ");
+    ncPrintHex((uint64_t)&endOfKernel);
+
+
 	clearBSS(&bss, &endOfKernel - &bss);
 
+    ncPrint("\nbss cleared, getting stackbase\n");
+
 	void * stackBase = getStackBase();
+
+    ncPrint("stack set\n");
 
 	return stackBase;
 }
@@ -273,16 +287,21 @@ void testAudio(){
 
 int main()
 {	
+    // ncClear();
+    ncPrint("se llego al main\n");
+
 	initProcessState();
 	init_rtc();
 	set_timezone(-3);
 	load_idt();
     init_serial();
 
-    test_serial();
+    // test_serial();
 
 	// testScreen();
 	// testAudio();
+
+    ncPrint("ya se termino todo lo de kernel, yendo a userspace\n");
 
     ((EntryPoint)PinkOSAddress)();
 
