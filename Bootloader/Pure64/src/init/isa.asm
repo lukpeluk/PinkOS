@@ -125,7 +125,7 @@ rtc_poll:
 	; 0x4115 is 800x600x24bit, 0x412E should be 32bit
 	; 0x4118 is 1024x768x24bit, 0x4138 should be 32bit
 	; 0x411B is 1280x1024x24bit, 0x413D should be 32bit
-	mov cx, 0x411B			; Put your desired mode here
+	mov cx, 0x4118			; Put your desired mode here
 	mov bx, cx			; Mode is saved to BX for the set command later
 	int 0x10
 
