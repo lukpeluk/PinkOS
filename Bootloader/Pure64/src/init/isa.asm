@@ -118,6 +118,36 @@ rtc_poll:
 	cmp byte [cfg_vesa], 1		; Check if VESA should be enabled
 	jne VBEdone			; If not then skip VESA init
 
+;	;;; Esto es debugging para bootear en hardware real
+;
+;  	; Check VESA support
+;    mov ax, 0x4F00           ; VESA Function: Return Controller Information
+;    int 0x10
+;    cmp ax, 0x004F           ; Check if VESA is supported
+;    jne not_vesa
+;
+;    ; Log VESA supported
+;    mov si, vesa_supported_msg
+;    call print_str
+;
+;    ; Check if the mode is supported
+;    mov ax, 0x4F02           ; VESA Function: Set SuperVGA Video Mode
+;    mov bx, 0x4118           ; Example mode: 1024x768x24-bit
+;
+;	; mov bx, 0x4200 ; likely unsupported
+;
+;    int 0x10
+;    cmp ax, 0x004F           ; Check if the mode is supported
+;    jne mode_not_supported
+;
+;    ; Log mode supported
+;    mov si, mode_supported_msg
+;    call print_str
+;    jmp VBEdone
+;
+;	;;; Fin del debugging para bootear en hardware real
+
+
 	mov edi, VBEModeInfoBlock	; VBE data will be stored at this address
 	mov ax, 0x4F01			; GET SuperVGA MODE INFORMATION - http://www.ctyme.com/intr/rb-0274.htm
 	; CX queries the mode, it should be in the form 0x41XX as bit 14 is set for LFB and bit 8 is set for VESA mode
@@ -125,7 +155,9 @@ rtc_poll:
 	; 0x4115 is 800x600x24bit, 0x412E should be 32bit
 	; 0x4118 is 1024x768x24bit, 0x4138 should be 32bit
 	; 0x411B is 1280x1024x24bit, 0x413D should be 32bit
+	
 	mov cx, 0x4118			; Put your desired mode here
+
 	mov bx, cx			; Mode is saved to BX for the set command later
 	int 0x10
 
@@ -144,10 +176,46 @@ VBEfail:
 	mov si, msg_novesa
 	call print_string_16
 	mov byte [cfg_vesa], 0		; Clear the VESA config as it was not successful
+	.halt
+		cli
+		hlt
+		jmp .halt
 
 VBEdone:
 
 ret
+
+; not_vesa:
+;     mov si, vesa_not_supported_msg
+;     call print_str
+;     jmp VBEdone
+; 
+; mode_not_supported:
+;     mov si, mode_not_supported_msg
+;     call print_str
+; 	jmp VBEdone
+; 
+; 
+; ; Use SI for the string pointer, used for debugging, works in text mode
+; print_str:
+;     ; SI is expected to point to the string to print
+; .print_char:
+;     lodsb                   ; Load the next character from [SI] into AL
+;     or al, al               ; Check if AL is null (end of string)
+;     jz .done
+;     mov ah, 0x0E            ; BIOS teletype function
+;     int 0x10                ; Print character in AL
+;     jmp .print_char
+; .done:
+;     ret
+; 
+; ; debugging messages
+; section .data
+; 	vesa_not_supported_msg db "VESA not supported", 0
+; 	vesa_supported_msg db "VESA supported", 0
+; 	mode_not_supported_msg db "Mode not supported", 0
+; 	mode_supported_msg db "Mode supportedddddd", 0
+; 
 
 
 ; =============================================================================
