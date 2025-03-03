@@ -18,7 +18,7 @@ void test(unsigned char event_type, int hold_times, unsigned char ascii, unsigne
 
 void demo_main(unsigned char * args){
     // System reserved tasks
-    syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, test, 0);
+    syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, (uint64_t)test, 0);
 
     // CLI
     clear();
@@ -27,7 +27,7 @@ void demo_main(unsigned char * args){
 
     // GUI
     syscall(CLEAR_SCREEN_SYSCALL, 0, 0, 0);
-    syscall(DRAW_STRING_SYSCALL, "Welcome to PinkOS demo directly from a syscall!", 0xffffff, 0x000000);
+    syscall(DRAW_STRING_SYSCALL, (uint64_t) "Welcome to PinkOS demo directly from a syscall!", 0xffffff, 0x000000);
 
 
     // Audio

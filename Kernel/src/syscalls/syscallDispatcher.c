@@ -89,7 +89,7 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             break;
         case DRAW_STRING_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawString(arg1, arg2, arg3);
+            drawString((unsigned char *)arg1, arg2, arg3);
             break;
         case DRAW_CHAR_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);

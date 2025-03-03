@@ -8,7 +8,7 @@ static uint32_t randmon_seed = 0;
 static unsigned char * invalid_format_message = "Invalid format, use %s for a string or %d for a int\n";
 
 void print(unsigned char * string){
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
+    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -63,17 +63,17 @@ void printf(unsigned char * format, ...) {
             switch (*str) {
                 case 'd': {
                     int num = va_arg(args, int);
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, num_to_string(num), 0, 0, 0);
+                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)num_to_string(num), 0, 0, 0);
                     break;
                 }
                 case 's': {
                     unsigned char *string = va_arg(args, unsigned char *);
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
+                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
                     break;
                 }
                 case 'c': {
-                    unsigned char c = va_arg(args, int);
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, c, 0, 0, 0);
+                    unsigned char c = (unsigned char)va_arg(args, int);
+                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)c, 0, 0, 0);
                     break;
                 }
                 case '0' ... '9': {
@@ -88,24 +88,24 @@ void printf(unsigned char * format, ...) {
                         while (string[len] != '\0') {
                             len++;
                         }
-                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
+                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
                         for (int i = 0; i < width - len; i++) {
-                            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, ' ', 0, 0, 0);
+                            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)' ', 0, 0, 0);
                         }
                     } else {
-                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, invalid_format_message, 0, 0, 0);
+                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)invalid_format_message, 0, 0, 0);
                         va_end(args);
                         return;
                     }
                     break;
                 }
                 default:
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, invalid_format_message, 0, 0, 0);                
+                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)invalid_format_message, 0, 0, 0);                
                     va_end(args);
                     return;
             }
         } else {
-            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, *str, 0, 0, 0);
+            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)*str, 0, 0, 0);
         }
         str++;
     }
@@ -114,12 +114,12 @@ void printf(unsigned char * format, ...) {
 }
 
 void putChar(unsigned char c){
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, c, 0, 0, 0);
+    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)c, 0, 0, 0);
 }
 
 void puts(unsigned char * string){
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, string, 0, 0, 0);
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, '\n', 0, 0, 0);
+    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
+    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)'\n', 0, 0, 0);
 }
 
 unsigned char getChar(){
@@ -171,7 +171,7 @@ void scanf(unsigned char * format, ...){
                     break;
                 }
                 default:
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, invalid_format_message, 0, 0, 0);
+                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)invalid_format_message, 0, 0, 0);
                     va_end(args);
                     return;
             }
@@ -200,7 +200,7 @@ void sleep(uint64_t millis){
 
 uint64_t getMillisElapsed(){
     uint64_t millis;
-    syscall(GET_MILLIS_ELAPSED_SYSCALL, &millis, 0, 0, 0, 0);
+    syscall(GET_MILLIS_ELAPSED_SYSCALL, (uint64_t)&millis, 0, 0, 0, 0);
     return millis;
 }
 

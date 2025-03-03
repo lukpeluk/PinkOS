@@ -5,6 +5,6 @@
 
 KeyboardEvent getKeyboardEvent(){
     KeyboardEvent event;
-    syscall(GET_KEY_EVENT_SYSCALL, &event, 0, 0, 0, 0);
+    syscall(GET_KEY_EVENT_SYSCALL, (uint64_t)&event, 0, 0, 0, 0);
     return event;
 }

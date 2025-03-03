@@ -50,7 +50,7 @@ InterruptStackFrame getDefaultCRI() {
 void initProcessState() {
     processState.rootMode = ACTIVATE_ROOT_MODE;
     processState.permissions = ROOT_PERMISSIONS;
-    processState.currentProcess = SYSTEM_PROCESS;
+    processState.currentProcess = (unsigned char *)SYSTEM_PROCESS;
     processState.systemStackBase = 0;
 }
 

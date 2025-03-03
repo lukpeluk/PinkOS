@@ -11,7 +11,7 @@ void parrot_main(unsigned char * args){
     unsigned char c;
 
     while (1){
-        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, " - ", 0, 0, 0);
+        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) " - ", 0, 0, 0);
 
         int i = 0;
         do{
@@ -23,6 +23,6 @@ void parrot_main(unsigned char * args){
         } while(c != '\n');
         
         buffer[i] = 0;
-        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, buffer, 0, 0, 0);
+        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) buffer, 0, 0, 0);
     }
 }

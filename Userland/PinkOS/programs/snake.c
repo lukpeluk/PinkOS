@@ -174,33 +174,33 @@ void drawScores() {
     Point info_player_2 = {space_for_scores, 200};
 
 
-    drawString("Player 1", 0xFFFFFF, 0x000000, info_player_1);
-    drawString("Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_1.y + 50});
+    drawString((unsigned char *)"Player 1", 0xFFFFFF, 0x000000, info_player_1);
+    drawString((unsigned char *)"Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_1.y + 50});
     drawNumber(snakes[0].score, 0xFFFFFF, 0x000000, (Point){space_for_scores + 7 * char_width, info_player_1.y + 50});
 
     if (num_players == 1) {
         if (snakes[0].death) {
             incFontSize();
-            drawString("GAME OVER", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
+            drawString((unsigned char *)"GAME OVER", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
         }
         return;
     }
-    drawString("Player 2", 0xFFFFFF, 0x000000, info_player_2);
-    drawString("Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_2.y + 50});
+    drawString((unsigned char *)"Player 2", 0xFFFFFF, 0x000000, info_player_2);
+    drawString((unsigned char *)"Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_2.y + 50});
     drawNumber(snakes[1].score, 0xFFFFFF, 0x000000, (Point){space_for_scores + 7 * char_width, info_player_2.y + 50});
     
     char is_both_dead = snakes[0].death && snakes[1].death;
     if (is_both_dead) {
         incFontSize();
-        drawString("DRAW", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
+        drawString((unsigned char *)"DRAW", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
         return;
     }else if(snakes[0].death){
         incFontSize();
-        drawString("SNAKE 2 WINS", 0xFF0000, 0x000000, (Point){space_for_scores, 10});
+        drawString((unsigned char *)"SNAKE 2 WINS", 0xFF0000, 0x000000, (Point){space_for_scores, 10});
         return;
     }else if(snakes[1].death){
         incFontSize();
-        drawString("SNAKE 1 WINS", 0x00FF00, 0x000000, (Point){space_for_scores, 10});
+        drawString((unsigned char *)"SNAKE 1 WINS", 0x00FF00, 0x000000, (Point){space_for_scores, 10});
         return;
     }
     

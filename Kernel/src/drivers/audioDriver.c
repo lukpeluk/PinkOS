@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <drivers/audioDriver.h>
 #include <drivers/videoDriver.h>
+#include <drivers/pitDriver.h>
 
 #define CURRENT_NOTE() audioState.notes[audioState.current_note]
 #define NOTE_STILL_PLAYING() (audioState.current_note_duration + audioState.current_note_start > milliseconds_elapsed())
@@ -10,6 +11,8 @@
 
 extern void play_sound(uint32_t nFrequence);
 extern void stop_sound();
+
+void play_sound_wrapper(uint64_t freq);
 
 static AudioState audioState = {0};
 static int milliseconds_delayed = 0;
