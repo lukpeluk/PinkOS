@@ -32,7 +32,7 @@ void make_ethereal_request(unsigned char * request, EtherPinkResponse * response
     clientResponse->size = 0;
     clientResponse->raw_data = 0;
 
-    current = RAW_DATA_ADDRESS;
+    current = (unsigned char *) RAW_DATA_ADDRESS;
     while(*request){
         write_serial(*request);
         request++;
@@ -48,6 +48,6 @@ void process_header(){
         clientResponse->type = *(uint8_t*)(RAW_DATA_ADDRESS + 16);
         clientResponse->size = 0;
         total_size = *(uint32_t*)(RAW_DATA_ADDRESS + 32);
-        current = RAW_DATA_ADDRESS; 
+        current = (unsigned char *) RAW_DATA_ADDRESS; 
     }
 }

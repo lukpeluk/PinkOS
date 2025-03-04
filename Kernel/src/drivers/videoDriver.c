@@ -44,18 +44,18 @@ typedef struct vbe_mode_info_structure * VBEInfoPtr;
 
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
 static Font font = ibm_bios_font;
-static font_size = 2;
+static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
-	if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
-		return;
-	}
-	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
-	uint64_t offset = (x * ((VBE_mode_info->bpp)/8)) + (y * VBE_mode_info->pitch);
-	framebuffer[offset]     =  (hexColor) & 0xFF;
-	framebuffer[offset+1]   =  (hexColor >> 8) & 0xFF; 
-	framebuffer[offset+2]   =  (hexColor >> 16) & 0xFF;
+    if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
+        return;
+    }
+    uint8_t * framebuffer = (uint8_t *)(uintptr_t) VBE_mode_info->framebuffer;
+    uint64_t offset = (x * ((VBE_mode_info->bpp)/8)) + (y * VBE_mode_info->pitch);
+    framebuffer[offset]     =  (hexColor) & 0xFF;
+    framebuffer[offset+1]   =  (hexColor >> 8) & 0xFF; 
+    framebuffer[offset+2]   =  (hexColor >> 16) & 0xFF;
 }
 
 // BASIC SHAPES
@@ -330,22 +330,22 @@ uint64_t getCharHeight(){
 // GENERAL
 
 void clearScreen(uint32_t bgColor){
-	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
-	uint64_t offset = 0;
+    uint8_t * framebuffer = (uint8_t *)(uintptr_t) VBE_mode_info->framebuffer;
+    uint64_t offset = 0;
 
-	uint8_t channel1 = (bgColor) & 0xFF;
-	uint8_t channel2 = (bgColor >> 8) & 0xFF;
-	uint8_t channel3 = (bgColor >> 16) & 0xFF;
+    uint8_t channel1 = (bgColor) & 0xFF;
+    uint8_t channel2 = (bgColor >> 8) & 0xFF;
+    uint8_t channel3 = (bgColor >> 16) & 0xFF;
 
     for(uint32_t i = 0; i < VBE_mode_info->height; i++){
-		offset = (i * VBE_mode_info->pitch);
+        offset = (i * VBE_mode_info->pitch);
 
         for(uint32_t j = 0; j < VBE_mode_info->width; j++){
-            // putPixel(bgColor, j, i);
-			framebuffer[offset] = channel1;
-			framebuffer[offset+1] = channel2;
-			framebuffer[offset+2] = channel3;
-			offset += 3;
+			// putPixel(bgColor, j, i);
+            framebuffer[offset] = channel1;
+            framebuffer[offset+1] = channel2;
+            framebuffer[offset+2] = channel3;
+            offset += 3;
         }
     }
 

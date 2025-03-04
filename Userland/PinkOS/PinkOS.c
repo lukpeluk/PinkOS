@@ -93,6 +93,8 @@ int stdin_write_position = 0;
 int stdin_read_position = 0;
 
 void draw_status_bar();
+void newPrompt();
+void idle(unsigned char *message);
 
 unsigned char get_char_from_stdin()
 {
@@ -200,6 +202,7 @@ int save_str_to_buffer(unsigned char *string)
 	{
 		save_char_to_buffer(string[i]);
 	}
+	return 0;
 }
 
 int save_number_to_buffer(uint64_t number)
@@ -224,6 +227,7 @@ int save_number_to_buffer(uint64_t number)
 	{
 		save_char_to_buffer(buffer[j]);
 	}
+	return 0;
 }
 
 void reset_markup(){
@@ -449,7 +453,7 @@ void execute_program(int input_line)
 	if (program == 0)
 	{
 		// "Command not found"
-		add_str_to_stdout(command_not_found_msg);
+		add_str_to_stdout((unsigned char *)command_not_found_msg);
 		newPrompt();
 	}
 	// if the program is found, execute it
@@ -643,63 +647,63 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 	// TODO: capaz hacer función add_warning_to_stdout o algo así para no poner >! en todos lados
 
 	// TODO: Implementar Pantallazo Rosa
-	add_str_to_stdout(">!Exception: ");
+	add_str_to_stdout((unsigned char *)">!Exception: ");
 	add_number_to_stdout(exception_id);
 	add_char_to_stdout('\n');
 
 	// print the backup registers
-	add_str_to_stdout(">!rax: ");
+	add_str_to_stdout((unsigned char *)">!rax: ");
 	add_number_to_stdout(backup_registers->registers.rax);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rbx: ");
+	add_str_to_stdout((unsigned char *)">!rbx: ");
 	add_number_to_stdout(backup_registers->registers.rbx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rcx: ");
+	add_str_to_stdout((unsigned char *)">!rcx: ");
 	add_number_to_stdout(backup_registers->registers.rcx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rdx: ");
+	add_str_to_stdout((unsigned char *)">!rdx: ");
 	add_number_to_stdout(backup_registers->registers.rdx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rsi: ");
+	add_str_to_stdout((unsigned char *)">!rsi: ");
 	add_number_to_stdout(backup_registers->registers.rsi);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rdi: ");
+	add_str_to_stdout((unsigned char *)">!rdi: ");
 	add_number_to_stdout(backup_registers->registers.rdi);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rbp: ");
+	add_str_to_stdout((unsigned char *)">!rbp: ");
 	add_number_to_stdout(backup_registers->registers.rbp);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r8: ");
+	add_str_to_stdout((unsigned char *)">!r8: ");
 	add_number_to_stdout(backup_registers->registers.r8);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r9: ");
+	add_str_to_stdout((unsigned char *)">!r9: ");
 	add_number_to_stdout(backup_registers->registers.r9);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r10: ");
+	add_str_to_stdout((unsigned char *)">!r10: ");
 	add_number_to_stdout(backup_registers->registers.r10);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r11: ");
+	add_str_to_stdout((unsigned char *)">!r11: ");
 	add_number_to_stdout(backup_registers->registers.r11);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r12: ");
+	add_str_to_stdout((unsigned char *)">!r12: ");
 	add_number_to_stdout(backup_registers->registers.r12);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r13: ");
+	add_str_to_stdout((unsigned char *)">!r13: ");
 	add_number_to_stdout(backup_registers->registers.r13);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r14: ");
+	add_str_to_stdout((unsigned char *)">!r14: ");
 	add_number_to_stdout(backup_registers->registers.r14);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r15: ");
+	add_str_to_stdout((unsigned char *)">!r15: ");
 	add_number_to_stdout(backup_registers->registers.r15);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!cri_rip: ");
+	add_str_to_stdout((unsigned char *)">!cri_rip: ");
 	add_number_to_stdout(backup_registers->cri_rip);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!cri_rsp: ");
+	add_str_to_stdout((unsigned char *)">!cri_rsp: ");
 	add_number_to_stdout(backup_registers->cri_rsp);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!cri_rflags: ");
+	add_str_to_stdout((unsigned char *)">!cri_rflags: ");
 	add_number_to_stdout(backup_registers->cri_rflags);
 	add_char_to_stdout('\n');
 }
@@ -810,7 +814,7 @@ void restoreContext(uint8_t was_graphic)
 	}
 	previousAudioState.restoring_audio = 0;
 
-	idle("idle from restoreContext");
+	idle((unsigned char *)"idle from restoreContext");
 }
 
 // message for debugging purposes
@@ -844,7 +848,7 @@ void home_screen()
 	position.x = (screen_width - MONA_LISA_WIDTH * scale) / 2;
 	position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
 
-	drawBitmap(mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
+	drawBitmap((uint32_t *) mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
 
 	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
 	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
@@ -894,4 +898,5 @@ int main()
 	newPrompt();
 
 	idle((unsigned char *)"idle from main");
+	return 0;
 }

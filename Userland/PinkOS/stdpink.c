@@ -5,7 +5,9 @@
 
 static uint32_t randmon_seed = 0;
 
-static unsigned char * invalid_format_message = "Invalid format, use %s for a string or %d for a int\n";
+static unsigned char * invalid_format_message = (unsigned char *) "Invalid format, use %s for a string or %d for a int\n";
+
+extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
 void print(unsigned char * string){
     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);

@@ -55,6 +55,7 @@ Point getNewPosition(Point pos, Direction dir);
 Point getNewTail(Snake *snake);
 Point getNewCherryPosition();
 void init();
+void drawScores();
 
 // Variables de juego
 static uint64_t last_draw_time = 0;
@@ -68,12 +69,12 @@ static char num_players = 1;
 void snake_main(unsigned char *args) {
     // Se fija el argumento para la cantidad de players
     if(args[0] == '\0'){
-        print("Usage: snake <players>\n");
+        print((unsigned char *)"Usage: snake <players>\n");
         return;
     }
     // Checkea si el argumento es un número
     if( args[1] != '\0' || args[0] < '1' || args[0] > '2'){
-        print("Invalid number of players. Please use 1 or 2 players\n");
+        print((unsigned char *)"Invalid number of players. Please use 1 or 2 players\n");
         return;
     }
     if (args[0] == '1') num_players = 1;
@@ -264,8 +265,8 @@ Point getNewPosition(Point pos, Direction dir) {
         case DOWN: return (Point){pos.x, pos.y + 1};
         case LEFT: return (Point){pos.x - 1, pos.y};
         case RIGHT: return (Point){pos.x + 1, pos.y};
+        default: return pos;
     }
-    return pos;
 }
 
 void moveCherry() {

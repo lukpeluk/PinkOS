@@ -3,6 +3,7 @@
 #include <graphicsLib.h>
 #include <audioLib.h>
 #include <songs.h>
+#include <stdin.h>
 
 #define WIDTH 31
 #define HEIGHT 31
@@ -207,9 +208,9 @@ void easter_egg_main(unsigned char *args){
     position.x = (screen_width - RICK_ROLL_WIDTH * scale) / 2;
     position.y = (screen_height - RICK_ROLL_HEIGHT * scale) / 2;
     // drawBitmap(easter_egg, WIDTH, HEIGHT, position, scale);
-    print(" PinkOS will never give you up\n PinkOS will never let you down\n PinkOS will never run around and desert you\n PinkOS will never make you cry\n PinkOS will never say goodbye\n PinkOS will never tell a lie and hurt you\n"); 
+    print((unsigned char *)" PinkOS will never give you up\n PinkOS will never let you down\n PinkOS will never run around and desert you\n PinkOS will never make you cry\n PinkOS will never say goodbye\n PinkOS will never tell a lie and hurt you\n"); 
     
-    play_audio(neverGonnaGiveYouUp, 1, 114);
+    play_audio((Note **)neverGonnaGiveYouUp, 1, 114);
     
     // Wait for key
     int frame = 0;

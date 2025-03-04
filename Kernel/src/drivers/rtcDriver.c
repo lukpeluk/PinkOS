@@ -71,8 +71,8 @@ void get_time(RTC_Time * time_to_return) {
     *time_to_return = time;
 }
 
-void set_timezone(int time_zone) {
-    time_zone = time_zone;
+void set_timezone(int time_zone_given) {
+    time_zone = time_zone_given;
 }
 
 

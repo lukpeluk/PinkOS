@@ -96,10 +96,10 @@ void runProgram(Program * program, unsigned char * arguments) {
     
     // ↓↓↓↓ Versión que limpia el stack antes de llamar a la función del programa ↓↓↓↓
     InterruptStackFrame cri = getDefaultCRI();
-    cri.rip = program->entry;
+    cri.rip = (uint64_t) program->entry;
     cri.rsp = processState.systemStackBase - 8; // -8 because the return address is pushed in the stack
     push_to_custom_stack_pointer(processState.systemStackBase, (uint64_t)quitProgram);
-    magic_recover(&cri, arguments);             
+    magic_recover(&cri, (uint64_t) arguments);             
 
     // ↓↓↓↓ Versión que preserva el stack antes de llamar a la función del programa ↓↓↓↓
     // InterruptStackFrame cri = getDefaultCRI();
@@ -112,7 +112,7 @@ void runProgram(Program * program, unsigned char * arguments) {
 void quitProgram() {
     uint64_t was_graphic = processState.permissions & DRAWING_PERMISSION;
     setPermissions(ROOT_PERMISSIONS);
-    setCurrentProcess(SYSTEM_PROCESS);
+    setCurrentProcess((unsigned char *)SYSTEM_PROCESS);
     InterruptStackFrame cri = getDefaultCRI();
     cri.rip = (uint64_t)callRestoreContextHandler;
     cri.rsp = processState.systemStackBase;

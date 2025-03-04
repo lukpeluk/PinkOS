@@ -13,7 +13,7 @@ void whatsapp_main(unsigned char * args){
     EtherPinkResponse response;
 
     while (1){
-        printf(" -> ");
+        printf((unsigned char *)" -> ");
 
         int i = 0;
         do{

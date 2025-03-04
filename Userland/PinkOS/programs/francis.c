@@ -25,7 +25,7 @@ void francis_main(unsigned char * args){
     EtherPinkResponse response;
 
   
-    make_ethereal_request("francis\n", &response);
+    make_ethereal_request((unsigned char *)"francis\n", &response);
 
     while(response.code != 2){
         // wait for response
@@ -50,9 +50,9 @@ void francis_main(unsigned char * args){
     uint32_t *francis = (uint32_t *)(raw_data );
 
     // Dibujar el bitmap
-    drawBitmap((unsigned char *)francis, FRANCIS_WIDTH, FRANCIS_HEIGHT, position, scale);
+    drawBitmap(francis, FRANCIS_WIDTH, FRANCIS_HEIGHT, position, scale);
 
-    printf("Bitmap dibujado con éxito.\n");
+    printf((unsigned char *)"Bitmap dibujado con éxito.\n");
     while(1){
         sleep(500);
     }

@@ -13,7 +13,7 @@ void pietra_main(unsigned char * args){
     EtherPinkResponse response;
 
   
-    make_ethereal_request("pietra\n", &response);
+    make_ethereal_request((unsigned char *)"pietra\n", &response);
 
     while(response.code != 2){
         // wait for response
@@ -38,9 +38,9 @@ void pietra_main(unsigned char * args){
     uint32_t *pietra = (uint32_t *)(raw_data );
 
     // Dibujar el bitmap
-    drawBitmap((unsigned char *)pietra, PIETRA_WIDTH, PIETRA_HEIGHT, position, scale);
+    drawBitmap(pietra, PIETRA_WIDTH, PIETRA_HEIGHT, position, scale);
 
-    printf("Bitmap dibujado con éxito.\n");
+    printf((unsigned char *)"Bitmap dibujado con éxito.\n");
     while(1){
         sleep(500);
     }

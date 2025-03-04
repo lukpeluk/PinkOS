@@ -49,8 +49,8 @@ void spotify_main(unsigned char *args){
     }
 
     if(args[i] == '\0'){
-        print("Usage: spotify [-b] <song name>\nWill play the Pink Panther theme while you think about it.\n\n");
-        args = "pink panther";
+        print((unsigned char *)"Usage: spotify [-b] <song name>\nWill play the Pink Panther theme while you think about it.\n\n");
+        args = (unsigned char *)"pink panther";
         play_audio(songs[0].notes, background, songs[0].tempo);
         song_found = 1;
 
@@ -66,12 +66,12 @@ void spotify_main(unsigned char *args){
 
     if (!song_found)
     {
-        print("Song not found. :(\n");
+        print((unsigned char *)"Song not found. :(\n");
         return;
         // print("Song not found. Playing Pink Panther theme instead.\n");
         // play_audio(songs[0].notes, background, songs[0].tempo);
     }
-    print("You can use space to pause/resume :)\n\n");
+    print((unsigned char *)"You can use space to pause/resume :)\n\n");
 
     if(background){
         enableBackgroundAudio();
@@ -83,10 +83,10 @@ void spotify_main(unsigned char *args){
     while(is_audio_playing() || paused){
         if(getChar() == ' '){
             if(paused){
-                print("resuming\n");
+                print((unsigned char *)"resuming\n");
                 resume_audio();
             } else {
-                print("pausing\n");
+                print((unsigned char *)"pausing\n");
                 pause_audio();
             }
             paused = !paused;

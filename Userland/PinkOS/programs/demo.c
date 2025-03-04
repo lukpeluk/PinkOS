@@ -10,10 +10,10 @@
 #include <environmentApiEndpoints.h>
 #include <handlerIds.h>
 
-extern syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
+extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 
 void test(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code){
-    print("System hijacked! >:)\n");
+    print((unsigned char *)"System hijacked! >:)\n");
 }
 
 void demo_main(unsigned char * args){
@@ -22,7 +22,7 @@ void demo_main(unsigned char * args){
 
     // CLI
     clear();
-    print("Welcome to PinkOS Demo from the user environment API!");
+    print((unsigned char *)"Welcome to PinkOS Demo from the user environment API!");
 
 
     // GUI

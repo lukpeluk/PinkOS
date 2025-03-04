@@ -22,7 +22,7 @@ void chatgpt_main(unsigned char * args){
     buffer[7] = ' ';
 
     while (1){
-        printf(" -> ");
+        printf((unsigned char *)" -> ");
 
         int i = 8;
         do{
