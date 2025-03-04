@@ -85,12 +85,12 @@ void mona_lisa_main(unsigned char *args) {
         syscall(SLEEP_SYSCALL, 100, 0, 0, 0, 0);
     }
 
-    // // Wait for key
-    // unsigned char c = get_char_from_stdin();
-    // while(1){
-    //     // if (c != 0) {
-    //     //     break;
-    //     // }
-    //     // c = get_char_from_stdin();
-    // }
+    // Wait for key
+    unsigned char c = get_char_from_stdin();
+    while(1){
+        // if (c != 0) {
+        //     break;
+        // }
+        // c = get_char_from_stdin();
+    }
 }
