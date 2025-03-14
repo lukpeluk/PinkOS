@@ -187,6 +187,14 @@ static Program programs[] = {
         MAKE_ETHEREAL_REQUEST_PERMISSION,
         (unsigned char *)"Chat with GPT-3",
         (unsigned char *)"usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
+    },
+    {
+        (unsigned char *)"set_timezone",
+        (unsigned char *)"Set Timezone",
+        set_timezone_main,
+        SET_TIMEZONE_PERMISSION,
+        (unsigned char *)"Set the timezone",
+        (unsigned char *)"usage: set_timezone <timezone> \nSet Timezone v1 \n Use this program to set the timezone of the system."
     }
     
     // TODO: ↓↓↓↓↓↓

@@ -44,5 +44,6 @@ void demo_main(unsigned char *args);
 void whatsapp_main(unsigned char *args);
 void francis_main(unsigned char *args);
 void chatgpt_main(unsigned char *args);
+void set_timezone_main(unsigned char *args);
 
 #endif

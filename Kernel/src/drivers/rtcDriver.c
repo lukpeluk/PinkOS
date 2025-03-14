@@ -37,7 +37,8 @@ void adjust_time(RTC_Time *time, int displacement) {
             }
             time->day = days_in_month(time->month, time->year);
         }
-        time->day_of_week = (time->day_of_week == 0) ? 6 : time->day_of_week - 1;
+        // day of week, range 1-7
+        time->day_of_week = (time->day_of_week - 1 == 0) ? 7 : time->day_of_week - 1;
 
     } else if (adjusted_hour >= 24) {
         time->hours = adjusted_hour - 24;
@@ -52,7 +53,7 @@ void adjust_time(RTC_Time *time, int displacement) {
                 time->year++;
             }
         }
-        time->day_of_week = (time->day_of_week + 1) % 7;
+        time->day_of_week = (time->day_of_week + 1 == 8) ? 1 : time->day_of_week + 1;
 
     } else {
         time->hours = adjusted_hour;
@@ -63,7 +64,7 @@ void adjust_time(RTC_Time *time, int displacement) {
 
 RTC_Time * update_time() {
     get_time_utc(&time);
-    // adjust_time(&time, time_zone);   //TODO: PORQUE CHOTA NO FUNCIONA ESTO !??!?!?!
+    adjust_time(&time, time_zone);
     return &time;
 }
 
@@ -71,7 +72,7 @@ void get_time(RTC_Time * time_to_return) {
     *time_to_return = time;
 }
 
-void set_timezone(int time_zone_given) {
+void set_timezone(int time_zone_given) { // Nota mental: Existe el ocultamiento de variables en C
     time_zone = time_zone_given;
 }
 
