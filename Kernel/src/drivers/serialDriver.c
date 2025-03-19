@@ -6,7 +6,8 @@
 
 static EtherPinkResponse * clientResponse;
 static unsigned char * current = 0;
-static uint32_t total_size = -1;
+// static uint32_t total_size = 300*300*4;
+static uint32_t total_size = 4728;
 
 void process_serial(unsigned char c){
     if(current && clientResponse){
@@ -15,7 +16,8 @@ void process_serial(unsigned char c){
         clientResponse->size++;
         // process_header();
 
-        if( c == 0 ){
+        // if( c == 0 ){
+        if (clientResponse->size == total_size){
             current = 0;
             clientResponse->code = SUCCESS;
             clientResponse->raw_data = (unsigned char *)RAW_DATA_ADDRESS;

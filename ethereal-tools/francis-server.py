@@ -2,6 +2,7 @@ import socket
 import requests
 import json
 import struct
+import os
 
 # Prompt constante o inicial
 CONSTANT_PROMPT = "No uses emojis, por favor responde únicamente con texto en ASCII reducido. Sé conciso."
@@ -73,7 +74,7 @@ def main():
                                 length = len(data)
                                 # header = 0x00 01 00 00 00 05 7E 40 (but remember to convert to 64-bit little-endian)
                                 header = struct.pack("<Q", 0x00010000057E40) + length.to_bytes(4, byteorder='big')
-                                client_socket.sendall(header)
+                                # client_socket.sendall(header)
                                 client_socket.sendall(data)
                                 print("Enviado francis.bin")
                         except FileNotFoundError:
@@ -110,6 +111,31 @@ def main():
                         # Send \0
                         client_socket.sendall(b'\x00')
                         print(f"Respuesta de la API enviada: {api_response}")
+                        continue
+
+                    if line.startswith("apt install "):
+                        # Instalar un paquete de pip
+                        package = line[len("apt install "):].strip()
+                        print(f"Instalando paquete: {package}")
+                        try:
+                            # get from /programs the .bin
+                            with open(f"./ethereal-tools/programs/{package}.bin", "rb") as f:
+                                data = f.read()
+                                length = len(data)
+                                # header = b'\x00\x00\x01\x00\x00\x00\x00\x00' + length.to_bytes(4, byteorder='big')
+                                # client_socket.sendall(header)
+                                client_socket.sendall(data)
+                                print(f"Enviado {package}.bin")
+                                continue
+                        except FileNotFoundError:
+                            print(f"No se encontró el archivo {package}.bin")
+                            respuesta = f"Error: No se encontró el archivo {package}.bin\n"
+                        except Exception as e:
+                            respuesta = f"Error al instalar el paquete {package}: {e}\n"
+
+                        client_socket.sendall(respuesta.encode('utf-8'))
+                        client_socket.sendall(b'\x00')
+                        print(f"Enviado: {respuesta.strip()}")
                         continue
 
                     # Responder al servidor con un mensaje por defecto

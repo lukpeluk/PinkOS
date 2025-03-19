@@ -45,5 +45,6 @@ void whatsapp_main(unsigned char *args);
 void francis_main(unsigned char *args);
 void chatgpt_main(unsigned char *args);
 void set_timezone_main(unsigned char *args);
+void apt_install_main(unsigned char *args);
 
 #endif

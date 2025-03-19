@@ -195,7 +195,15 @@ static Program programs[] = {
         SET_TIMEZONE_PERMISSION,
         (unsigned char *)"Set the timezone",
         (unsigned char *)"usage: set_timezone <timezone> \nSet Timezone v1 \n Use this program to set the timezone of the system."
-    }
+    },
+    {
+        (unsigned char *)"apt_install",
+        (unsigned char *)"Apt Install",
+        apt_install_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION | CHANGE_FONT_SIZE_PERMISSION,
+        (unsigned char *)"Install a package",
+        (unsigned char *)"usage: apt_install \nApt Install v1 \n Use this program to install a package."
+    },
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},

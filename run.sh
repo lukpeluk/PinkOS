@@ -7,8 +7,9 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     -m 512 \
     -audiodev pa,id=speaker \
     -machine pcspk-audiodev=speaker \
+    -serial tcp::4444,server,nowait
     # -rtc base=localtime \
-    
+
     -serial tcp::4444,server,nowait
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Para Mac
