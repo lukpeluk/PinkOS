@@ -78,7 +78,7 @@ uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's a
 int current_string = 0;
 int current_position = 0;
 int oldest_string = 0;
-int scroll = 0; // indica qué línea es la que está en la parte superior de la pantalla
+int scroll = 0; // indica quÃ© lÃ­nea es la que estÃ¡ en la parte superior de la pantalla
 
 uint32_t current_text_color; // intended to be changed via markup
 int highlighting_text = 0;	 // for highlighting text
@@ -135,12 +135,12 @@ void clear_stdin()
 // saves the key to the buffer
 // 0 for success, -1 if save was not performed (string size exceeded for example)
 //
-// me harté de escribir en inglés, perdonenme en esta descripción:
-// el buffer tiene dos índices, uno para el string actual y uno para el más viejo guardado.
-// la idea es que al llegar al final del arreglo, vuelve a empezar, sobreescribiendo el valor más viejo
-// cuando el buffer de escritura (el del str actual) llega al buffer de lectura (el del más viejo), se mueve el buffer de lectura
+// me hartÃ© de escribir en inglÃ©s, perdonenme en esta descripciÃ³n:
+// el buffer tiene dos Ã­ndices, uno para el string actual y uno para el mÃ¡s viejo guardado.
+// la idea es que al llegar al final del arreglo, vuelve a empezar, sobreescribiendo el valor mÃ¡s viejo
+// cuando el buffer de escritura (el del str actual) llega al buffer de lectura (el del mÃ¡s viejo), se mueve el buffer de lectura
 // cuando quiero leer toda la terminal con su historial, empiezo desde el buffer de lectura y termino en el buffer de escritura
-// (obviamnte también al leer tengo que hacer un wrap around cuando llego al final del buffer)
+// (obviamnte tambiÃ©n al leer tengo que hacer un wrap around cuando llego al final del buffer)
 int save_char_to_buffer(char key)
 {
 	// if enter key is pressed, move to the next string
@@ -154,8 +154,8 @@ int save_char_to_buffer(char key)
 		{
 			ADVANCE_INDEX(oldest_string, BUFFER_SIZE)
 
-			// TODO: ver si este código está bien acá o es más prolijo abstraer la lógica del scroll
-			// igual la única forma de que esto pase es que el buffer sea más chico que la pantalla
+			// TODO: ver si este cÃ³digo estÃ¡ bien acÃ¡ o es mÃ¡s prolijo abstraer la lÃ³gica del scroll
+			// igual la Ãºnica forma de que esto pase es que el buffer sea mÃ¡s chico que la pantalla
 			if (oldest_string == scroll)
 			{
 				ADVANCE_INDEX(scroll, BUFFER_SIZE)
@@ -354,7 +354,7 @@ void add_char_to_stdout(char character)
 {
 	if(!IS_ASCII(character)) return;
 
-	// presionar delete en la primera posición no hace nada
+	// presionar delete en la primera posiciÃ³n no hace nada
 	if (character == '\b' && current_position == 0)
 		return;
 
@@ -394,7 +394,7 @@ void add_str_to_stdout(char *string)
 			scroll_if_out_of_bounds();
 		}
 	}
-	// reset_markup(); // no estoy seguro si queremos que cada impresión resetee el estilo
+	// reset_markup(); // no estoy seguro si queremos que cada impresiÃ³n resetee el estilo
 }
 
 void add_number_to_stdout(uint64_t number)
@@ -469,7 +469,7 @@ void execute_program(int input_line)
 		if ((program->perms & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
 		{
 			// Si voy a ejecutar un programa con permisos de audio, y se estaba reproduciendo algo en segundo plano, guardo el estado
-			// E indico que luego de terminar la ejecución debe restaurarse el estado guardado
+			// E indico que luego de terminar la ejecuciÃ³n debe restaurarse el estado guardado
 			disableBackgroundAudio();
 			previousAudioState.restoring_audio = 1;
 			previousAudioState.playing = is_audio_playing();
@@ -573,9 +573,9 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 		// }
 	}
 
-	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
+	// --- MANEJA LA ENTRADA ESTÃNDAR Y EL BUFFER DE LA TERMINAL ---
 	// 		El key repeat es configurable, 
-	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
+	// 		O sea que podÃ©s decidir si mantener una tecla presionada solo mande la interrupciÃ³n la primera vez
 	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_BS)
 	{
 		// Solo guardo en el buffer de la terminal si estoy en modo CLI
@@ -588,14 +588,14 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !running_program) {
 		// WIP - ITERAR POR LOS COMANDOS RECIENTES
-		// Al tocar enter se guarda la línea en el buffer de comandos
+		// Al tocar enter se guarda la lÃ­nea en el buffer de comandos
 		// strcpy(command_buffer[current_command], PREV_STRING);
 		// ADVANCE_INDEX(current_command, COMMAND_BUFFER_SIZE);
 		// if(current_command == oldest_command){
 		// 	ADVANCE_INDEX(oldest_command, COMMAND_BUFFER_SIZE);
 		// }
 
-		// // Si se está iterando por los comandos anteriores, se ejecuta el comando actual
+		// // Si se estÃ¡ iterando por los comandos anteriores, se ejecuta el comando actual
 		// if(command_in_iteration != -1){
 		// 	command_in_iteration = -1;
 		// 	execute_program(command_buffer[command_in_iteration]);
@@ -644,7 +644,7 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 	running_program = 0;
 	graphics_mode = 0;
 
-	// TODO: capaz hacer función add_warning_to_stdout o algo así para no poner >! en todos lados
+	// TODO: capaz hacer funciÃ³n add_warning_to_stdout o algo asÃ­ para no poner >! en todos lados
 
 	// TODO: Implementar Pantallazo Rosa
 	add_str_to_stdout((char *)">!Exception: ");
@@ -802,8 +802,8 @@ void restoreContext(uint8_t was_graphic)
 	newPrompt();
 	clear_stdin();
 
-	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
-	// Si en el estado anterior a la ejecución del programa se estaba reproduciendo audio en segundo plano, continuar la reproducción
+	// Si el programa no activÃ³ el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
+	// Si en el estado anterior a la ejecuciÃ³n del programa se estaba reproduciendo audio en segundo plano, continuar la reproducciÃ³n
 	if (!background_audio_enabled){
 		stop_audio();
 		if(previousAudioState.restoring_audio){
@@ -879,7 +879,7 @@ int main()
 {
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
-	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sÃ­, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
 	home_screen();
 	redraw();
@@ -893,7 +893,7 @@ int main()
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	current_text_color = PinkOSColors.text;
-	add_str_to_stdout((char *)"># * This ñáèôü system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
+	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
 	add_str_to_stdout((char *)"\n >#* Type help for help\n");
 	newPrompt();
 

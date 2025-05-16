@@ -17,7 +17,8 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     -hda Image/x64BareBonesImage.qcow2 \
     -m 512 \
     -audiodev coreaudio,id=speaker \
-    -machine pcspk-audiodev=speaker
+    -machine pcspk-audiodev=speaker \
+    -serial tcp::4444,server,nowait
 else
   echo "Sistema operativo no soportado"
   exit 1
