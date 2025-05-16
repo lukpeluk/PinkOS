@@ -197,7 +197,7 @@ uint32_t * rickroll_frames[] = {
 
 uint32_t rickroll_frame_count = sizeof(rickroll_frames) / sizeof(uint32_t *);
 
-void easter_egg_main(unsigned char *args){
+void easter_egg_main(char *args){
     
     Point position = {0};
     int scale = 20;
@@ -208,14 +208,14 @@ void easter_egg_main(unsigned char *args){
     position.x = (screen_width - RICK_ROLL_WIDTH * scale) / 2;
     position.y = (screen_height - RICK_ROLL_HEIGHT * scale) / 2;
     // drawBitmap(easter_egg, WIDTH, HEIGHT, position, scale);
-    print((unsigned char *)" PinkOS will never give you up\n PinkOS will never let you down\n PinkOS will never run around and desert you\n PinkOS will never make you cry\n PinkOS will never say goodbye\n PinkOS will never tell a lie and hurt you\n"); 
+    print((char *)" PinkOS will never give you up\n PinkOS will never let you down\n PinkOS will never run around and desert you\n PinkOS will never make you cry\n PinkOS will never say goodbye\n PinkOS will never tell a lie and hurt you\n"); 
     
     play_audio((Note **)neverGonnaGiveYouUp, 1, 114);
     
     // Wait for key
     int frame = 0;
     int direction = 1;
-    unsigned char c = get_char_from_stdin();
+    char c = get_char_from_stdin();
     while(1){
         if (c != 0) {
             break;

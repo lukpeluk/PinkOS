@@ -20,18 +20,18 @@ static void loadModule(uint8_t ** module, void * targetModuleAddress)
 {
 	uint32_t moduleSize = readUint32(module);
 
-	ncPrint((const unsigned char *)"  Will copy module at 0x");
+	ncPrint((const char *)"  Will copy module at 0x");
 	ncPrintHex((uint64_t)*module);
-	ncPrint((const unsigned char *)" to 0x");
+	ncPrint((const char *)" to 0x");
 	ncPrintHex((uint64_t)targetModuleAddress);
-	ncPrint((const unsigned char *)" (");
+	ncPrint((const char *)" (");
 	ncPrintDec(moduleSize);
-	ncPrint((const unsigned char *)" bytes)");
+	ncPrint((const char *)" bytes)");
 
 	memcpy(targetModuleAddress, *module, moduleSize);
 	*module += moduleSize;
 
-	ncPrint((const unsigned char *)" [Done]");
+	ncPrint((const char *)" [Done]");
 	ncNewline();
 }
 

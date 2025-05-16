@@ -30,7 +30,7 @@ extern void loader();
 typedef struct ProcessState {
     int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process
-    unsigned char * currentProcess; // Name of the current process (for crash reporting and logging)
+    char * currentProcess; // Name of the current process (for crash reporting and logging)
     uint64_t systemStackBase; // Base of the system stack
 } ProcessState;
 
@@ -50,7 +50,7 @@ InterruptStackFrame getDefaultCRI() {
 void initProcessState() {
     processState.rootMode = ACTIVATE_ROOT_MODE;
     processState.permissions = ROOT_PERMISSIONS;
-    processState.currentProcess = (unsigned char *)SYSTEM_PROCESS;
+    processState.currentProcess = (char *)SYSTEM_PROCESS;
     processState.systemStackBase = 0;
 }
 
@@ -76,11 +76,11 @@ void setPermissions(uint32_t permissions) {
     processState.permissions = permissions;
 }
 
-unsigned char * getCurrentProcess() {
+char * getCurrentProcess() {
     return processState.currentProcess;
 }
 
-void setCurrentProcess(unsigned char * process) {
+void setCurrentProcess(char * process) {
     processState.currentProcess = process;
 }
 
@@ -89,7 +89,7 @@ void loadStackBase(uint64_t stackBase) {
 }
 
 
-void runProgram(Program * program, unsigned char * arguments) {
+void runProgram(Program * program, char * arguments) {
     desactivateRootMode();
     setPermissions(program->perms);
     setCurrentProcess(program->name);           // Save the name and not the command, because the purpose of this is to be used in crash reports and logs
@@ -112,7 +112,7 @@ void runProgram(Program * program, unsigned char * arguments) {
 void quitProgram() {
     uint64_t was_graphic = processState.permissions & DRAWING_PERMISSION;
     setPermissions(ROOT_PERMISSIONS);
-    setCurrentProcess((unsigned char *)SYSTEM_PROCESS);
+    setCurrentProcess((char *)SYSTEM_PROCESS);
     InterruptStackFrame cri = getDefaultCRI();
     cri.rip = (uint64_t)callRestoreContextHandler;
     cri.rsp = processState.systemStackBase;

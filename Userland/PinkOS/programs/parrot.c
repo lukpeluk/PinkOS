@@ -7,9 +7,9 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 
 #define BUFFER_SIZE 200
 
-void parrot_main(unsigned char * args){
-    unsigned char buffer[BUFFER_SIZE];
-    unsigned char c;
+void parrot_main(char * args){
+    char buffer[BUFFER_SIZE];
+    char c;
 
     while (1){
         syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) " - ", 0, 0, 0);

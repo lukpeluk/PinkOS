@@ -3,15 +3,15 @@
 
 #include <stdint.h>
 
-typedef void (*ProgramEntry)(unsigned char*);
+typedef void (*ProgramEntry)(char*);
 
 typedef struct {
-    unsigned char* command;
-    unsigned char* name;
+    char* command;
+    char* name;
     ProgramEntry entry;
     uint32_t perms;
-    unsigned char* help;         // This is the help command (a very brief description)
-    unsigned char* description;  // All the information about the command
+    char* help;         // This is the help command (a very brief description)
+    char* description;  // All the information about the command
 } Program;
 
 
@@ -26,11 +26,11 @@ void desactivateRootMode();
 
 uint32_t getPermissions();
 
-unsigned char * getCurrentProcess();
+char * getCurrentProcess();
 
 void loadStackBase(uint64_t stackBase);
 
-void runProgram(Program * programName, unsigned char * arguments);
+void runProgram(Program * programName, char * arguments);
 
 void quitProgram();
 

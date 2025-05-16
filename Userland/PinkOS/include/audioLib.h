@@ -103,7 +103,7 @@ typedef struct Note{
 } Note;
 
 typedef struct Song{
-    unsigned char * name;
+    char * name;
     Note** notes;       // null terminated
     uint64_t tempo;
 } Song;

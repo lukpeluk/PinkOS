@@ -9,7 +9,7 @@
 #define FRANCIS_HEIGHT 300
 
 uint64_t memcmp(const void *s1, const void *s2, uint64_t n) {
-    const unsigned char *p1 = s1, *p2 = s2;
+    const char *p1 = s1, *p2 = s2;
     while (n--) {
         if (*p1 != *p2) {
             return *p1 - *p2;
@@ -20,12 +20,12 @@ uint64_t memcmp(const void *s1, const void *s2, uint64_t n) {
     return 0;
 }
 
-void francis_main(unsigned char * args){
+void francis_main(char * args){
 
     EtherPinkResponse response;
 
   
-    make_ethereal_request((unsigned char *)"francis\n", &response);
+    make_ethereal_request((char *)"francis\n", &response);
 
     while(response.code != 2){
         // wait for response
@@ -52,7 +52,7 @@ void francis_main(unsigned char * args){
     // Dibujar el bitmap
     drawBitmap(francis, FRANCIS_WIDTH, FRANCIS_HEIGHT, position, scale);
 
-    printf((unsigned char *)"Bitmap dibujado con éxito.\n");
+    printf((char *)"Bitmap dibujado con éxito.\n");
     while(1){
         sleep(500);
     }

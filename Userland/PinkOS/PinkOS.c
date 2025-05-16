@@ -17,8 +17,8 @@
 #define ADVANCE_INDEX(index, array_size) index = (index + 1) % array_size;
 #define DECREASE_INDEX(index, array_size) index = index ? (index - 1) : array_size - 1;
 
-#define IS_ASCII(ascii) ((unsigned char)ascii > 0 && (unsigned char)ascii < 256)
-#define IS_PRINTABLE_CHAR(ascii) ((unsigned char)ascii >= 32 && (unsigned char)ascii < 255 && (unsigned char)ascii != ASCII_DEL)
+#define IS_ASCII(ascii) ((char)ascii > 0 && (char)ascii < 256)
+#define IS_PRINTABLE_CHAR(ascii) ((char)ascii >= 32 && (char)ascii < 255 && (char)ascii != ASCII_DEL)
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void *get_stack_pointer();
@@ -64,51 +64,51 @@ int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 
 #define COMMAND_BUFFER_SIZE 10
 
-static unsigned char logo_str[10] = "    PinkOS";
-static unsigned char time_str[10] = "  00:00:00";
+static char logo_str[10] = "    PinkOS";
+static char time_str[10] = "  00:00:00";
 static Point time_position = {950, 5};
 static Point logo_position = {10, 5};
 
 
-static const unsigned char *command_not_found_msg = (const unsigned char *) ">?Command not found\n";
-static const unsigned char *default_prompt = (const unsigned char *)" > ";
+static const char *command_not_found_msg = (const char *) ">?Command not found\n";
+static const char *default_prompt = (const char *)" > ";
 
-unsigned char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
+char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
 uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's an output
 int current_string = 0;
 int current_position = 0;
 int oldest_string = 0;
-int scroll = 0; // indica quÃ© lÃ­nea es la que estÃ¡ en la parte superior de la pantalla
+int scroll = 0; // indica qué línea es la que está en la parte superior de la pantalla
 
 uint32_t current_text_color; // intended to be changed via markup
 int highlighting_text = 0;	 // for highlighting text
 
-unsigned char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
+char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
 int current_command = 0;
 int oldest_command = 0;
 int command_in_iteration = -1;
 
-unsigned char stdin_buffer[STRING_SIZE] = {0};
+char stdin_buffer[STRING_SIZE] = {0};
 int stdin_write_position = 0;
 int stdin_read_position = 0;
 
 void draw_status_bar();
 void newPrompt();
-void idle(unsigned char *message);
+void idle(char *message);
 
-unsigned char get_char_from_stdin()
+char get_char_from_stdin()
 {
 	if (stdin_write_position == stdin_read_position)
 	{
 		return 0;
 	}
 
-	unsigned char c = stdin_buffer[stdin_read_position];
+	char c = stdin_buffer[stdin_read_position];
 	stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
 	return c;
 }
 
-void add_char_to_stdin(unsigned char c)
+void add_char_to_stdin(char c)
 {
 	stdin_buffer[stdin_write_position] = c;
 	stdin_write_position = (stdin_write_position + 1) % STRING_SIZE;
@@ -135,13 +135,13 @@ void clear_stdin()
 // saves the key to the buffer
 // 0 for success, -1 if save was not performed (string size exceeded for example)
 //
-// me hartÃ© de escribir en inglÃ©s, perdonenme en esta descripciÃ³n:
-// el buffer tiene dos Ã­ndices, uno para el string actual y uno para el mÃ¡s viejo guardado.
-// la idea es que al llegar al final del arreglo, vuelve a empezar, sobreescribiendo el valor mÃ¡s viejo
-// cuando el buffer de escritura (el del str actual) llega al buffer de lectura (el del mÃ¡s viejo), se mueve el buffer de lectura
+// me harté de escribir en inglés, perdonenme en esta descripción:
+// el buffer tiene dos índices, uno para el string actual y uno para el más viejo guardado.
+// la idea es que al llegar al final del arreglo, vuelve a empezar, sobreescribiendo el valor más viejo
+// cuando el buffer de escritura (el del str actual) llega al buffer de lectura (el del más viejo), se mueve el buffer de lectura
 // cuando quiero leer toda la terminal con su historial, empiezo desde el buffer de lectura y termino en el buffer de escritura
-// (obviamnte tambiÃ©n al leer tengo que hacer un wrap around cuando llego al final del buffer)
-int save_char_to_buffer(unsigned char key)
+// (obviamnte también al leer tengo que hacer un wrap around cuando llego al final del buffer)
+int save_char_to_buffer(char key)
 {
 	// if enter key is pressed, move to the next string
 	if (key == '\n')
@@ -154,8 +154,8 @@ int save_char_to_buffer(unsigned char key)
 		{
 			ADVANCE_INDEX(oldest_string, BUFFER_SIZE)
 
-			// TODO: ver si este cÃ³digo estÃ¡ bien acÃ¡ o es mÃ¡s prolijo abstraer la lÃ³gica del scroll
-			// igual la Ãºnica forma de que esto pase es que el buffer sea mÃ¡s chico que la pantalla
+			// TODO: ver si este código está bien acá o es más prolijo abstraer la lógica del scroll
+			// igual la única forma de que esto pase es que el buffer sea más chico que la pantalla
 			if (oldest_string == scroll)
 			{
 				ADVANCE_INDEX(scroll, BUFFER_SIZE)
@@ -196,7 +196,7 @@ int save_char_to_buffer(unsigned char key)
 	return 0;
 }
 
-int save_str_to_buffer(unsigned char *string)
+int save_str_to_buffer(char *string)
 {
 	for (int i = 0; string[i] != 0; i++)
 	{
@@ -207,7 +207,7 @@ int save_str_to_buffer(unsigned char *string)
 
 int save_number_to_buffer(uint64_t number)
 {
-	unsigned char buffer[12];
+	char buffer[12];
 	int i = 0;
 	if (number == 0)
 	{
@@ -237,7 +237,7 @@ void reset_markup(){
 
 // recieves a string and updates the current color and highlighting state if the string contains markup at the beginning
 // returns the amount of markup chars detected, to avoid printing them
-int process_markup(unsigned char *string)
+int process_markup(char *string)
 {
 	int markup_chars = 2; // 2 is the default amount of markup characters
 
@@ -350,11 +350,11 @@ void scroll_if_out_of_bounds()
 }
 
 // prints and saves to the buffer
-void add_char_to_stdout(unsigned char character)
+void add_char_to_stdout(char character)
 {
 	if(!IS_ASCII(character)) return;
 
-	// presionar delete en la primera posiciÃ³n no hace nada
+	// presionar delete en la primera posición no hace nada
 	if (character == '\b' && current_position == 0)
 		return;
 
@@ -376,7 +376,7 @@ void add_char_to_stdout(unsigned char character)
 }
 
 // prints and saves to the buffer
-void add_str_to_stdout(unsigned char *string)
+void add_str_to_stdout(char *string)
 {
 	int markup_chars = 0;
 	for (int i = 0; string[i] != 0; i++)
@@ -394,12 +394,12 @@ void add_str_to_stdout(unsigned char *string)
 			scroll_if_out_of_bounds();
 		}
 	}
-	// reset_markup(); // no estoy seguro si queremos que cada impresiÃ³n resetee el estilo
+	// reset_markup(); // no estoy seguro si queremos que cada impresión resetee el estilo
 }
 
 void add_number_to_stdout(uint64_t number)
 {
-	unsigned char buffer[12];
+	char buffer[12];
 	int i = 0;
 	if (number == 0)
 	{
@@ -421,11 +421,11 @@ void add_number_to_stdout(uint64_t number)
 	}
 }
 
-static unsigned char arguments[STRING_SIZE];
+static char arguments[STRING_SIZE];
 void execute_program(int input_line)
 {
 	// get the program name
-	unsigned char program_name[STRING_SIZE];
+	char program_name[STRING_SIZE];
 	int i = 0;
 	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0; i++)
 	{
@@ -453,7 +453,7 @@ void execute_program(int input_line)
 	if (program == 0)
 	{
 		// "Command not found"
-		add_str_to_stdout((unsigned char *)command_not_found_msg);
+		add_str_to_stdout((char *)command_not_found_msg);
 		newPrompt();
 	}
 	// if the program is found, execute it
@@ -469,7 +469,7 @@ void execute_program(int input_line)
 		if ((program->perms & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
 		{
 			// Si voy a ejecutar un programa con permisos de audio, y se estaba reproduciendo algo en segundo plano, guardo el estado
-			// E indico que luego de terminar la ejecuciÃ³n debe restaurarse el estado guardado
+			// E indico que luego de terminar la ejecución debe restaurarse el estado guardado
 			disableBackgroundAudio();
 			previousAudioState.restoring_audio = 1;
 			previousAudioState.playing = is_audio_playing();
@@ -491,10 +491,10 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 		clear_console();
 		break;
 	case PRINT_STRING_ENDPOINT:
-		add_str_to_stdout((unsigned char *)arg1);
+		add_str_to_stdout((char *)arg1);
 		break;
 	case PRINT_CHAR_ENDPOINT:
-		add_char_to_stdout((unsigned char)arg1);
+		add_char_to_stdout((char)arg1);
 		break;
 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
 		background_audio_enabled = 1;
@@ -507,7 +507,7 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 	}
 }
 
-void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
+void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 {
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
@@ -573,9 +573,9 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 		// }
 	}
 
-	// --- MANEJA LA ENTRADA ESTÃNDAR Y EL BUFFER DE LA TERMINAL ---
+	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
 	// 		El key repeat es configurable, 
-	// 		O sea que podÃ©s decidir si mantener una tecla presionada solo mande la interrupciÃ³n la primera vez
+	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
 	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_BS)
 	{
 		// Solo guardo en el buffer de la terminal si estoy en modo CLI
@@ -588,14 +588,14 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !running_program) {
 		// WIP - ITERAR POR LOS COMANDOS RECIENTES
-		// Al tocar enter se guarda la lÃ­nea en el buffer de comandos
+		// Al tocar enter se guarda la línea en el buffer de comandos
 		// strcpy(command_buffer[current_command], PREV_STRING);
 		// ADVANCE_INDEX(current_command, COMMAND_BUFFER_SIZE);
 		// if(current_command == oldest_command){
 		// 	ADVANCE_INDEX(oldest_command, COMMAND_BUFFER_SIZE);
 		// }
 
-		// // Si se estÃ¡ iterando por los comandos anteriores, se ejecuta el comando actual
+		// // Si se está iterando por los comandos anteriores, se ejecuta el comando actual
 		// if(command_in_iteration != -1){
 		// 	command_in_iteration = -1;
 		// 	execute_program(command_buffer[command_in_iteration]);
@@ -644,66 +644,66 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 	running_program = 0;
 	graphics_mode = 0;
 
-	// TODO: capaz hacer funciÃ³n add_warning_to_stdout o algo asÃ­ para no poner >! en todos lados
+	// TODO: capaz hacer función add_warning_to_stdout o algo así para no poner >! en todos lados
 
 	// TODO: Implementar Pantallazo Rosa
-	add_str_to_stdout((unsigned char *)">!Exception: ");
+	add_str_to_stdout((char *)">!Exception: ");
 	add_number_to_stdout(exception_id);
 	add_char_to_stdout('\n');
 
 	// print the backup registers
-	add_str_to_stdout((unsigned char *)">!rax: ");
+	add_str_to_stdout((char *)">!rax: ");
 	add_number_to_stdout(backup_registers->registers.rax);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!rbx: ");
+	add_str_to_stdout((char *)">!rbx: ");
 	add_number_to_stdout(backup_registers->registers.rbx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!rcx: ");
+	add_str_to_stdout((char *)">!rcx: ");
 	add_number_to_stdout(backup_registers->registers.rcx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!rdx: ");
+	add_str_to_stdout((char *)">!rdx: ");
 	add_number_to_stdout(backup_registers->registers.rdx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!rsi: ");
+	add_str_to_stdout((char *)">!rsi: ");
 	add_number_to_stdout(backup_registers->registers.rsi);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!rdi: ");
+	add_str_to_stdout((char *)">!rdi: ");
 	add_number_to_stdout(backup_registers->registers.rdi);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!rbp: ");
+	add_str_to_stdout((char *)">!rbp: ");
 	add_number_to_stdout(backup_registers->registers.rbp);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r8: ");
+	add_str_to_stdout((char *)">!r8: ");
 	add_number_to_stdout(backup_registers->registers.r8);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r9: ");
+	add_str_to_stdout((char *)">!r9: ");
 	add_number_to_stdout(backup_registers->registers.r9);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r10: ");
+	add_str_to_stdout((char *)">!r10: ");
 	add_number_to_stdout(backup_registers->registers.r10);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r11: ");
+	add_str_to_stdout((char *)">!r11: ");
 	add_number_to_stdout(backup_registers->registers.r11);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r12: ");
+	add_str_to_stdout((char *)">!r12: ");
 	add_number_to_stdout(backup_registers->registers.r12);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r13: ");
+	add_str_to_stdout((char *)">!r13: ");
 	add_number_to_stdout(backup_registers->registers.r13);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r14: ");
+	add_str_to_stdout((char *)">!r14: ");
 	add_number_to_stdout(backup_registers->registers.r14);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!r15: ");
+	add_str_to_stdout((char *)">!r15: ");
 	add_number_to_stdout(backup_registers->registers.r15);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!cri_rip: ");
+	add_str_to_stdout((char *)">!cri_rip: ");
 	add_number_to_stdout(backup_registers->cri_rip);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!cri_rsp: ");
+	add_str_to_stdout((char *)">!cri_rsp: ");
 	add_number_to_stdout(backup_registers->cri_rsp);
 	add_char_to_stdout('\n');
-	add_str_to_stdout((unsigned char *)">!cri_rflags: ");
+	add_str_to_stdout((char *)">!cri_rflags: ");
 	add_number_to_stdout(backup_registers->cri_rflags);
 	add_char_to_stdout('\n');
 }
@@ -712,66 +712,66 @@ void registers_handler(BackupRegisters *backup_registers)
 {
 	RTC_Time time;
 	syscall(GET_RTC_TIME_SYSCALL, (uint64_t)&time, 0, 0, 0, 0);
-	add_str_to_stdout((unsigned char *)"Registers at time: ");
+	add_str_to_stdout((char *)"Registers at time: ");
 	add_number_to_stdout((uint64_t)time.hours);
-	add_char_to_stdout((unsigned char)':');
+	add_char_to_stdout((char)':');
 	add_number_to_stdout((uint64_t)time.minutes);
-	add_char_to_stdout((unsigned char)':');
+	add_char_to_stdout((char)':');
 	add_number_to_stdout((uint64_t)time.seconds);
-	add_char_to_stdout((unsigned char)'\n');
+	add_char_to_stdout((char)'\n');
 
 	// print the backup registers
-	add_str_to_stdout((unsigned char *)"rax: ");
+	add_str_to_stdout((char *)"rax: ");
 	add_number_to_stdout(backup_registers->registers.rax);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rbx: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rbx: ");
 	add_number_to_stdout(backup_registers->registers.rbx);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rcx: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rcx: ");
 	add_number_to_stdout(backup_registers->registers.rcx);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rdx: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rdx: ");
 	add_number_to_stdout(backup_registers->registers.rdx);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rsi: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rsi: ");
 	add_number_to_stdout(backup_registers->registers.rsi);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rdi: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rdi: ");
 	add_number_to_stdout(backup_registers->registers.rdi);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rbp: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rbp: ");
 	add_number_to_stdout(backup_registers->registers.rbp);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r8: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r8: ");
 	add_number_to_stdout(backup_registers->registers.r8);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r9: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r9: ");
 	add_number_to_stdout(backup_registers->registers.r9);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r10: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r10: ");
 	add_number_to_stdout(backup_registers->registers.r10);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r11: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r11: ");
 	add_number_to_stdout(backup_registers->registers.r11);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r12: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r12: ");
 	add_number_to_stdout(backup_registers->registers.r12);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r13: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r13: ");
 	add_number_to_stdout(backup_registers->registers.r13);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r14: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r14: ");
 	add_number_to_stdout(backup_registers->registers.r14);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"r15: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r15: ");
 	add_number_to_stdout(backup_registers->registers.r15);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rip: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rip: ");
 	add_number_to_stdout(backup_registers->cri_rip);
-	add_char_to_stdout((unsigned char)'\n');
-	add_str_to_stdout((unsigned char *)"rsp: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rsp: ");
 	add_number_to_stdout(backup_registers->cri_rsp);
-	add_char_to_stdout((unsigned char)'\n');
+	add_char_to_stdout((char)'\n');
 
 	if (!graphics_mode)
 	{
@@ -802,8 +802,8 @@ void restoreContext(uint8_t was_graphic)
 	newPrompt();
 	clear_stdin();
 
-	// Si el programa no activÃ³ el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
-	// Si en el estado anterior a la ejecuciÃ³n del programa se estaba reproduciendo audio en segundo plano, continuar la reproducciÃ³n
+	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
+	// Si en el estado anterior a la ejecución del programa se estaba reproduciendo audio en segundo plano, continuar la reproducción
 	if (!background_audio_enabled){
 		stop_audio();
 		if(previousAudioState.restoring_audio){
@@ -814,11 +814,11 @@ void restoreContext(uint8_t was_graphic)
 	}
 	previousAudioState.restoring_audio = 0;
 
-	idle((unsigned char *)"idle from restoreContext");
+	idle((char *)"idle from restoreContext");
 }
 
 // message for debugging purposes
-void idle(unsigned char *message)
+void idle(char *message)
 {
 	while (1)
 	{
@@ -829,7 +829,7 @@ void idle(unsigned char *message)
 	}
 }
 
-void home_screen_exit_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
+void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
 {
 	show_home_screen = 0;
 }
@@ -879,7 +879,7 @@ int main()
 {
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
-	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sÃ­, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
 	home_screen();
 	redraw();
@@ -893,10 +893,10 @@ int main()
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	current_text_color = PinkOSColors.text;
-	add_str_to_stdout((unsigned char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
-	add_str_to_stdout((unsigned char *)"\n >#* Type help for help\n");
+	add_str_to_stdout((char *)"># * This ñáèôü system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
+	add_str_to_stdout((char *)"\n >#* Type help for help\n");
 	newPrompt();
 
-	idle((unsigned char *)"idle from main");
+	idle((char *)"idle from main");
 	return 0;
 }

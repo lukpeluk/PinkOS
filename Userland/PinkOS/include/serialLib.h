@@ -6,11 +6,11 @@
 typedef struct EtherPinkResponse{
     uint16_t code, type;
     uint64_t size;
-    unsigned char *raw_data;
+    char *raw_data;
 } EtherPinkResponse;
 
 
-void make_ethereal_request(unsigned char * request, EtherPinkResponse * response);
+void make_ethereal_request(char * request, EtherPinkResponse * response);
 
 
 

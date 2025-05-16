@@ -55,23 +55,23 @@ void * initializeKernelBinary()
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
 
-    ncPrint((const unsigned char *)"all modules loaded, clearing bss\n");
+    ncPrint((const char *)"all modules loaded, clearing bss\n");
 
-    ncPrint((const unsigned char *)"bssAddress: ");
+    ncPrint((const char *)"bssAddress: ");
     ncPrintHex((uint64_t)bss);
-    ncPrint((const unsigned char *)"   bssSize: ");
+    ncPrint((const char *)"   bssSize: ");
     ncPrintHex((uint64_t)(&endOfKernel - &bss));
-    ncPrint((const unsigned char *)"   endOfKernel: ");
+    ncPrint((const char *)"   endOfKernel: ");
     ncPrintHex((uint64_t)&endOfKernel);
 
 
 	clearBSS(&bss, &endOfKernel - &bss);
 
-    ncPrint((const unsigned char *)"\nbss cleared, getting stackbase\n");
+    ncPrint((const char *)"\nbss cleared, getting stackbase\n");
 
 	void * stackBase = getStackBase();
 
-    ncPrint((const unsigned char *)"stack set\n");
+    ncPrint((const char *)"stack set\n");
 
 	return stackBase;
 }
@@ -278,7 +278,7 @@ void testAudio(){
     stop_audio();
 
     // print the delay
-    drawString((unsigned char *)"Delay: ", 0x00ffffff, 0x00000000);
+    drawString((char *)"Delay: ", 0x00ffffff, 0x00000000);
     drawNumber(get_milliseconds_delayed(), 0x00ffffff, 0x00000000, 0);
     sleep(5000);
 }
@@ -290,7 +290,7 @@ void testAudio(){
 int main()
 {	
     // ncClear();
-    ncPrint((const unsigned char *)"se llego al main\n");
+    ncPrint((const char *)"se llego al main\n");
 
 	initProcessState();
 	init_rtc();
@@ -303,7 +303,7 @@ int main()
 	// testScreen();
 	// testAudio();
 
-    ncPrint((const unsigned char *)"ya se termino todo lo de kernel, yendo a userspace\n");
+    ncPrint((const char *)"ya se termino todo lo de kernel, yendo a userspace\n");
 
     ((EntryPoint)PinkOSAddress)();
 

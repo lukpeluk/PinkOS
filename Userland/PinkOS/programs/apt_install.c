@@ -3,9 +3,9 @@
 #include <stdpink.h>
 
 
-void apt_install_main(unsigned char * args){
-    unsigned char buffer[200];
-    unsigned char c;
+void apt_install_main(char * args){
+    char buffer[200];
+    char c;
     EtherPinkResponse response;
 
     buffer[0] = 'a';
@@ -24,7 +24,7 @@ void apt_install_main(unsigned char * args){
     buffer[13] = 0;
 
     while (1){
-        printf((unsigned char *)" -> ");
+        printf((char *)" -> ");
 
         int i = 13;
         do{

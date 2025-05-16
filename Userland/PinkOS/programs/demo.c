@@ -12,17 +12,17 @@
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 
-void test(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code){
-    print((unsigned char *)"System hijacked! >:)\n");
+void test(char event_type, int hold_times, char ascii, char scan_code){
+    print((char *)"System hijacked! >:)\n");
 }
 
-void demo_main(unsigned char * args){
+void demo_main(char * args){
     // System reserved tasks
     syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, (uint64_t)test, 0);
 
     // CLI
     clear();
-    print((unsigned char *)"Welcome to PinkOS Demo from the user environment API!");
+    print((char *)"Welcome to PinkOS Demo from the user environment API!");
 
 
     // GUI

@@ -1379,10 +1379,10 @@ const static Note * neverGonnaGiveYouUp[] = {
 };
 
 const static Song songs[] = {
-    {(unsigned char *)"pink panther", (Note **) pinkPanther , 120},
-    {(unsigned char *)"furelise", (Note **) furElise, 80},
-    {(unsigned char *)"super mario", (Note **) superMarioBros, 180},
-    {(unsigned char *)"never gonna give you up", (Note **) neverGonnaGiveYouUp, 114},
+    {(char *)"pink panther", (Note **) pinkPanther , 120},
+    {(char *)"furelise", (Note **) furElise, 80},
+    {(char *)"super mario", (Note **) superMarioBros, 180},
+    {(char *)"never gonna give you up", (Note **) neverGonnaGiveYouUp, 114},
 };
 
 const static int num_songs = sizeof(songs) / sizeof(Song);
