@@ -62,6 +62,7 @@ static const Colors PinkOSColors = {
 };
 
 
+extern Colors* ColorSchema; // Representa el esquema de colores actual, se inicializa en PinkOS.c, capaz hay que buscarle otro lugar
 
 
 #endif

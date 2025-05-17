@@ -31,6 +31,8 @@ static struct PreviousAudioState{
 	AudioState state;
 } previousAudioState = {0};
 
+Colors* ColorSchema = &PinkOSMockupColors;
+
 static int show_home_screen = 1;
 
 typedef struct
@@ -231,7 +233,7 @@ int save_number_to_buffer(uint64_t number)
 }
 
 void reset_markup(){
-	current_text_color = PinkOSColors.text;
+	current_text_color = ColorSchema->text;
 	highlighting_text = 0;
 }
 
@@ -245,18 +247,18 @@ int process_markup(char *string)
 		highlighting_text = !highlighting_text;
 
 	else if(*string == '>' && *(string + 1) == '!')
-		current_text_color = PinkOSColors.error;
+		current_text_color = ColorSchema->error;
 
 	else if(*string == '>' && *(string + 1) == '?')
-		current_text_color = PinkOSColors.warning;
+		current_text_color = ColorSchema->warning;
 
 	else if(*string == '>' && *(string + 1) == '+')
-		current_text_color = PinkOSColors.success;
+		current_text_color = ColorSchema->success;
 
 	else if(*string == '>' && *(string + 1) == '.')
-		current_text_color = PinkOSColors.text;
+		current_text_color = ColorSchema->text;
 	else if(*string == '>' && *(string + 1) == '#')
-		current_text_color = PinkOSColors.info;
+		current_text_color = ColorSchema->info;
 	
 	else markup_chars = 0;
 
@@ -266,7 +268,7 @@ int process_markup(char *string)
 void redraw()
 {
 	// clear screen
-	syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)PinkOSColors.background, 0, 0, 0, 0);
+	syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
 	draw_status_bar();
 	syscall(SET_CURSOR_LINE_SYSCALL, 2, 0, 0, 0, 0); // evita dibujar la status bar
 	reset_markup(); // just in case
@@ -280,7 +282,7 @@ void redraw()
 
 		if (is_input[i] == 1)
 		{
-			syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)PinkOSColors.prompt, (uint64_t)PinkOSColors.background, 0, 0);
+			syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 		}
 		int j = 0;
 		int markup_chars = 0;
@@ -292,13 +294,13 @@ void redraw()
 			if(markup_chars)
 				j += markup_chars-1; // updates the index to avoid printing the markup characters
 			else
-				syscall(DRAW_CHAR_SYSCALL, (uint64_t)buffer[i][j], (uint64_t)current_text_color, (uint64_t)(highlighting_text ? PinkOSColors.highlighted_text_background : PinkOSColors.background), 1, 0);
+				syscall(DRAW_CHAR_SYSCALL, (uint64_t)buffer[i][j], (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 		}
 		reset_markup(); // resets the styles in case it was not reset manually
 
 		// print a new line (except in the last string)
 		if (i != current_string)
-			syscall(DRAW_CHAR_SYSCALL, (uint64_t)'\n', (uint64_t)current_text_color, (uint64_t)PinkOSColors.background, 1, 0);
+			syscall(DRAW_CHAR_SYSCALL, (uint64_t)'\n', (uint64_t)current_text_color, (uint64_t)ColorSchema->background, 1, 0);
 
 	} while (i != current_string);
 }
@@ -372,7 +374,7 @@ void add_char_to_stdout(char character)
 
 	// print character to screen, if not in graphic mode
 	if(!graphics_mode)
-		syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)current_text_color, (uint64_t)(highlighting_text ? PinkOSColors.highlighted_text_background : PinkOSColors.background), 1, 0);
+		syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 }
 
 // prints and saves to the buffer
@@ -464,7 +466,7 @@ void execute_program(int input_line)
 		if (program->perms & DRAWING_PERMISSION)
 		{
 			graphics_mode = 1;
-			syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)PinkOSColors.background, 0, 0, 0, 0);
+			syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
 		}
 		if ((program->perms & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
 		{
@@ -512,7 +514,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
-	// syscall(DRAW_HEX_SYSCALL, scan_code, PinkOSColors.text, PinkOSColors.background, 0, 0);  // For debugging
+	// syscall(DRAW_HEX_SYSCALL, scan_code, ColorSchema->text, ColorSchema->background, 0, 0);  // For debugging
 	// return;
 
 
@@ -632,9 +634,9 @@ void draw_status_bar()
 	time_position.x = getScreenWidth() - (11 * char_width);
 	logo_str[2] = 169;
 
-	drawRectangle(PinkOSColors.status_bar_background, screen_width, char_width + 10, (Point){0, 0});
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)logo_str, (uint64_t)PinkOSColors.status_bar_text, (uint64_t)PinkOSColors.status_bar_background, (uint64_t)&logo_position, 0);
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)time_str, (uint64_t)PinkOSColors.status_bar_text, (uint64_t)PinkOSColors.status_bar_background, (uint64_t)&time_position, 0);
+	drawRectangle(ColorSchema->status_bar_background, screen_width, char_width + 10, (Point){0, 0});
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)logo_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&logo_position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)time_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&time_position, 0);
 }
 
 void exception_handler(int exception_id, BackupRegisters *backup_registers)
@@ -785,7 +787,7 @@ void newPrompt()
 {
 	scroll_if_out_of_bounds();
 	is_input[current_string] = 1;
-	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)PinkOSColors.prompt, (uint64_t)PinkOSColors.background, 0, 0);
+	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 	reset_markup();
 }
 
@@ -823,7 +825,7 @@ void idle(char *message)
 	while (1)
 	{
 		// if (message != 0){
-		// 	syscall(DRAW_STRING_SYSCALL, message, PinkOSColors.text, PinkOSColors.background, 0, 0);
+		// 	syscall(DRAW_STRING_SYSCALL, message, ColorSchema->text, ColorSchema->background, 0, 0);
 		// }
 		_hlt();
 	}
@@ -857,14 +859,14 @@ void home_screen()
 	position.x = 0;
 	position.y = 400;
 
-	drawRectangle(PinkOSColors.background, screen_width, 140, position);
+	drawRectangle(ColorSchema->background, screen_width, 140, position);
 	position.x += 50;
 	position.y += 25;
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Welcome to PinkOS!", (uint64_t)PinkOSColors.text, (uint64_t)PinkOSColors.background, (uint64_t)&position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Welcome to PinkOS!", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
 
 	position.y += 50;
 
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press any key to continue", (uint64_t)PinkOSColors.text, (uint64_t)PinkOSColors.background, (uint64_t)&position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press any key to continue", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
 
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
@@ -892,7 +894,7 @@ int main()
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)RTC_HANDLER, (uint64_t)status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
-	current_text_color = PinkOSColors.text;
+	current_text_color = ColorSchema->text;
 	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
 	add_str_to_stdout((char *)"\n >#* Type help for help\n");
 	newPrompt();

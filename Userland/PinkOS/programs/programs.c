@@ -204,6 +204,14 @@ static Program programs[] = {
         (char *)"Install a package",
         (char *)"usage: apt_install \nApt Install v1 \n Use this program to install a package."
     },
+    {
+        "changetheme",
+        "Change Theme",
+        change_theme_main,
+        0,
+        "Toggle between the default and mockup color themes",
+        "usage: chagetheme \nChangeTheme v1 \n Use this command to change the color theme."
+    }
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
