@@ -6,6 +6,7 @@
 #include <keyboard.h>
 #include <stdint.h>
 #include <ascii.h>
+#include <colors.h>
 
 #define GAMESCREEN_SIZE 760
 #define GAMEBOARD_SIZE 20
@@ -112,7 +113,7 @@ void snake_main(char *args) {
                 snakes[i].death = 1;
             }
         }
-        drawRectangleBorder(0xFFFFFF, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
+        drawRectangleBorder(ColorSchema->text, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
         drawScores();
         // Dibuja el tablero
         // drawGameboard();
@@ -148,7 +149,7 @@ void init() {
     snakes[0].head = (Point){START_OFFSET + snakes[0].length - 1, 10};
     snakes[1].head = (Point){GAMEBOARD_SIZE - (START_OFFSET + snakes[1].length - 1), 10};
 
-    drawRectangleBorder(0xFFFFFF, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
+    drawRectangleBorder(ColorSchema->text, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
 
     // Coloca las serpientes en el tablero
     for (int i = 0; i < snakes[0].length; i++) {
@@ -175,33 +176,33 @@ void drawScores() {
     Point info_player_2 = {space_for_scores, 200};
 
 
-    drawString((char *)"Player 1", 0xFFFFFF, 0x000000, info_player_1);
-    drawString((char *)"Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_1.y + 50});
-    drawNumber(snakes[0].score, 0xFFFFFF, 0x000000, (Point){space_for_scores + 7 * char_width, info_player_1.y + 50});
+    drawString((char *)"Player 1", ColorSchema->text, ColorSchema->background, info_player_1);
+    drawString((char *)"Score: ", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, info_player_1.y + 50});
+    drawNumber(snakes[0].score, ColorSchema->text, ColorSchema->background, (Point){space_for_scores + 7 * char_width, info_player_1.y + 50});
 
     if (num_players == 1) {
         if (snakes[0].death) {
             incFontSize();
-            drawString((char *)"GAME OVER", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
+            drawString((char *)"GAME OVER", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, 10});
         }
         return;
     }
-    drawString((char *)"Player 2", 0xFFFFFF, 0x000000, info_player_2);
-    drawString((char *)"Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_2.y + 50});
-    drawNumber(snakes[1].score, 0xFFFFFF, 0x000000, (Point){space_for_scores + 7 * char_width, info_player_2.y + 50});
+    drawString((char *)"Player 2", ColorSchema->text, ColorSchema->background, info_player_2);
+    drawString((char *)"Score: ", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, info_player_2.y + 50});
+    drawNumber(snakes[1].score, ColorSchema->text, ColorSchema->background, (Point){space_for_scores + 7 * char_width, info_player_2.y + 50});
     
     char is_both_dead = snakes[0].death && snakes[1].death;
     if (is_both_dead) {
         incFontSize();
-        drawString((char *)"DRAW", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
+        drawString((char *)"DRAW", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, 10});
         return;
     }else if(snakes[0].death){
         incFontSize();
-        drawString((char *)"SNAKE 2 WINS", 0xFF0000, 0x000000, (Point){space_for_scores, 10});
+        drawString((char *)"SNAKE 2 WINS", 0xFF0000, ColorSchema->background, (Point){space_for_scores, 10});
         return;
     }else if(snakes[1].death){
         incFontSize();
-        drawString((char *)"SNAKE 1 WINS", 0x00FF00, 0x000000, (Point){space_for_scores, 10});
+        drawString((char *)"SNAKE 1 WINS", 0x00FF00, ColorSchema->background, (Point){space_for_scores, 10});
         return;
     }
     
@@ -232,7 +233,7 @@ int moveSnake(Snake *snake) {
         // Elimino LA ANTERIOR del tablero
         BOARD(snake->tail.x, snake->tail.y) = EMPTY; // Limpia la cola en el tablero
         // Elimino LA ANTERIOR del dibujo
-        drawRectangle(0x000000, GRAPHICS_SCALE, GRAPHICS_SCALE, (Point){snake->tail.x * GRAPHICS_SCALE, snake->tail.y * GRAPHICS_SCALE});
+        drawRectangle(ColorSchema->background, GRAPHICS_SCALE, GRAPHICS_SCALE, (Point){snake->tail.x * GRAPHICS_SCALE, snake->tail.y * GRAPHICS_SCALE});
         // Guardo la nueva cola
         snake->tail = new_tail;
     }
