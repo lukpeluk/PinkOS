@@ -37,6 +37,18 @@ def send_to_google_api(user_prompt):
     except Exception as e:
         return f"Error al comunicarse con la API: {str(e)}"
 
+def send_response_with_header(client_socket, header_code, content_type, response_type, data):
+    """Envía respuesta con header correcto en little-endian"""
+    total_size = len(data)
+    
+    # Crear header de 14 bytes en little-endian
+    # 2 bytes header_code + 2 bytes content_type + 2 bytes response_type + 8 bytes total_size
+    header = struct.pack('<HHHQ', header_code, content_type, response_type, total_size)
+    
+    # Enviar header + datos
+    client_socket.sendall(header + data)
+    print(f"Enviado header: code={header_code}, content_type={content_type}, response_type={response_type}, size={total_size}")
+
 def main():
     # Configuración del cliente TCP
     host = 'localhost'
@@ -69,79 +81,77 @@ def main():
                         print("Recibido francis")
                         # Mandar francis.bin
                         try:
-                            with open("./ethereal-tools/francis.bin", "rb") as f:
+                            with open("./francis.bin", "rb") as f:
                                 data = f.read()
-                                length = len(data)
-                                # header = 0x00 01 00 00 00 05 7E 40 (but remember to convert to 64-bit little-endian)
-                                header = struct.pack("<Q", 0x00010000057E40) + length.to_bytes(4, byteorder='big')
-                                # client_socket.sendall(header)
-                                client_socket.sendall(data)
+                                # SUCCESS(2), BITMAP(1), FIXED_SIZE(0)
+                                send_response_with_header(client_socket, 2, 1, 0, data)
                                 print("Enviado francis.bin")
                         except FileNotFoundError:
                             print("No se encontró el archivo francis.bin")
-                            client_socket.sendall(b"Error: francis.bin no encontrado\n")
+                            error_msg = b"Error: francis.bin no encontrado"
+                            # ERROR(3), PLAIN_TEXT(0), ASCII_STREAM(1)
+                            send_response_with_header(client_socket, 3, 0, 1, error_msg)
                         continue
 
                     if line == "pietra":
                         print("Recibido PIETRA")
                         # Mandar pietra.bin
                         try:
-                            with open("./ethereal-tools/pietra.bin", "rb") as f:
+                            with open("./pietra.bin", "rb") as f:
                                 data = f.read()
-                                length = len(data)
-                                header = b'\x00\x00\x01\x00\x00\x00\x00\x00' + length.to_bytes(4, byteorder='big')
-                                client_socket.sendall(header)
-                                client_socket.sendall(data)
+                                # SUCCESS(2), BITMAP(1), FIXED_SIZE(0)
+                                send_response_with_header(client_socket, 2, 1, 0, data)
                                 print("Enviado pietra.bin")
                         except FileNotFoundError:
                             print("No se encontró el archivo pietra.bin")
-                            client_socket.sendall(b"Error: pietra.bin no encontrado\n")
+                            error_msg = b"Error: pietra.bin no encontrado"
+                            # ERROR(3), PLAIN_TEXT(0), ASCII_STREAM(1)
+                            send_response_with_header(client_socket, 3, 0, 1, error_msg)
                         continue
 
                     # Manejar comandos con prefijo "chatgpt"
                     if line.startswith("chatgpt "):
-                        # 16 bits del codigo de respuesta, 8 bits del tipo del contenido, 8 bits del tipo de respuesta y 32 bits del tamaño del contenido
                         user_prompt = line[len("chatgpt "):].strip()
                         print(f"Enviando a la API: {user_prompt}")
                         api_response = send_to_google_api(user_prompt)
-                        # length = len(api_response)
-                        # header = b'\x00\x00\x00\x00' + bytes([0, 0, 0, 0]) + length.to_bytes(4, byteorder='big')
-                        # client_socket.sendall(header)
-                        client_socket.sendall(f"{api_response}\n".encode('utf-8'))
-                        # Send \0
-                        client_socket.sendall(b'\x00')
+                        # Convertir a bytes y agregar null terminator para ASCII_STREAM
+                        response_data = api_response.encode('utf-8') + b'\x00'
+                        # SUCCESS(2), PLAIN_TEXT(0), ASCII_STREAM(1)
+                        send_response_with_header(client_socket, 2, 0, 1, response_data)
                         print(f"Respuesta de la API enviada: {api_response}")
                         continue
 
                     if line.startswith("apt install "):
-                        # Instalar un paquete de pip
+                        # Instalar un paquete
                         package = line[len("apt install "):].strip()
                         print(f"Instalando paquete: {package}")
                         try:
                             # get from /programs the .bin
-                            with open(f"./ethereal-tools/programs/{package}.bin", "rb") as f:
+                            with open(f"./programs/{package}.bin", "rb") as f:
                                 data = f.read()
-                                length = len(data)
-                                # header = b'\x00\x00\x01\x00\x00\x00\x00\x00' + length.to_bytes(4, byteorder='big')
-                                # client_socket.sendall(header)
-                                client_socket.sendall(data)
+                                # SUCCESS(2), BITMAP(1), FIXED_SIZE(0)
+                                send_response_with_header(client_socket, 2, 1, 0, data)
                                 print(f"Enviado {package}.bin")
                                 continue
                         except FileNotFoundError:
                             print(f"No se encontró el archivo {package}.bin")
-                            respuesta = f"Error: No se encontró el archivo {package}.bin\n"
+                            respuesta = f"Error: No se encontró el archivo {package}.bin"
                         except Exception as e:
-                            respuesta = f"Error al instalar el paquete {package}: {e}\n"
+                            respuesta = f"Error al instalar el paquete {package}: {e}"
 
-                        client_socket.sendall(respuesta.encode('utf-8'))
-                        client_socket.sendall(b'\x00')
-                        print(f"Enviado: {respuesta.strip()}")
+                        # Enviar error con null terminator
+                        error_data = respuesta.encode('utf-8') + b'\x00'
+                        # ERROR(3), PLAIN_TEXT(0), ASCII_STREAM(1)
+                        send_response_with_header(client_socket, 3, 0, 1, error_data)
+                        print(f"Enviado: {respuesta}")
                         continue
 
                     # Responder al servidor con un mensaje por defecto
-                    respuesta = "PUTO EL QUE LEE\n"
-                    client_socket.sendall(respuesta.encode('utf-8'))
-                    print(f"Enviado: {respuesta.strip()}")
+                    respuesta = input("mensage: ")
+                    response_data = respuesta.encode('utf-8') + b'\x00'
+                    # SUCCESS(2), PLAIN_TEXT(0), ASCII_STREAM(1)
+                    send_response_with_header(client_socket, 2, 0, 1, response_data)
+                    print(f"Enviado: {respuesta}")
 
     except ConnectionRefusedError:
         print("No se pudo conectar al servidor. Asegúrate de que esté ejecutándose.")
