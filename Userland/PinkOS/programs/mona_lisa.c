@@ -15,7 +15,7 @@
 extern uint64_t syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
 
-int str_to_int(unsigned char *str) {
+int str_to_int(char *str) {
     int result = 0;
     int i = 0;
     while (str[i] != '\0' && str[i] >= '0' && str[i] <= '9') {
@@ -43,9 +43,9 @@ Note * testChromaticScaleLigated[] = {
     0,
 };
 
-void mona_lisa_main(unsigned char *args) {
+void mona_lisa_main(char *args) {
     if(args[0] == '\0'){
-		print("Usage: mona_lisa <scale (range 1-15)>\n");
+		print((char *)"Usage: mona_lisa <scale (range 1-15)>\n");
         return;
     }
 
@@ -58,7 +58,7 @@ void mona_lisa_main(unsigned char *args) {
     }
 
     if(desired_scale < 1 || desired_scale > 15){
-		print("Usage: mona_lisa <scale (range 1-15)>\n");
+		print((char *)"Usage: mona_lisa <scale (range 1-15)>\n");
         return;
     }
 
@@ -74,7 +74,7 @@ void mona_lisa_main(unsigned char *args) {
         position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
 
         // Draw the Mona Lisa image
-        drawBitmap(mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
+        drawBitmap((uint32_t *)mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
 
         if(scale == desired_scale){
 			// scale = 1;
@@ -86,7 +86,7 @@ void mona_lisa_main(unsigned char *args) {
     }
 
     // Wait for key
-    unsigned char c = get_char_from_stdin();
+    char c = get_char_from_stdin();
     while(1){
         // if (c != 0) {
         //     break;

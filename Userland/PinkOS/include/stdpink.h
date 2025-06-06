@@ -5,14 +5,14 @@
 #include <environmentApiEndpoints.h>
 #include <stdint.h>
 
-void strcpy(unsigned char * dest, unsigned char * src);
+void strcpy(char * dest, char * src);
 
 /*
  * Prints a string to the console
  * @param string the string to print
  * @return void
 */ 
-void print(unsigned char * string);
+void print(char * string);
 
 /*
  * Prints a string with the given format to the console 
@@ -20,20 +20,20 @@ void print(unsigned char * string);
  * @param ... the arguments to replace in the format
  * @return void
 */
-void printf(unsigned char * format, ...);
+void printf(char * format, ...);
 
 /*
  * Prints a single character to the console
  * @param c the character to print
  * @return void
 */
-void putChar(unsigned char c);
+void putChar(char c);
 
 /*
  * Reads a character from the console
  * @return the character read
 */
-unsigned char getChar();
+char getChar();
 
 /*
  * Clears the stdin buffer so that future reads are not yelding previously inserted chars
@@ -47,7 +47,7 @@ void clearStdinBuffer();
  * @param ... pointers to the variables to store the values
  * @return void
 */
-void scanf(unsigned char * format, ...);
+void scanf(char * format, ...);
 
 
 void seedRandom(uint64_t seed);

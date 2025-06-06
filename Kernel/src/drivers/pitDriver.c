@@ -1,6 +1,7 @@
 #include <drivers/pitDriver.h>
 #include <drivers/registersDriver.h>
 #include <drivers/videoDriver.h>
+#include <drivers/audioDriver.h>
 
 // 18.2 Hz
 #define MILLISECONDS_PER_TICK 54.9450549451
@@ -31,7 +32,6 @@ uint64_t milliseconds_elapsed() {
 void sleep(uint64_t milis) {
 	uint64_t start = milliseconds_elapsed();
 
-	int i = 0;
 	while (milliseconds_elapsed() - start < milis){
 		_hlt();
 	}

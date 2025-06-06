@@ -7,7 +7,9 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     -m 512 \
     -audiodev pa,id=speaker \
     -machine pcspk-audiodev=speaker \
-    -rtc base=localtime \
+    -serial tcp::4444,server,nowait
+    # -rtc base=localtime \
+
     -serial tcp::4444,server,nowait
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Para Mac
@@ -15,7 +17,8 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     -hda Image/x64BareBonesImage.qcow2 \
     -m 512 \
     -audiodev coreaudio,id=speaker \
-    -machine pcspk-audiodev=speaker
+    -machine pcspk-audiodev=speaker \
+    -serial tcp::4444,server,nowait
 else
   echo "Sistema operativo no soportado"
   exit 1

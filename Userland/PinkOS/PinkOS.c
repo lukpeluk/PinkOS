@@ -17,8 +17,8 @@
 #define ADVANCE_INDEX(index, array_size) index = (index + 1) % array_size;
 #define DECREASE_INDEX(index, array_size) index = index ? (index - 1) : array_size - 1;
 
-#define IS_ASCII(ascii) ((unsigned char)ascii > 0 && (unsigned char)ascii < 256)
-#define IS_PRINTABLE_CHAR(ascii) ((unsigned char)ascii >= 32 && (unsigned char)ascii < 255 && (unsigned char)ascii != ASCII_DEL)
+#define IS_ASCII(ascii) ((char)ascii > 0 && (char)ascii < 256)
+#define IS_PRINTABLE_CHAR(ascii) ((char)ascii >= 32 && (char)ascii < 255 && (char)ascii != ASCII_DEL)
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void *get_stack_pointer();
@@ -30,6 +30,8 @@ static struct PreviousAudioState{
 	uint8_t playing;
 	AudioState state;
 } previousAudioState = {0};
+
+Colors* ColorSchema = &PinkOSMockupColors;
 
 static int show_home_screen = 1;
 
@@ -64,16 +66,16 @@ int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 
 #define COMMAND_BUFFER_SIZE 10
 
-static unsigned char logo_str[10] = "    PinkOS";
-static unsigned char time_str[10] = "  00:00:00";
+static char logo_str[10] = "    PinkOS";
+static char time_str[10] = "  00:00:00";
 static Point time_position = {950, 5};
 static Point logo_position = {10, 5};
 
 
-static const unsigned char *command_not_found_msg = ">?Command not found\n";
-static const unsigned char *default_prompt = " > ";
+static const char *command_not_found_msg = (const char *) ">?Command not found\n";
+static const char *default_prompt = (const char *)" > ";
 
-unsigned char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
+char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
 uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's an output
 int current_string = 0;
 int current_position = 0;
@@ -83,28 +85,32 @@ int scroll = 0; // indica qué línea es la que está en la parte superior de la
 uint32_t current_text_color; // intended to be changed via markup
 int highlighting_text = 0;	 // for highlighting text
 
-unsigned char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
+char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
 int current_command = 0;
 int oldest_command = 0;
 int command_in_iteration = -1;
 
-unsigned char stdin_buffer[STRING_SIZE] = {0};
+char stdin_buffer[STRING_SIZE] = {0};
 int stdin_write_position = 0;
 int stdin_read_position = 0;
 
-unsigned char get_char_from_stdin()
+void draw_status_bar();
+void newPrompt();
+void idle(char *message);
+
+char get_char_from_stdin()
 {
 	if (stdin_write_position == stdin_read_position)
 	{
 		return 0;
 	}
 
-	unsigned char c = stdin_buffer[stdin_read_position];
+	char c = stdin_buffer[stdin_read_position];
 	stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
 	return c;
 }
 
-void add_char_to_stdin(unsigned char c)
+void add_char_to_stdin(char c)
 {
 	stdin_buffer[stdin_write_position] = c;
 	stdin_write_position = (stdin_write_position + 1) % STRING_SIZE;
@@ -137,7 +143,7 @@ void clear_stdin()
 // cuando el buffer de escritura (el del str actual) llega al buffer de lectura (el del más viejo), se mueve el buffer de lectura
 // cuando quiero leer toda la terminal con su historial, empiezo desde el buffer de lectura y termino en el buffer de escritura
 // (obviamnte también al leer tengo que hacer un wrap around cuando llego al final del buffer)
-int save_char_to_buffer(unsigned char key)
+int save_char_to_buffer(char key)
 {
 	// if enter key is pressed, move to the next string
 	if (key == '\n')
@@ -192,17 +198,18 @@ int save_char_to_buffer(unsigned char key)
 	return 0;
 }
 
-int save_str_to_buffer(unsigned char *string)
+int save_str_to_buffer(char *string)
 {
 	for (int i = 0; string[i] != 0; i++)
 	{
 		save_char_to_buffer(string[i]);
 	}
+	return 0;
 }
 
 int save_number_to_buffer(uint64_t number)
 {
-	unsigned char buffer[12];
+	char buffer[12];
 	int i = 0;
 	if (number == 0)
 	{
@@ -222,16 +229,17 @@ int save_number_to_buffer(uint64_t number)
 	{
 		save_char_to_buffer(buffer[j]);
 	}
+	return 0;
 }
 
 void reset_markup(){
-	current_text_color = PinkOSColors.text;
+	current_text_color = ColorSchema->text;
 	highlighting_text = 0;
 }
 
 // recieves a string and updates the current color and highlighting state if the string contains markup at the beginning
 // returns the amount of markup chars detected, to avoid printing them
-int process_markup(unsigned char *string)
+int process_markup(char *string)
 {
 	int markup_chars = 2; // 2 is the default amount of markup characters
 
@@ -239,18 +247,18 @@ int process_markup(unsigned char *string)
 		highlighting_text = !highlighting_text;
 
 	else if(*string == '>' && *(string + 1) == '!')
-		current_text_color = PinkOSColors.error;
+		current_text_color = ColorSchema->error;
 
 	else if(*string == '>' && *(string + 1) == '?')
-		current_text_color = PinkOSColors.warning;
+		current_text_color = ColorSchema->warning;
 
 	else if(*string == '>' && *(string + 1) == '+')
-		current_text_color = PinkOSColors.success;
+		current_text_color = ColorSchema->success;
 
 	else if(*string == '>' && *(string + 1) == '.')
-		current_text_color = PinkOSColors.text;
+		current_text_color = ColorSchema->text;
 	else if(*string == '>' && *(string + 1) == '#')
-		current_text_color = PinkOSColors.info;
+		current_text_color = ColorSchema->info;
 	
 	else markup_chars = 0;
 
@@ -260,7 +268,7 @@ int process_markup(unsigned char *string)
 void redraw()
 {
 	// clear screen
-	syscall(CLEAR_SCREEN_SYSCALL, PinkOSColors.background, 0, 0, 0, 0);
+	syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
 	draw_status_bar();
 	syscall(SET_CURSOR_LINE_SYSCALL, 2, 0, 0, 0, 0); // evita dibujar la status bar
 	reset_markup(); // just in case
@@ -274,7 +282,7 @@ void redraw()
 
 		if (is_input[i] == 1)
 		{
-			syscall(DRAW_STRING_SYSCALL, default_prompt, PinkOSColors.prompt, PinkOSColors.background, 0, 0);
+			syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 		}
 		int j = 0;
 		int markup_chars = 0;
@@ -286,13 +294,13 @@ void redraw()
 			if(markup_chars)
 				j += markup_chars-1; // updates the index to avoid printing the markup characters
 			else
-				syscall(DRAW_CHAR_SYSCALL, buffer[i][j], current_text_color, highlighting_text ? PinkOSColors.highlighted_text_background : PinkOSColors.background, 1, 0);
+				syscall(DRAW_CHAR_SYSCALL, (uint64_t)buffer[i][j], (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 		}
 		reset_markup(); // resets the styles in case it was not reset manually
 
 		// print a new line (except in the last string)
 		if (i != current_string)
-			syscall(DRAW_CHAR_SYSCALL, '\n', current_text_color, PinkOSColors.background, 1, 0);
+			syscall(DRAW_CHAR_SYSCALL, (uint64_t)'\n', (uint64_t)current_text_color, (uint64_t)ColorSchema->background, 1, 0);
 
 	} while (i != current_string);
 }
@@ -325,11 +333,11 @@ void scroll_if_out_of_bounds()
 	int is_in_boundaries = -1;
 	uint8_t needs_redraw = 0;
 	do {
-		uint64_t cursor_line, cursor_col = 0;
-		syscall(GET_CURSOR_LINE_SYSCALL, &cursor_line, 0, 0, 0, 0);
-		syscall(GET_CURSOR_COL_SYSCALL, &cursor_col, 0, 0, 0, 0);
+		uint64_t cursor_line = 0, cursor_col = 0;
+		syscall(GET_CURSOR_LINE_SYSCALL, (uint64_t)&cursor_line, 0, 0, 0, 0);
+		syscall(GET_CURSOR_COL_SYSCALL, (uint64_t)&cursor_col, 0, 0, 0, 0);
 		
-		syscall(IS_CURSOR_IN_BOUNDARIES_SYSCALL, cursor_line, cursor_col + 1, &is_in_boundaries, 0, 0);
+		syscall(IS_CURSOR_IN_BOUNDARIES_SYSCALL, cursor_line, cursor_col + 1, (uint64_t)&is_in_boundaries, 0, 0);
 
 		if(!is_in_boundaries){
 			ADVANCE_INDEX(scroll, BUFFER_SIZE);
@@ -344,7 +352,7 @@ void scroll_if_out_of_bounds()
 }
 
 // prints and saves to the buffer
-void add_char_to_stdout(unsigned char *character)
+void add_char_to_stdout(char character)
 {
 	if(!IS_ASCII(character)) return;
 
@@ -366,11 +374,11 @@ void add_char_to_stdout(unsigned char *character)
 
 	// print character to screen, if not in graphic mode
 	if(!graphics_mode)
-		syscall(DRAW_CHAR_SYSCALL, character, current_text_color, highlighting_text ? PinkOSColors.highlighted_text_background : PinkOSColors.background, 1, 0);
+		syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 }
 
 // prints and saves to the buffer
-void add_str_to_stdout(unsigned char *string)
+void add_str_to_stdout(char *string)
 {
 	int markup_chars = 0;
 	for (int i = 0; string[i] != 0; i++)
@@ -393,7 +401,7 @@ void add_str_to_stdout(unsigned char *string)
 
 void add_number_to_stdout(uint64_t number)
 {
-	unsigned char buffer[12];
+	char buffer[12];
 	int i = 0;
 	if (number == 0)
 	{
@@ -415,11 +423,11 @@ void add_number_to_stdout(uint64_t number)
 	}
 }
 
-static unsigned char arguments[STRING_SIZE];
+static char arguments[STRING_SIZE];
 void execute_program(int input_line)
 {
 	// get the program name
-	unsigned char program_name[STRING_SIZE];
+	char program_name[STRING_SIZE];
 	int i = 0;
 	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0; i++)
 	{
@@ -447,7 +455,7 @@ void execute_program(int input_line)
 	if (program == 0)
 	{
 		// "Command not found"
-		add_str_to_stdout(command_not_found_msg);
+		add_str_to_stdout((char *)command_not_found_msg);
 		newPrompt();
 	}
 	// if the program is found, execute it
@@ -458,7 +466,7 @@ void execute_program(int input_line)
 		if (program->perms & DRAWING_PERMISSION)
 		{
 			graphics_mode = 1;
-			syscall(CLEAR_SCREEN_SYSCALL, PinkOSColors.background, 0, 0, 0, 0);
+			syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
 		}
 		if ((program->perms & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
 		{
@@ -472,7 +480,7 @@ void execute_program(int input_line)
 		}
 
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
-		syscall(RUN_PROGRAM_SYSCALL, program, arguments, 0, 0, 0);
+		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
 	}
 }
 
@@ -485,10 +493,10 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 		clear_console();
 		break;
 	case PRINT_STRING_ENDPOINT:
-		add_str_to_stdout(arg1);
+		add_str_to_stdout((char *)arg1);
 		break;
 	case PRINT_CHAR_ENDPOINT:
-		add_char_to_stdout(arg1);
+		add_char_to_stdout((char)arg1);
 		break;
 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
 		background_audio_enabled = 1;
@@ -501,12 +509,12 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 	}
 }
 
-void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
+void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 {
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
-	// syscall(DRAW_HEX_SYSCALL, scan_code, PinkOSColors.text, PinkOSColors.background, 0, 0);  // For debugging
+	// syscall(DRAW_HEX_SYSCALL, scan_code, ColorSchema->text, ColorSchema->background, 0, 0);  // For debugging
 	// return;
 
 
@@ -518,8 +526,8 @@ void key_handler(unsigned char event_type, int hold_times, unsigned char ascii, 
 	}
 	
 	int is_ctrl_pressed, is_shift_pressed = 0;
-	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, &is_ctrl_pressed, 0, 0);
-	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, &is_shift_pressed, 0, 0);
+	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, (uint64_t)&is_ctrl_pressed, 0, 0);
+	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, (uint64_t)&is_shift_pressed, 0, 0);
 
 
 	// --- HANDLE SHELL KEYBOARD SHORTCUTS ---
@@ -620,15 +628,15 @@ void draw_status_bar()
 		return;
 
 	int screen_width = 0;
-	syscall(GET_SCREEN_WIDTH_SYSCALL, &screen_width, 0, 0, 0, 0);
+	syscall(GET_SCREEN_WIDTH_SYSCALL, (uint64_t)&screen_width, 0, 0, 0, 0);
 
 	int char_width = getCharWidth();
 	time_position.x = getScreenWidth() - (11 * char_width);
 	logo_str[2] = 169;
 
-	drawRectangle(PinkOSColors.status_bar_background, screen_width, char_width + 10, (Point){0, 0});
-	syscall(DRAW_STRING_AT_SYSCALL, logo_str, PinkOSColors.status_bar_text, PinkOSColors.status_bar_background, &logo_position, 0);
-	syscall(DRAW_STRING_AT_SYSCALL, time_str, PinkOSColors.status_bar_text, PinkOSColors.status_bar_background, &time_position, 0);
+	drawRectangle(ColorSchema->status_bar_background, screen_width, char_width + 10, (Point){0, 0});
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)logo_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&logo_position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)time_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&time_position, 0);
 }
 
 void exception_handler(int exception_id, BackupRegisters *backup_registers)
@@ -641,63 +649,63 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 	// TODO: capaz hacer función add_warning_to_stdout o algo así para no poner >! en todos lados
 
 	// TODO: Implementar Pantallazo Rosa
-	add_str_to_stdout(">!Exception: ");
+	add_str_to_stdout((char *)">!Exception: ");
 	add_number_to_stdout(exception_id);
 	add_char_to_stdout('\n');
 
 	// print the backup registers
-	add_str_to_stdout(">!rax: ");
+	add_str_to_stdout((char *)">!rax: ");
 	add_number_to_stdout(backup_registers->registers.rax);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rbx: ");
+	add_str_to_stdout((char *)">!rbx: ");
 	add_number_to_stdout(backup_registers->registers.rbx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rcx: ");
+	add_str_to_stdout((char *)">!rcx: ");
 	add_number_to_stdout(backup_registers->registers.rcx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rdx: ");
+	add_str_to_stdout((char *)">!rdx: ");
 	add_number_to_stdout(backup_registers->registers.rdx);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rsi: ");
+	add_str_to_stdout((char *)">!rsi: ");
 	add_number_to_stdout(backup_registers->registers.rsi);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rdi: ");
+	add_str_to_stdout((char *)">!rdi: ");
 	add_number_to_stdout(backup_registers->registers.rdi);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!rbp: ");
+	add_str_to_stdout((char *)">!rbp: ");
 	add_number_to_stdout(backup_registers->registers.rbp);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r8: ");
+	add_str_to_stdout((char *)">!r8: ");
 	add_number_to_stdout(backup_registers->registers.r8);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r9: ");
+	add_str_to_stdout((char *)">!r9: ");
 	add_number_to_stdout(backup_registers->registers.r9);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r10: ");
+	add_str_to_stdout((char *)">!r10: ");
 	add_number_to_stdout(backup_registers->registers.r10);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r11: ");
+	add_str_to_stdout((char *)">!r11: ");
 	add_number_to_stdout(backup_registers->registers.r11);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r12: ");
+	add_str_to_stdout((char *)">!r12: ");
 	add_number_to_stdout(backup_registers->registers.r12);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r13: ");
+	add_str_to_stdout((char *)">!r13: ");
 	add_number_to_stdout(backup_registers->registers.r13);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r14: ");
+	add_str_to_stdout((char *)">!r14: ");
 	add_number_to_stdout(backup_registers->registers.r14);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!r15: ");
+	add_str_to_stdout((char *)">!r15: ");
 	add_number_to_stdout(backup_registers->registers.r15);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!cri_rip: ");
+	add_str_to_stdout((char *)">!cri_rip: ");
 	add_number_to_stdout(backup_registers->cri_rip);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!cri_rsp: ");
+	add_str_to_stdout((char *)">!cri_rsp: ");
 	add_number_to_stdout(backup_registers->cri_rsp);
 	add_char_to_stdout('\n');
-	add_str_to_stdout(">!cri_rflags: ");
+	add_str_to_stdout((char *)">!cri_rflags: ");
 	add_number_to_stdout(backup_registers->cri_rflags);
 	add_char_to_stdout('\n');
 }
@@ -705,67 +713,67 @@ void exception_handler(int exception_id, BackupRegisters *backup_registers)
 void registers_handler(BackupRegisters *backup_registers)
 {
 	RTC_Time time;
-	syscall(GET_RTC_TIME_SYSCALL, &time, 0, 0, 0, 0);
-	add_str_to_stdout("Registers at time: ");
-	add_number_to_stdout(time.hours);
-	add_char_to_stdout(':');
-	add_number_to_stdout(time.minutes);
-	add_char_to_stdout(':');
-	add_number_to_stdout(time.seconds);
-	add_char_to_stdout('\n');
+	syscall(GET_RTC_TIME_SYSCALL, (uint64_t)&time, 0, 0, 0, 0);
+	add_str_to_stdout((char *)"Registers at time: ");
+	add_number_to_stdout((uint64_t)time.hours);
+	add_char_to_stdout((char)':');
+	add_number_to_stdout((uint64_t)time.minutes);
+	add_char_to_stdout((char)':');
+	add_number_to_stdout((uint64_t)time.seconds);
+	add_char_to_stdout((char)'\n');
 
 	// print the backup registers
-	add_str_to_stdout("rax: ");
+	add_str_to_stdout((char *)"rax: ");
 	add_number_to_stdout(backup_registers->registers.rax);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rbx: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rbx: ");
 	add_number_to_stdout(backup_registers->registers.rbx);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rcx: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rcx: ");
 	add_number_to_stdout(backup_registers->registers.rcx);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rdx: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rdx: ");
 	add_number_to_stdout(backup_registers->registers.rdx);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rsi: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rsi: ");
 	add_number_to_stdout(backup_registers->registers.rsi);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rdi: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rdi: ");
 	add_number_to_stdout(backup_registers->registers.rdi);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rbp: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rbp: ");
 	add_number_to_stdout(backup_registers->registers.rbp);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r8: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r8: ");
 	add_number_to_stdout(backup_registers->registers.r8);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r9: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r9: ");
 	add_number_to_stdout(backup_registers->registers.r9);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r10: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r10: ");
 	add_number_to_stdout(backup_registers->registers.r10);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r11: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r11: ");
 	add_number_to_stdout(backup_registers->registers.r11);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r12: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r12: ");
 	add_number_to_stdout(backup_registers->registers.r12);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r13: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r13: ");
 	add_number_to_stdout(backup_registers->registers.r13);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r14: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r14: ");
 	add_number_to_stdout(backup_registers->registers.r14);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("r15: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"r15: ");
 	add_number_to_stdout(backup_registers->registers.r15);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rip: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rip: ");
 	add_number_to_stdout(backup_registers->cri_rip);
-	add_char_to_stdout('\n');
-	add_str_to_stdout("rsp: ");
+	add_char_to_stdout((char)'\n');
+	add_str_to_stdout((char *)"rsp: ");
 	add_number_to_stdout(backup_registers->cri_rsp);
-	add_char_to_stdout('\n');
+	add_char_to_stdout((char)'\n');
 
 	if (!graphics_mode)
 	{
@@ -779,7 +787,7 @@ void newPrompt()
 {
 	scroll_if_out_of_bounds();
 	is_input[current_string] = 1;
-	syscall(DRAW_STRING_SYSCALL, default_prompt, PinkOSColors.prompt, PinkOSColors.background, 0, 0);
+	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 	reset_markup();
 }
 
@@ -808,22 +816,22 @@ void restoreContext(uint8_t was_graphic)
 	}
 	previousAudioState.restoring_audio = 0;
 
-	idle("idle from restoreContext");
+	idle((char *)"idle from restoreContext");
 }
 
 // message for debugging purposes
-void idle(unsigned char *message)
+void idle(char *message)
 {
 	while (1)
 	{
 		// if (message != 0){
-		// 	syscall(DRAW_STRING_SYSCALL, message, PinkOSColors.text, PinkOSColors.background, 0, 0);
+		// 	syscall(DRAW_STRING_SYSCALL, message, ColorSchema->text, ColorSchema->background, 0, 0);
 		// }
 		_hlt();
 	}
 }
 
-void home_screen_exit_handler(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code)
+void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
 {
 	show_home_screen = 0;
 }
@@ -831,7 +839,7 @@ void home_screen_exit_handler(unsigned char event_type, int hold_times, unsigned
 void home_screen()
 {
 
-	syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, home_screen_exit_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)KEY_HANDLER, (uint64_t)home_screen_exit_handler, 0, 0, 0);
 
 	Point position = {0};
 	int scale = 12;
@@ -842,7 +850,7 @@ void home_screen()
 	position.x = (screen_width - MONA_LISA_WIDTH * scale) / 2;
 	position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
 
-	drawBitmap(mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
+	drawBitmap((uint32_t *) mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
 
 	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
 	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
@@ -851,14 +859,14 @@ void home_screen()
 	position.x = 0;
 	position.y = 400;
 
-	drawRectangle(PinkOSColors.background, screen_width, 140, position);
+	drawRectangle(ColorSchema->background, screen_width, 140, position);
 	position.x += 50;
 	position.y += 25;
-	syscall(DRAW_STRING_AT_SYSCALL, "Welcome to PinkOS!", PinkOSColors.text, PinkOSColors.background, &position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Welcome to PinkOS!", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
 
 	position.y += 50;
 
-	syscall(DRAW_STRING_AT_SYSCALL, "Press any key to continue", PinkOSColors.text, PinkOSColors.background, &position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press any key to continue", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
 
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
@@ -872,24 +880,25 @@ void home_screen()
 int main()
 {
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
-	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, get_stack_pointer(), 0, 0, 0, 0);
+	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
 	home_screen();
 	redraw();
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
-	syscall(SET_HANDLER_SYSCALL, EXCEPTION_HANDLER, exception_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, REGISTERS_HANDLER, registers_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, USER_ENVIRONMENT_API_HANDLER, api_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, KEY_HANDLER, key_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, RTC_HANDLER, status_bar_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, RESTORE_CONTEXT_HANDLER, restoreContext, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)USER_ENVIRONMENT_API_HANDLER, (uint64_t)api_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)KEY_HANDLER, (uint64_t)key_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)RTC_HANDLER, (uint64_t)status_bar_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
-	current_text_color = PinkOSColors.text;
-	add_str_to_stdout("># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
-	add_str_to_stdout("\n >#* Type help for help\n");
+	current_text_color = ColorSchema->text;
+	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
+	add_str_to_stdout((char *)"\n >#* Type help for help\n");
 	newPrompt();
 
-	idle("idle from main");
+	idle((char *)"idle from main");
+	return 0;
 }

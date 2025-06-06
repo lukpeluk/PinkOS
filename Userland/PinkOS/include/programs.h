@@ -4,45 +4,48 @@
 #include <stdint.h>
 
 
-typedef void (*ProgramEntry)(unsigned char*);
+typedef void (*ProgramEntry)(char*);
 
 typedef struct {
-    unsigned char* command;
-    unsigned char* name;
+    char* command;
+    char* name;
     ProgramEntry entry;
     uint32_t perms;
-    unsigned char* help;         // This is the help command (a very brief description)
-    unsigned char* description;  // All the information about the command
+    char* help;         // This is the help command (a very brief description)
+    char* description;  // All the information about the command
 } Program;
 
-Program* get_program_entry(const unsigned char* name);
+Program* get_program_entry(const char* name);
 
-unsigned char * get_name();
-unsigned char * get_command();
-unsigned char * get_help();
+char * get_name();
+char * get_command();
+char * get_help();
 int increment_index();
 
-void echo_main(unsigned char *args);
-void forrest_gump_main(unsigned char *args);
-void parrot_main(unsigned char *args);
-void mona_lisa_main(unsigned char *args);
-void date_main(unsigned char *args);
-void time_main(unsigned char *args);
-void help_main(unsigned char *args);
-void man_main(unsigned char *args);
-void test_main(unsigned char *args);
-void ps_main(unsigned char *args);
-void spotify_main(unsigned char *args);
-void pause_main(unsigned char *args);
-void clear_main(unsigned char *args);
-void resume_main(unsigned char *args);
-void snake_main(unsigned char *args);
-void easter_egg_main(unsigned char *args);
-void pietra_main(unsigned char *args);
-void test_ascii_main(unsigned char *args);
-void demo_main(unsigned char *args);
-void whatsapp_main(unsigned char *args);
-void francis_main(unsigned char *args);
-void chatgpt_main(unsigned char *args);
+void echo_main(char *args);
+void forrest_gump_main(char *args);
+void parrot_main(char *args);
+void mona_lisa_main(char *args);
+void date_main(char *args);
+void time_main(char *args);
+void help_main(char *args);
+void man_main(char *args);
+void test_main(char *args);
+void ps_main(char *args);
+void spotify_main(char *args);
+void pause_main(char *args);
+void clear_main(char *args);
+void resume_main(char *args);
+void snake_main(char *args);
+void easter_egg_main(char *args);
+void pietra_main(char *args);
+void test_ascii_main(char *args);
+void demo_main(char *args);
+void whatsapp_main(char *args);
+void francis_main(char *args);
+void chatgpt_main(char *args);
+void set_timezone_main(char *args);
+void apt_install_main(char *args);
+void change_theme_main(unsigned char *args);
 
 #endif

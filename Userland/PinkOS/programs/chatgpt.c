@@ -7,9 +7,9 @@
 #define BUFFER_SIZE 200
 
 
-void chatgpt_main(unsigned char * args){
-    unsigned char buffer[BUFFER_SIZE];
-    unsigned char c;
+void chatgpt_main(char * args){
+    char buffer[BUFFER_SIZE];
+    char c;
     EtherPinkResponse response;
 
     buffer[0] = 'c';
@@ -22,7 +22,7 @@ void chatgpt_main(unsigned char * args){
     buffer[7] = ' ';
 
     while (1){
-        printf(" -> ");
+        printf((char *)" -> ");
 
         int i = 8;
         do{

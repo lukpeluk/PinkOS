@@ -7,13 +7,13 @@
 #define BUFFER_SIZE 200
 
 
-void whatsapp_main(unsigned char * args){
-    unsigned char buffer[BUFFER_SIZE];
-    unsigned char c;
+void whatsapp_main(char * args){
+    char buffer[BUFFER_SIZE];
+    char c;
     EtherPinkResponse response;
 
     while (1){
-        printf(" -> ");
+        printf((char *)" -> ");
 
         int i = 0;
         do{

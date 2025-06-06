@@ -13,28 +13,33 @@
 #define LOADING 1
 #define SUCCESS 2
 #define ERROR 3
+#define GETTING_HEADERS 4
 
 // RESPONSE TYPES
 #define FIXED_SIZE 0
 #define ASCII_STREAM 1
 
 
-#define HEADER_SIZE 8 // 2 byte for response code, 1 byte for content type, 1 byte for response type and 4 bytes for data size
+#define HEADER_SIZE 14 // 2 bytes for response code, 2 bytes for content type, 2 bytes for response type, and 8 bytes for data size
 
 
 typedef struct EtherPinkResponse{
-    uint16_t code, type;
+    uint16_t code, content_type, response_type;
     uint64_t size;
-    unsigned char *raw_data;
+    char *raw_data;
 } EtherPinkResponse;
 
 
-extern void init_setial();
+void process_serial(char c);
+void make_ethereal_request(char * request, EtherPinkResponse * response); 
+
+
+// asm, low level
+extern void init_serial();
 extern void test_serial();
 
 extern char read_serial();
-extern void write_serial(unsigned char c);
+extern void write_serial(char c);
 
-void process_serial(unsigned char c);
 
 #endif

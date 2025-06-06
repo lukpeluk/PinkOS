@@ -1,11 +1,11 @@
 #include <stdpink.h>
 
 
-void test_ascii_main(unsigned char *args){
-    print("Testing ascii:");
-    unsigned char i = 0;
+void test_ascii_main(char *args){
+    print((char *)"Testing ascii:");
+    char i = 0;
     while(1){
-        printf("Char %d: ", i);
+        printf((char *)"Char %d: ", i);
         putChar(i);
         putChar('\n');
         i++;

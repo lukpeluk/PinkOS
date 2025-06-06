@@ -6,6 +6,7 @@
 #include <keyboard.h>
 #include <stdint.h>
 #include <ascii.h>
+#include <colors.h>
 
 #define GAMESCREEN_SIZE 760
 #define GAMEBOARD_SIZE 20
@@ -41,7 +42,7 @@ typedef struct {
     Direction temp_dir;
     Point head;
     Point tail;
-    unsigned char controls[4];
+    char controls[4];
     char type;
     uint32_t score;
     char death;
@@ -50,11 +51,12 @@ typedef struct {
 void moveCherry();
 int moveSnake(Snake *snake);
 int checkCollision(Point position);
-Direction getDirection(const Snake *snake, unsigned char key);
+Direction getDirection(const Snake *snake, char key);
 Point getNewPosition(Point pos, Direction dir);
 Point getNewTail(Snake *snake);
 Point getNewCherryPosition();
 void init();
+void drawScores();
 
 // Variables de juego
 static uint64_t last_draw_time = 0;
@@ -65,15 +67,15 @@ static uint32_t cycles = 0;
 static char num_players = 1;
 
 // Función principal
-void snake_main(unsigned char *args) {
+void snake_main(char *args) {
     // Se fija el argumento para la cantidad de players
     if(args[0] == '\0'){
-        print("Usage: snake <players>\n");
+        print((char *)"Usage: snake <players>\n");
         return;
     }
     // Checkea si el argumento es un número
     if( args[1] != '\0' || args[0] < '1' || args[0] > '2'){
-        print("Invalid number of players. Please use 1 or 2 players\n");
+        print((char *)"Invalid number of players. Please use 1 or 2 players\n");
         return;
     }
     if (args[0] == '1') num_players = 1;
@@ -85,7 +87,7 @@ void snake_main(unsigned char *args) {
     
     while (1) {
         while (getMillisElapsed() - last_draw_time < REFRESH_RATE) {        // Espera hasta que pase el tiempo de refresco
-            unsigned char c = getChar();                                    // Obtiene la última tecla presionada
+            char c = getChar();                                    // Obtiene la última tecla presionada
 
             if (c == ASCII_ESC) return;                                     // Si se presiona ESC, termina el juego
 
@@ -111,7 +113,7 @@ void snake_main(unsigned char *args) {
                 snakes[i].death = 1;
             }
         }
-        drawRectangleBorder(0xFFFFFF, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
+        drawRectangleBorder(ColorSchema->text, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
         drawScores();
         // Dibuja el tablero
         // drawGameboard();
@@ -119,7 +121,7 @@ void snake_main(unsigned char *args) {
         if (snakes[0].death || snakes[1].death) {
             play_audio(songs[3].notes, 0, songs[3].tempo);
             while (1) {
-                unsigned char c = getChar();
+                char c = getChar();
                 if (c == ASCII_ESC) return;
             }
         }
@@ -147,7 +149,7 @@ void init() {
     snakes[0].head = (Point){START_OFFSET + snakes[0].length - 1, 10};
     snakes[1].head = (Point){GAMEBOARD_SIZE - (START_OFFSET + snakes[1].length - 1), 10};
 
-    drawRectangleBorder(0xFFFFFF, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
+    drawRectangleBorder(ColorSchema->text, GAMESCREEN_SIZE, GAMESCREEN_SIZE, 1, (Point){0, 0});
 
     // Coloca las serpientes en el tablero
     for (int i = 0; i < snakes[0].length; i++) {
@@ -174,33 +176,33 @@ void drawScores() {
     Point info_player_2 = {space_for_scores, 200};
 
 
-    drawString("Player 1", 0xFFFFFF, 0x000000, info_player_1);
-    drawString("Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_1.y + 50});
-    drawNumber(snakes[0].score, 0xFFFFFF, 0x000000, (Point){space_for_scores + 7 * char_width, info_player_1.y + 50});
+    drawString((char *)"Player 1", ColorSchema->text, ColorSchema->background, info_player_1);
+    drawString((char *)"Score: ", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, info_player_1.y + 50});
+    drawNumber(snakes[0].score, ColorSchema->text, ColorSchema->background, (Point){space_for_scores + 7 * char_width, info_player_1.y + 50});
 
     if (num_players == 1) {
         if (snakes[0].death) {
             incFontSize();
-            drawString("GAME OVER", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
+            drawString((char *)"GAME OVER", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, 10});
         }
         return;
     }
-    drawString("Player 2", 0xFFFFFF, 0x000000, info_player_2);
-    drawString("Score: ", 0xFFFFFF, 0x000000, (Point){space_for_scores, info_player_2.y + 50});
-    drawNumber(snakes[1].score, 0xFFFFFF, 0x000000, (Point){space_for_scores + 7 * char_width, info_player_2.y + 50});
+    drawString((char *)"Player 2", ColorSchema->text, ColorSchema->background, info_player_2);
+    drawString((char *)"Score: ", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, info_player_2.y + 50});
+    drawNumber(snakes[1].score, ColorSchema->text, ColorSchema->background, (Point){space_for_scores + 7 * char_width, info_player_2.y + 50});
     
     char is_both_dead = snakes[0].death && snakes[1].death;
     if (is_both_dead) {
         incFontSize();
-        drawString("DRAW", 0xFFFFFF, 0x000000, (Point){space_for_scores, 10});
+        drawString((char *)"DRAW", ColorSchema->text, ColorSchema->background, (Point){space_for_scores, 10});
         return;
     }else if(snakes[0].death){
         incFontSize();
-        drawString("SNAKE 2 WINS", 0xFF0000, 0x000000, (Point){space_for_scores, 10});
+        drawString((char *)"SNAKE 2 WINS", 0xFF0000, ColorSchema->background, (Point){space_for_scores, 10});
         return;
     }else if(snakes[1].death){
         incFontSize();
-        drawString("SNAKE 1 WINS", 0x00FF00, 0x000000, (Point){space_for_scores, 10});
+        drawString((char *)"SNAKE 1 WINS", 0x00FF00, ColorSchema->background, (Point){space_for_scores, 10});
         return;
     }
     
@@ -231,7 +233,7 @@ int moveSnake(Snake *snake) {
         // Elimino LA ANTERIOR del tablero
         BOARD(snake->tail.x, snake->tail.y) = EMPTY; // Limpia la cola en el tablero
         // Elimino LA ANTERIOR del dibujo
-        drawRectangle(0x000000, GRAPHICS_SCALE, GRAPHICS_SCALE, (Point){snake->tail.x * GRAPHICS_SCALE, snake->tail.y * GRAPHICS_SCALE});
+        drawRectangle(ColorSchema->background, GRAPHICS_SCALE, GRAPHICS_SCALE, (Point){snake->tail.x * GRAPHICS_SCALE, snake->tail.y * GRAPHICS_SCALE});
         // Guardo la nueva cola
         snake->tail = new_tail;
     }
@@ -249,7 +251,7 @@ int moveSnake(Snake *snake) {
 
 int checkCollision(Point position) {
     if (!IN_BOUNDS(position.x, position.y)) return 1; // Colisión con el borde
-    unsigned char obj_in_position = BOARD(position.x, position.y);
+    char obj_in_position = BOARD(position.x, position.y);
     if (obj_in_position == FOOD) return 2; // Colisión con comida
     if (obj_in_position != 0) {
         
@@ -264,8 +266,8 @@ Point getNewPosition(Point pos, Direction dir) {
         case DOWN: return (Point){pos.x, pos.y + 1};
         case LEFT: return (Point){pos.x - 1, pos.y};
         case RIGHT: return (Point){pos.x + 1, pos.y};
+        default: return pos;
     }
-    return pos;
 }
 
 void moveCherry() {
@@ -279,7 +281,7 @@ void moveCherry() {
 }
 
 // Obtiene la dirección de la tecla presionada, si es una dirección válida, dada una snake
-Direction getDirection(const Snake * snake, unsigned char key) {
+Direction getDirection(const Snake * snake, char key) {
     for (int i = 0; i < 4; i++)
         if (key == snake->controls[i])     // chequea que sea direcc válida y que no sea para el lado opuesto
             return i;

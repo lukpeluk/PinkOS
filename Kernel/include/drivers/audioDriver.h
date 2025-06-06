@@ -44,5 +44,8 @@ void inc_tempo(int amount);     // negative values to decrease tempo
 AudioState get_audio_state();
 void load_audio_state(AudioState state);
 
+// beep
+void beep(uint64_t freq, uint64_t milis);
+
 
 #endif

@@ -12,7 +12,7 @@
 
 #define BACKUP_REGISTERS_KEY 0x3B // F1
 
-extern unsigned char getKeyCode();
+extern char getKeyCode();
 
 // assumes scan code set is 1
 void int_21() {

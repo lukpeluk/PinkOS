@@ -44,18 +44,18 @@ typedef struct vbe_mode_info_structure * VBEInfoPtr;
 
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
 static Font font = ibm_bios_font;
-static font_size = 2;
+static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
-	if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
-		return;
-	}
-	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
-	uint64_t offset = (x * ((VBE_mode_info->bpp)/8)) + (y * VBE_mode_info->pitch);
-	framebuffer[offset]     =  (hexColor) & 0xFF;
-	framebuffer[offset+1]   =  (hexColor >> 8) & 0xFF; 
-	framebuffer[offset+2]   =  (hexColor >> 16) & 0xFF;
+    if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
+        return;
+    }
+    uint8_t * framebuffer = (uint8_t *)(uintptr_t) VBE_mode_info->framebuffer;
+    uint64_t offset = (x * ((VBE_mode_info->bpp)/8)) + (y * VBE_mode_info->pitch);
+    framebuffer[offset]     =  (hexColor) & 0xFF;
+    framebuffer[offset+1]   =  (hexColor >> 8) & 0xFF; 
+    framebuffer[offset+2]   =  (hexColor >> 16) & 0xFF;
 }
 
 // BASIC SHAPES
@@ -85,13 +85,15 @@ void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t
 
 static uint64_t x = 0;
 static uint64_t y = 0;
-static unsigned char INTERLINE = 4;
+static char INTERLINE = 4;
 
 // funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea y delete
 // hace wrapping automático, podría configurarse con un flag
 // para borrar le escribe un espacio en blanco por arriba
-void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
+void drawChar(char c, uint32_t textColor, uint32_t bgColor, int wrap) {
     int is_deleting = 0;
+
+	// si el caracter es un espacio, no lo dibuja
 
 	// salto de línea (antes del wrapping pues este no le debe afectar)
 	if(c == '\n'){
@@ -129,7 +131,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 	if(!IS_PRINTABLE_CHAR(c)) return;
 
 	// Obtener el puntero al array de bytes del carácter
-    uint8_t *character = font[c];
+    uint8_t *character = font[(unsigned char) c];
     if (character == 0) {
 		character = unsupported_char;
     }
@@ -152,7 +154,7 @@ void drawChar(unsigned char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 	x += (CHAR_WIDTH * font_size) * !is_deleting; // si estoy borrando, no incremento x
 }
 
-void drawCharAt(unsigned char c, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
@@ -162,13 +164,13 @@ void drawCharAt(unsigned char c, uint32_t textColor, uint32_t bgColor, Point * p
 	y = oldY;
 }
 
-void drawString(unsigned char * string, uint32_t textColor, uint32_t bgColor) {
+void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
 	while (*string) {
 		drawChar(*string++, textColor, bgColor, 1);
 	}
 }
 
-void drawStringAt(unsigned char * string, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
@@ -186,7 +188,7 @@ void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 		return;
 	}
 
-	unsigned char buffer[50];
+	char buffer[50];
 	int i = 0;
 	while(num > 0){
 		buffer[i] = num % 10 + '0';
@@ -218,7 +220,7 @@ void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 		return;
 	}
 
-	unsigned char buffer[50];
+	char buffer[50];
 	int i = 0;
 	while(num > 0){
 		buffer[i] = num % 16 < 10 ? num % 16 + '0' : num % 16 - 10 + 'A';
@@ -254,7 +256,7 @@ void simpleDrawNumber(uint64_t num){
 		return;
 	}
 
-	unsigned char buffer[50];
+	char buffer[50];
 	int i = 0;
 	while(num > 0){
 		buffer[i] = num % 10 + '0';
@@ -330,22 +332,22 @@ uint64_t getCharHeight(){
 // GENERAL
 
 void clearScreen(uint32_t bgColor){
-	uint8_t * framebuffer = (uint8_t *) VBE_mode_info->framebuffer;
-	uint64_t offset = 0;
+    uint8_t * framebuffer = (uint8_t *)(uintptr_t) VBE_mode_info->framebuffer;
+    uint64_t offset = 0;
 
-	uint8_t channel1 = (bgColor) & 0xFF;
-	uint8_t channel2 = (bgColor >> 8) & 0xFF;
-	uint8_t channel3 = (bgColor >> 16) & 0xFF;
+    uint8_t channel1 = (bgColor) & 0xFF;
+    uint8_t channel2 = (bgColor >> 8) & 0xFF;
+    uint8_t channel3 = (bgColor >> 16) & 0xFF;
 
     for(uint32_t i = 0; i < VBE_mode_info->height; i++){
-		offset = (i * VBE_mode_info->pitch);
+        offset = (i * VBE_mode_info->pitch);
 
         for(uint32_t j = 0; j < VBE_mode_info->width; j++){
-            // putPixel(bgColor, j, i);
-			framebuffer[offset] = channel1;
-			framebuffer[offset+1] = channel2;
-			framebuffer[offset+2] = channel3;
-			offset += 3;
+			// putPixel(bgColor, j, i);
+            framebuffer[offset] = channel1;
+            framebuffer[offset+1] = channel2;
+            framebuffer[offset+2] = channel3;
+            offset += 3;
         }
     }
 

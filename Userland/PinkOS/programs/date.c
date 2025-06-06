@@ -13,11 +13,11 @@ typedef struct {
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
-void date_main(unsigned char * args){
+void date_main(char * args){
     RTC_Time time;
-    syscall(GET_RTC_TIME_SYSCALL, &time, 0, 0, 0, 0);
-    unsigned char * month;
-    unsigned char * weekday;
+    syscall(GET_RTC_TIME_SYSCALL, (uint64_t)&time, 0, 0, 0, 0);
+    char * month;
+    char * weekday;
     switch (time.month){
         case 1:
             month = "Enero";
@@ -80,5 +80,5 @@ void date_main(unsigned char * args){
             break;
     }
 
-    printf("Hoy es %s %d de %s del 20%d\n", weekday, time.day, month, time.year);
+    printf((char *)"Hoy es %s %d de %s del 20%d\n", (char *)weekday, time.day,(char *) month, time.year);
 }

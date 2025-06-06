@@ -1,19 +1,19 @@
 #include <drivers/keyboardDriver.h>
 #include <stdint.h>
 
-extern unsigned char getKeyCode();
+extern char getKeyCode();
 
 #define BUFFER_SIZE 10
 #define PRESSED_KEYS_CACHE_SIZE 6
 
 #define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE
 
-// otra opci√≥n ser√≠a un arreglo con un elemento por scan code, a modo de flag
-// pero me parece innecesario siendo que los teclados rara vez soportan m√°s de 6 teclas a la vez (por como funcionan electr√≥nicamente y por limitaciones en la interfaz HID)
-// volver√≠a O(1) el seteo y el borrado de teclas, pero tampoco es que recorrer 6 posiciones cueste tanto, adem√°s empeora el caso de listar las teclas apretadas
-static unsigned char pressed_keys[PRESSED_KEYS_CACHE_SIZE] = {0x00};
-static unsigned char pressed_keys_special_keycode_flag[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // if a one, the key is a special keycode
-static unsigned char pressed_keys_hold_times[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // times the key was pressed before being released
+// otra opciÛn serÌa un arreglo con un elemento por scan code, a modo de flag
+// pero me parece innecesario siendo que los teclados rara vez soportan m·s de 6 teclas a la vez (por como funcionan electrÛnicamente y por limitaciones en la interfaz HID)
+// volverÌa O(1) el seteo y el borrado de teclas, pero tampoco es que recorrer 6 posiciones cueste tanto, adem·s empeora el caso de listar las teclas apretadas
+static char pressed_keys[PRESSED_KEYS_CACHE_SIZE] = {0x00};
+static char pressed_keys_special_keycode_flag[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // if a one, the key is a special keycode
+static char pressed_keys_hold_times[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // times the key was pressed before being released
 
 static KeyboardEvent keyboardEventBuffer[BUFFER_SIZE];
 int bufferReadIndex = 0;
@@ -25,16 +25,16 @@ static int caps_lock = 0;
 
 static int handling_special_scancode = 0; // indicates if a scancode is one of the special ones, that use two interrupts
 
-void addKeyboardEvent(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code);
-int set_key(unsigned char scan_code, unsigned char is_special);
-void release_key(unsigned char scan_code, unsigned char is_special);
+void addKeyboardEvent(char event_type, int hold_times, char ascii, char scan_code);
+int set_key(char scan_code, char is_special);
+void release_key(char scan_code, char is_special);
 
 // intended to be called by int_21, assumes scancode set 1
 KeyboardEvent processKeyPress() {
-	unsigned char c = getKeyCode();
+	char c = getKeyCode();
     int hold_times = 0;
-    unsigned char ascii = 0;
-    unsigned char event_type = 0;
+    char ascii = 0;
+    char event_type = 0;
 
     if(c == 0xE0) {
         handling_special_scancode = 1;
@@ -65,7 +65,7 @@ KeyboardEvent processKeyPress() {
 }
 
 // If the key is being pressed, returns for how many times it's been pressed, 0 if it's not pressed
-int isKeyPressed(unsigned char scan_code, unsigned char is_special) {
+int isKeyPressed(char scan_code, char is_special) {
     is_special = is_special ? 1 : 0;
 
     for(int i = 0; i < PRESSED_KEYS_CACHE_SIZE; i++) {
@@ -90,7 +90,7 @@ void getKeyboardEvent(KeyboardEvent * keyboardEvent) {
 }
 
 // Enqueue a KeyboardEvent to the buffer, if the buffer is full, the oldest event is overwritten
-void addKeyboardEvent(unsigned char event_type, int hold_times, unsigned char ascii, unsigned char scan_code) {
+void addKeyboardEvent(char event_type, int hold_times, char ascii, char scan_code) {
     keyboardEventBuffer[bufferWriteIndex] = (KeyboardEvent) {event_type, hold_times, ascii, scan_code};
     ADVANCE_INDEX(bufferWriteIndex);
     if(bufferReadIndex == bufferWriteIndex) {
@@ -105,7 +105,7 @@ void clearKeyboardBuffer() {
 
 // Set a key as pressed, returns the times the key was pressed, or 0 if the key couldn't be saved
 // (normally a keyboard does the same, if you press more keys than it can handle, it will ignore the extra ones)
-int set_key(unsigned char scan_code, unsigned char is_special) {
+int set_key(char scan_code, char is_special) {
     is_special = is_special ? 1 : 0;
 
     // Flags for modifier keys
@@ -136,7 +136,7 @@ int set_key(unsigned char scan_code, unsigned char is_special) {
     return 0; // the key couldn't be saved, all slots full
 }
 
-void release_key(unsigned char scan_code, unsigned char is_special) {
+void release_key(char scan_code, char is_special) {
     is_special = is_special ? 1 : 0;
 
     // Flags for modifier keys
@@ -157,7 +157,7 @@ void release_key(unsigned char scan_code, unsigned char is_special) {
 
 
 // convierte de keycode a ASCII
-unsigned char base_layer[256] = {
+char base_layer[256] = {
     ASCII_NUL,        // 0x00
     ASCII_ESC,        // 0x01
     '1',              // 0x02
@@ -171,7 +171,7 @@ unsigned char base_layer[256] = {
     '9',              // 0x0A
     '0',              // 0x0B
     '\'',             // 0x0C (Apostrofe)
-    '¬°',              // 0x0D (Signo de exclamaci√≥n)
+    '°',              // 0x0D (Signo de exclamaciÛn)
     ASCII_BS,         // 0x0E (Backspace)
     ASCII_HT,         // 0x0F (Tab)
     'q',              // 0x10
@@ -185,7 +185,7 @@ unsigned char base_layer[256] = {
     'o',              // 0x18
     'p',              // 0x19
     '`',              // 0x1A (Acento grave)
-    '+',              // 0x1B (Signo m√°s)
+    '+',              // 0x1B (Signo m·s)
     ASCII_LF,         // 0x1C (Enter)
     ASCII_NUL,        // 0x1D (Control izquierdo)
     'a',              // 0x1E
@@ -197,9 +197,9 @@ unsigned char base_layer[256] = {
     'j',              // 0x24
     'k',              // 0x25
     'l',              // 0x26
-    '√±',              // 0x27
+    'Ò',              // 0x27
     '{',              // 0x28
-    '¬∫',              // 0x29
+    '<',              // 0x29
     ASCII_NUL,        // 0x2A (Shift izquierdo)
     '}',              // 0x2B
     'z',              // 0x2C
@@ -213,10 +213,10 @@ unsigned char base_layer[256] = {
     '.',              // 0x34
     '-',              // 0x35
     ASCII_NUL,        // 0x36 (Shift derecho)
-    '*',              // 0x37 (Teclado num√©rico *)
+    '*',              // 0x37 (Teclado numÈrico *)
     ASCII_NUL,        // 0x38 (Alt izquierdo)
     ' ',              // 0x39 (Espacio)
-    ASCII_NUL,        // 0x3A (Bloq May√∫s)
+    ASCII_NUL,        // 0x3A (Bloq May˙s)
     ASCII_NUL,        // 0x3B (F1)
     ASCII_NUL,        // 0x3C (F2)
     ASCII_NUL,        // 0x3D (F3)
@@ -229,20 +229,20 @@ unsigned char base_layer[256] = {
     ASCII_NUL,        // 0x44 (F10)
     ASCII_NUL,        // 0x45 (Bloq Num)
     ASCII_NUL,        // 0x46 (Bloq Despl)
-    '7',              // 0x47 (Teclado num√©rico 7)
-    '8',              // 0x48 (Teclado num√©rico 8)
-    '9',              // 0x49 (Teclado num√©rico 9)
-    '-',              // 0x4A (Teclado num√©rico -)
-    '4',              // 0x4B (Teclado num√©rico 4)
-    '5',              // 0x4C (Teclado num√©rico 5)
-    '6',              // 0x4D (Teclado num√©rico 6)
-    '+',              // 0x4E (Teclado num√©rico +)
-    '1',              // 0x4F (Teclado num√©rico 1)
-    '2',              // 0x50 (Teclado num√©rico 2)
-    '3',              // 0x51 (Teclado num√©rico 3)
-    '0',              // 0x52 (Teclado num√©rico 0)
-    '.',              // 0x53 (Teclado num√©rico .)
-    ASCII_NUL,        // 0x54 (Teclado num√©rico Enter)
+    '7',              // 0x47 (Teclado numÈrico 7)
+    '8',              // 0x48 (Teclado numÈrico 8)
+    '9',              // 0x49 (Teclado numÈrico 9)
+    '-',              // 0x4A (Teclado numÈrico -)
+    '4',              // 0x4B (Teclado numÈrico 4)
+    '5',              // 0x4C (Teclado numÈrico 5)
+    '6',              // 0x4D (Teclado numÈrico 6)
+    '+',              // 0x4E (Teclado numÈrico +)
+    '1',              // 0x4F (Teclado numÈrico 1)
+    '2',              // 0x50 (Teclado numÈrico 2)
+    '3',              // 0x51 (Teclado numÈrico 3)
+    '0',              // 0x52 (Teclado numÈrico 0)
+    '.',              // 0x53 (Teclado numÈrico .)
+    ASCII_NUL,        // 0x54 (Teclado numÈrico Enter)
     ASCII_NUL,        // 0x55 (Control derecho)
     '<',        // 0x56 (Menor que)
     ASCII_NUL,        // 0x57 (F11)
@@ -250,7 +250,7 @@ unsigned char base_layer[256] = {
     [0x59 ... 0xFF] = ASCII_NUL  // Relleno con ASCII_NUL
 };
 
-unsigned char shift_layer[256] = {
+char shift_layer[256] = {
     ASCII_NUL,         // 0x00
     ASCII_NUL,         // 0x01
     '!',               // 0x02
@@ -264,7 +264,7 @@ unsigned char shift_layer[256] = {
     ')',               // 0x0A
     '=',               // 0x0B
     '?',               // 0x0C
-    '¬ø',               // 0x0D
+    'ø',               // 0x0D
     ASCII_NUL,          // 0x0E
     ASCII_NUL,          // 0x0F
     'Q',               // 0x10
@@ -290,9 +290,9 @@ unsigned char shift_layer[256] = {
     'J',               // 0x24
     'K',               // 0x25
     'L',               // 0x26
-    '√ë',               // 0x27
+    '—',               // 0x27
     '[',               // 0x28
-    '\\',               // 0x29
+    '>',               // 0x29
     ASCII_NUL,          // 0x2A
     ']',               // 0x2B
     'Z',               // 0x2C
@@ -345,7 +345,7 @@ unsigned char shift_layer[256] = {
 
 
 
-unsigned char caps_lock_layer[256] = {
+char caps_lock_layer[256] = {
     [0x00 ... 0x0F] = ASCII_NUL,
     'Q', // 0x10
     'W', // 0x11
@@ -370,7 +370,7 @@ unsigned char caps_lock_layer[256] = {
     'J', // 0x24
     'K', // 0x25
     'L', // 0x26
-    '√ë', // 0x27
+    '—', // 0x27
     ASCII_NUL, // 0x28
     ASCII_NUL, // 0x29
     ASCII_NUL, // 0x2A
@@ -385,7 +385,7 @@ unsigned char caps_lock_layer[256] = {
     [0x33 ... 0xFF] = ASCII_NUL
 };
 
-unsigned char altgr_layer[256] = {
+char altgr_layer[256] = {
     ASCII_NUL, // 0x00
     ASCII_NUL, // 0x01
     ASCII_NUL, // 0x02
@@ -395,24 +395,24 @@ unsigned char altgr_layer[256] = {
     [0x11 ... 0xFF] = ASCII_NUL,
 };
     
-// caps-lock no funca por alg√∫n motivo... pero bueno, no es tan importante
+// caps-lock no funca por alg˙n motivo... pero bueno, no es tan importante
 // keycode must be in the ascii range (TODO: fix)
 // should handle both press and release keycodes
-unsigned char keycodeToAscii(unsigned char keycode) {
+char keycodeToAscii(char keycode) {
     keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 0x80 : 0;
 
-    unsigned char ascii = ASCII_NUL;
+    char ascii = ASCII_NUL;
     if (shift_pressed) {
-        ascii = shift_layer[keycode];
+        ascii = shift_layer[(unsigned char) keycode];
     }
     else if (altgr_pressed) {
-        ascii = altgr_layer[keycode];
+        ascii = altgr_layer[(unsigned char) keycode];
     }
     else if (caps_lock) {
-        ascii = caps_lock_layer[keycode];
+        ascii = caps_lock_layer[(unsigned char) keycode];
     }
     if (ascii == ASCII_NUL) {
-        ascii = base_layer[keycode];
+        ascii = base_layer[(unsigned char) keycode];
     }
     return ascii;
 }
@@ -420,7 +420,7 @@ unsigned char keycodeToAscii(unsigned char keycode) {
 
 // convierte de keycode a ascii (forma vieja)
 // se usa temporalmente porque la otra no funca
-unsigned char keycodeToAsciiOld(unsigned char keycode) {
+char keycodeToAsciiOld(char keycode) {
     keycode = keycode < 0x81 ? keycode : keycode < 0xD9 ? keycode - 0x80 : 0;
 	if(!keycode) return 0;
 

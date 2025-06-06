@@ -15,6 +15,7 @@
 void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+void audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 void serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
@@ -48,7 +49,7 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
             break;
         case RUN_PROGRAM_SYSCALL:
             VALIDATE_PERMISSIONS(SET_PROCESS_PERMISSION);
-            runProgram((Program *)arg1, (unsigned char *)arg2);
+            runProgram((Program *)arg1, (char *)arg2);
             break;
         case QUIT_PROGRAM_SYSCALL:
             quitProgram();
@@ -89,15 +90,15 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             break;
         case DRAW_STRING_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawString(arg1, arg2, arg3);
+            drawString((char *)arg1, arg2, arg3);
             break;
         case DRAW_CHAR_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawCharAt(arg1, arg2, arg3, arg4);
+            drawCharAt(arg1, arg2, arg3, (Point *) arg4);
             break;
         case DRAW_STRING_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawStringAt(arg1, arg2, arg3, arg4);
+            drawStringAt((char *) arg1, arg2, arg3, (Point *) arg4);
             break;
         case DRAW_NUMBER_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
@@ -105,7 +106,7 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             break;
         case DRAW_NUMBER_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawNumberAt(arg1, arg2, arg3, arg4);
+            drawNumberAt(arg1, arg2, arg3, (Point *) arg4);
             break;
         case DRAW_HEX_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
@@ -113,7 +114,7 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
             break;
         case DRAW_HEX_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawHexAt(arg1, arg2, arg3, arg4);
+            drawHexAt(arg1, arg2, arg3, (Point *) arg4);
             break;
 
         // BITMAPS
@@ -228,7 +229,7 @@ void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t a
     switch (syscall)
     {
         case GET_KEY_EVENT_SYSCALL:
-            getKeyboardEvent(arg1);
+            getKeyboardEvent( (KeyboardEvent *)arg1);
             break;
         case CLEAR_KEYBOARD_BUFFER_SYSCALL:
             clearKeyboardBuffer();
@@ -287,7 +288,7 @@ void serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg
     {
         case MAKE_ETHEREAL_REQUEST_SYSCALL:
             VALIDATE_PERMISSIONS(MAKE_ETHEREAL_REQUEST_PERMISSION);
-            make_ethereal_request((unsigned char *)arg1, (EtherPinkResponse *)arg2);
+            make_ethereal_request((char *)arg1, (EtherPinkResponse *)arg2);
             break;
         default:
             break;
