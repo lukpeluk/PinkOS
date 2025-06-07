@@ -1,5 +1,5 @@
 GLOBAL cpuVendor
-GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, load_interrupt_frame, load_stack_int, push_to_custom_stack_pointer, get_stack_pointer
+GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, magic_recover_old, load_interrupt_frame, load_stack_int, push_to_custom_stack_pointer, get_stack_pointer
 
 ; TODO: 
 ; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
@@ -39,30 +39,30 @@ cpuVendor:
 ;;     uint64_t rsp;
 ;;     uint64_t ss;
 ;; } StackInt;
-;magic_recover:
-;    ; rdi apunta a la estructura InterruptStackFrame en memoria
-;
+magic_recover_old:
+    ; rdi apunta a la estructura InterruptStackFrame en memoria
+
 ;    ; Cargar valores desde la estructura InterruptStackFrame al stack en el orden correcto para iretq
-;    mov rax, [rdi + 0]   ; Cargar ss
-;    push rax              ; Apilar ss
-;    mov rax, [rdi + 8]   ; Cargar rsp
-;    push rax              ; Apilar rsp
-;    mov rax, [rdi + 16]    ; Cargar rip
-;    push rax              ; Apilar rip
-;    mov rax, [rdi + 24]    ; Cargar cs
-;    push rax              ; Apilar cs
-;    mov rax, [rdi + 32]   ; Cargar rflags
-;    push rax              ; Apilar rflags
-;
-;    mov rdi, rsi
-;
-;    ; signal pic EOI (End of Interrupt)
-;	mov al, 20h
-;	out 20h, al
-;
-;
-;    ; Ejecutar iretq para retornar usando el contexto cargado
-;    iretq
+    mov rax, [rdi + 0]   ; Cargar ss
+    push rax              ; Apilar ss
+    mov rax, [rdi + 8]   ; Cargar rsp
+    push rax              ; Apilar rsp
+    mov rax, [rdi + 16]    ; Cargar rip
+    push rax              ; Apilar rip
+    mov rax, [rdi + 24]    ; Cargar cs
+    push rax              ; Apilar cs
+    mov rax, [rdi + 32]   ; Cargar rflags
+    push rax              ; Apilar rflags
+
+    mov rdi, rsi
+
+    ; signal pic EOI (End of Interrupt)
+	mov al, 20h
+	out 20h, al
+
+
+    ; Ejecutar iretq para retornar usando el contexto cargado
+    iretq
 
 ; Recibe un puntero a una estructura Registers que debe tener el backup de registros, y en base a ella retoma la ejecución de un proceso
 ; Requiere que el rsp de Registers apunte a un interrupt stack frame válido desde el cual hacer iretq
