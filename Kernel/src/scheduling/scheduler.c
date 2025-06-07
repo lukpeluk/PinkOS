@@ -13,6 +13,7 @@
 
 extern uint64_t load_interrupt_frame(InterruptStackFrame *frame, uint64_t stack_pointer);
 extern void magic_recover(Registers *registers);
+extern void magic_recover_old(InterruptStackFrame *cri, uint64_t args);
 extern void push_to_custom_stack_pointer(uint64_t stack_pointer, uint64_t value_to_push);
 
 static ProcessControlBlock *currentProcess = NULL;  // Proceso actualmente en ejecución
@@ -227,7 +228,7 @@ void terminateCurrentProcess() {
     removeProcessFromScheduler(pid);
     if(currentProcess == NULL){
         return;
-        uint64_t was_graphic = 0;
+        uint64_t was_graphic = 0; //todo
         setPermissions(ROOT_PERMISSIONS);
         setCurrentProcess((char *)SYSTEM_PROCESS);
 
@@ -235,7 +236,7 @@ void terminateCurrentProcess() {
         cri.rip = (uint64_t)callRestoreContextHandler;
         cri.rsp = processState.systemStackBase;
 
-        magic_recover(&cri); // Restaurar el contexto del sistema
+        magic_recover_old(&cri, was_graphic); // Restaurar el contexto del sistema
     } else {
         scheduleNextProcess();
     }
