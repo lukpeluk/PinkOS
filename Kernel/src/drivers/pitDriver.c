@@ -16,8 +16,9 @@ void timer_handler() {
 	ticks++;
 	saveRegisters();  // Backup of the registers at any time, in case of wanting them for logging or debugging
 
+	audioLoop(); // Call the audio driver main loop to update the audio stream
+	videoLoop(); // Call the video driver main loop to update the video buffer
 	schedulerLoop(); // Call the scheduler to switch processes if needed
-	audioLoop();
 }
 
 uint64_t ticks_elapsed() {
