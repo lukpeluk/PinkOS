@@ -225,7 +225,20 @@ void scheduleNextProcess() {
 void terminateCurrentProcess() {
     uint32_t pid = currentProcess->pid;
     removeProcessFromScheduler(pid);
-    scheduleNextProcess();
+    if(currentProcess == NULL){
+        return;
+        uint64_t was_graphic = 0;
+        setPermissions(ROOT_PERMISSIONS);
+        setCurrentProcess((char *)SYSTEM_PROCESS);
+
+        InterruptStackFrame cri = getDefaultCRI();
+        cri.rip = (uint64_t)callRestoreContextHandler;
+        cri.rsp = processState.systemStackBase;
+
+        magic_recover(&cri); // Restaurar el contexto del sistema
+    } else {
+        scheduleNextProcess();
+    }
 }
 
 
