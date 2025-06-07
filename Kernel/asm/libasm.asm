@@ -42,7 +42,7 @@ cpuVendor:
 magic_recover_old:
     ; rdi apunta a la estructura InterruptStackFrame en memoria
 
-;    ; Cargar valores desde la estructura InterruptStackFrame al stack en el orden correcto para iretq
+    ; Cargar valores desde la estructura InterruptStackFrame al stack en el orden correcto para iretq
     mov rax, [rdi + 0]   ; Cargar ss
     push rax              ; Apilar ss
     mov rax, [rdi + 8]   ; Cargar rsp
