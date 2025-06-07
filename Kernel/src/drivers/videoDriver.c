@@ -70,6 +70,7 @@ void videoLoop() {
 		return; // No focused window, nothing to do
 	
 	if (milliseconds_elapsed() - last_frame_time < (1000 / FRAME_RATE)) {
+		last_frame_time = milliseconds_elapsed();
 		return; // Not enough time has passed since the last frame, skip this update
 	}
 	memcpy((void *)(uintptr_t)VBE_mode_info->framebuffer, focusedBuffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
