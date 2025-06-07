@@ -150,7 +150,7 @@ void addProcessToScheduler(Program *program, char *arguments) {
     // Si es el primer proceso, inicializar la lista
     if (processList == NULL) {
         processList = newProcess;
-        currentProcess = newProcess; // Como es el primer proceso, lo hacemos el actual
+        // currentProcess = newProcess; // Como es el primer proceso, lo hacemos el actual
     }
     processListTail->next = newProcess;  
     newProcess->next = processList;      
@@ -233,15 +233,19 @@ void terminateCurrentProcess() {
 void schedulerLoop() {
     // Si no hay procesos, no hacer nada
     ticksSinceLastSwitch++;
-    if (currentProcess == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0) {
+    if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0) {
         return;
     }
 
     log_to_serial("schedulerLoop: Ejecutando el bucle del scheduler");
 
-    // Guardar el contexto del proceso actual en base al backup de registros, para poder restaurarlo después
-    // BackupRegisters * backup = getBackupRegisters();
-    // currentProcess->registers = backup->registers;
+    if(currentProcess == NULL){
+        currentProcess = processList;
+    } else {
+        // Guardar el contexto del proceso actual en base al backup de registros, para poder restaurarlo después
+        BackupRegisters * backup = getBackupRegisters();
+        currentProcess->registers = backup->registers;
+    }
 
     log_to_serial("schedulerLoop: pasando al siguiente proceso");
 
