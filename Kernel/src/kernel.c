@@ -78,26 +78,26 @@ void * initializeKernelBinary()
 	return stackBase;
 }
 
-void testScreen(){
-	clearScreen(0x00df8090);
+// void testScreen(){
+// 	clearScreen(0x00df8090);
 
-	// draw a 7 by 3 px bitmap of a rainbow in the top left corner with 50 pixels of padding and a scale of 3
-	uint32_t rainbow[21] = {
-		0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3,
-		0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000,
-		0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000, 0xFF7F00, 
-	};
-	drawBitmap(rainbow, 7, 3, &(Point){50, 50}, 10);
+// 	// draw a 7 by 3 px bitmap of a rainbow in the top left corner with 50 pixels of padding and a scale of 3
+// 	uint32_t rainbow[21] = {
+// 		0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3,
+// 		0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000,
+// 		0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000, 0xFF7F00, 
+// 	};
+// 	drawBitmap(rainbow, 7, 3, &(Point){50, 50}, 10);
 
-	Point start = {50, 50};
-	Point end = {500, 500};
-	drawRectangleBoder(&start, &end, 5, 0x00000000);
-	start.x += 10;
-	start.y += 10;
-	end.x -= 10;
-	end.y -= 10;
-	drawRectangle(&start, &end, 0x00000000);
-}
+// 	Point start = {50, 50};
+// 	Point end = {500, 500};
+// 	drawRectangleBoder(&start, &end, 5, 0x00000000);
+// 	start.x += 10;
+// 	start.y += 10;
+// 	end.x -= 10;
+// 	end.y -= 10;
+// 	drawRectangle(&start, &end, 0x00000000);
+// }
 
 
 // Ligature always 0 coz it's not supported by the previous format, manually choose notes to ligate
@@ -280,9 +280,9 @@ void testAudio(){
     stop_audio();
 
     // print the delay
-    drawString((char *)"Delay: ", 0x00ffffff, 0x00000000);
-    drawNumber(get_milliseconds_delayed(), 0x00ffffff, 0x00000000, 0);
-    sleep(5000);
+    // drawString((char *)"Delay: ", 0x00ffffff, 0x00000000);
+    // drawNumber(get_milliseconds_delayed(), 0x00ffffff, 0x00000000, 0);
+    // sleep(5000);
 }
 
 // void testSerial(){
