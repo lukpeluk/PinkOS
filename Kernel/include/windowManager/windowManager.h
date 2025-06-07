@@ -19,8 +19,6 @@ void initWindowManager();
  * @return The PID of the focused window, or NULL if no window is present.
 */
 uint32_t getFocusedWindow();
-uint32_t getWindowByPID();
-
 int isFocusedWindow(uint32_t pid);
 
 /** getFocusedBuffer: 

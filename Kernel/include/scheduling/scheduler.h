@@ -5,7 +5,7 @@
 #include <processState.h>
 #include <drivers/registersDriver.h>
 
-#define IS_GRAPHIC(currentProcess) (currentProcess->permissions & DRAWING_PERMISSION;)
+#define IS_GRAPHIC(currentProcess) (currentProcess->permissions & DRAWING_PERMISSION)
 
 typedef struct ProcessControlBlock {
     char *name;                     

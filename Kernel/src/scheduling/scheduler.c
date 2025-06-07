@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <memoryManager/memoryManager.h>
+#include <windowManager/windowManager.h>
 
 #define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
 #define TICKS_TILL_SWITCH 10     // Cantidad de ticks hasta cambiar de proceso
@@ -164,6 +165,14 @@ void addProcessToScheduler(Program *program, char *arguments) {
 
     processCount++;
     log_to_serial("addProcessToScheduler: Proceso agregado con éxito");
+
+    // agregar la ventana del proceso al window manager si es un proceso gráfico
+    if (IS_GRAPHIC(newProcess)) {
+        uint8_t *buffer = addWindow(newProcess->pid);
+        if (buffer == NULL) {
+            log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso gráfico");
+        }
+    }
 }
 
 // Elimina un proceso del planificador por su PID
@@ -230,12 +239,16 @@ void scheduleNextProcess() {
 
 void terminateCurrentProcess() {
     uint32_t pid = currentProcess->pid;
-    uint64_t was_graphic = currentProcess->permissions & DRAWING_PERMISSION;
+    uint64_t was_graphic = IS_GRAPHIC(currentProcess);
+
+    if(was_graphic) {
+        log_to_serial("terminateCurrentProcess: El proceso actual es gráfico, eliminando ventana asociada");
+        removeWindow(pid); // Eliminar la ventana asociada al proceso gráfico
+    }
+
     removeProcessFromScheduler(pid);
 
     if(currentProcess == NULL){
-        // return;
-        // uint64_t was_graphic = 0; //todo
         setPermissions(ROOT_PERMISSIONS);
         setCurrentProcess((char *)SYSTEM_PROCESS);
 

@@ -76,12 +76,6 @@ void decFontSize(){
     syscall(DEC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
 }
 
-void getFontSize(uint8_t *size){
-    if(size == 0){
-        return;
-    }
-    syscall(GET_FONT_SIZE_SYSCALL, (uint64_t)size, 0, 0, 0, 0);
-}
 
 // void drawBitmapTransparent(uint32_t * bitmap, uint64_t width, uint64_t height, Point position, uint32_t scale){
 //     syscall(DRAW_BITMAP_TRANSPARENT_SYSCALL, (uint64_t)bitmap, width, height, (uint64_t)&position, (uint64_t)scale);
