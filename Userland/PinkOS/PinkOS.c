@@ -448,6 +448,20 @@ void execute_program(int input_line)
 	}
 	arguments[j] = 0;
 
+
+	// Si el programa es el texto "async", se ejecuta forrestgump 2 veces para probar el manejo de procesos asíncronos
+	if (strcmp(program_name, "async") == 0)
+	{
+		add_str_to_stdout((char *)"Running two instances of Forrest Gump simultaneously\n");
+		running_program = 1;
+
+		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
+
+		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)arguments, 0, 0, 0);
+		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)logo_str, 0, 0, 0);
+		return;
+	}
+
 	// get the program entry point
 	Program *program = get_program_entry(program_name);
 
@@ -480,6 +494,7 @@ void execute_program(int input_line)
 		}
 
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
+
 		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
 	}
 }
@@ -519,7 +534,7 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 
 
 	// --- HOLDING ESC FORCE QUITS THE CURRENT PROGRAM ---
-	if (ascii == ASCII_ESC && running_program && hold_times > 1)
+	if (ascii == ASCII_ESC && running_program && hold_times == 1)
 	{
 		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
 		return;

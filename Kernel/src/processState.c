@@ -1,14 +1,9 @@
 #include <processState.h>
-#include <eventHandling/eventHandlers.h>
-#include <permissions.h>
 #include <stdint.h>
 #include <drivers/videoDriver.h>
 #include <scheduling/scheduler.h>
 #include <drivers/serialDriver.h>
 
-#define ACTIVATE_ROOT_MODE 1
-#define DESACTIVATE_ROOT_MODE 0
-#define SYSTEM_PROCESS "system"
 
 // If you are looking for specific state variables like timezone, font size, etc... you should look at the respective drivers
 
@@ -75,10 +70,14 @@ void setCurrentProcess(char * process) {
     processState.currentProcess = process;
 }
 
+
 void loadStackBase(uint64_t stackBase) {
     processState.systemStackBase = stackBase;
 }
 
+uint64_t getSystemStackBase() {
+    return processState.systemStackBase;
+}
 
 // void runProgram(Program * program, char * arguments) {
 //     desactivateRootMode();

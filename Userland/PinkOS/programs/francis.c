@@ -4,21 +4,10 @@
 #include <environmentApiEndpoints.h>
 #include <stdpink.h>
 #include <graphicsLib.h>
+#include <colors.h>
 
 #define FRANCIS_WIDTH 300
 #define FRANCIS_HEIGHT 300
-
-uint64_t memcmp(const void *s1, const void *s2, uint64_t n) {
-    const char *p1 = s1, *p2 = s2;
-    while (n--) {
-        if (*p1 != *p2) {
-            return *p1 - *p2;
-        }
-        p1++;
-        p2++;
-    }
-    return 0;
-}
 
 void francis_main(char * args){
 
@@ -27,10 +16,27 @@ void francis_main(char * args){
   
     make_ethereal_request((char *)"francis\n", &response);
 
+    uint64_t font_size = getCharWidth();
+    drawString((char *)"Esperando respuesta", ColorSchema->text, ColorSchema->background, (Point){40, 40});
+
+    int i = 0;
     while(response.code != 2){
+        // clear();
+        int text_width = 19 * font_size;
+        i++;
+        if(i % 3 == 0){
+            drawString((char *)".  ", ColorSchema->text, ColorSchema->background, (Point){40 + text_width, 40});
+        }
+        else if(i % 3 == 1){
+            drawString((char *)".. ", ColorSchema->text, ColorSchema->background, (Point){40 + text_width, 40});
+        } else if(i % 3 == 2){
+            drawString((char *)"...", ColorSchema->text, ColorSchema->background, (Point){40 + text_width, 40});
+        }
+
         // wait for response
-        sleep(100);
+        sleep(250);
     }
+    clear();
 
     Point position = {0};
 

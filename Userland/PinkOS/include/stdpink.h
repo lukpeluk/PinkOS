@@ -70,4 +70,13 @@ void sleep(uint64_t millis);
 
 uint64_t getMillisElapsed();
 
+/*
+ * Compares two memory blocks
+ * @param s1 the first memory block
+ * @param s2 the second memory block
+ * @param n the number of bytes to compare
+ * @return 0 if equal, negative if s1 < s2, positive if s1 > s2
+*/
+uint64_t memcmp(const void *s1, const void *s2, uint64_t n);
+
 #endif

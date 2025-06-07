@@ -100,7 +100,7 @@ def main():
                         continue
 
                     if line == "pietra":
-                        print("Recibido PIETRA")
+                        print("Recibido pietra")
                         # Mandar pietra.bin
                         try:
                             with open("./pietra.bin", "rb") as f:

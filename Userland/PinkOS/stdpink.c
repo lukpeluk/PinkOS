@@ -214,3 +214,15 @@ uint32_t randInt(uint32_t min, uint32_t max){
     randmon_seed = randmon_seed * 1664525 + 1013904223;
     return (randmon_seed % (max - min + 1)) + min;
 }
+
+uint64_t memcmp(const void *s1, const void *s2, uint64_t n) {
+    const char *p1 = s1, *p2 = s2;
+    while (n--) {
+        if (*p1 != *p2) {
+            return *p1 - *p2;
+        }
+        p1++;
+        p2++;
+    }
+    return 0;
+}

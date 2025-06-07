@@ -2,6 +2,12 @@
 #define _STATE_H
 
 #include <stdint.h>
+#include <permissions.h>
+#include <eventHandling/eventHandlers.h>
+
+#define ACTIVATE_ROOT_MODE 1
+#define DESACTIVATE_ROOT_MODE 0
+#define SYSTEM_PROCESS "system"
 
 typedef void (*ProgramEntry)(char*);
 
@@ -41,6 +47,7 @@ uint32_t getPermissions();
 char * getCurrentProcess();
 
 void loadStackBase(uint64_t stackBase);
+uint64_t getSystemStackBase();
 
 void runProgram(Program * programName, char * arguments);
 
@@ -48,5 +55,6 @@ void quitProgram();
 
 // recibe un uint32_t con los permisos requeridos y devuelve 1 si el proceso actual tiene esos permisos, 0 en caso contrario
 int validatePermissions(uint32_t requiredPermissions);
+
 
 #endif

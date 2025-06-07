@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define STACK_BASE_ADDRESS 0x700000
+#define STACK_BASE_ADDRESS 0x800000
 #define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
-#define MAX_PROCESSES 10        // Número máximo de procesos simultáneos
-#define TICKS_TILL_SWITCH 50   // Cantidad de ticks hasta cambiar de proceso
+#define MAX_PROCESSES 1000        // Número máximo de procesos simultáneos
+#define TICKS_TILL_SWITCH 10     // Cantidad de ticks hasta cambiar de proceso
 
 #define NULL 0
 
@@ -101,6 +101,12 @@ void log_string(char* message) {
     log_to_serial(message);
 }
 
+
+void quitWrapper(){
+    log_to_serial("quitWrapper: Programa saliendo naturalmente");
+    quitProgram();
+}
+
 // Agrega un nuevo proceso al planificador, no lo ejecuta inmediatamente
 void addProcessToScheduler(Program *program, char *arguments) {
     static uint32_t processCount = 0; // Contador de procesos creados
@@ -126,7 +132,7 @@ void addProcessToScheduler(Program *program, char *arguments) {
     newProcess->registers.rsp = newProcess->stackBase - 8; // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
 
     // Guardo un puntero a la función de salida del programa, que es quitProgram (por eso rsp - 8)
-    push_to_custom_stack_pointer(newProcess->stackBase, (uint64_t)quitProgram);
+    push_to_custom_stack_pointer(newProcess->stackBase, (uint64_t)quitWrapper);
 
     // Generar el CRI inicial para el proceso
     // El rip se inicializa al entry point del programa, y el rsp al stack pointer del proceso antes de cargar el interrupt stack frame
@@ -225,16 +231,18 @@ void scheduleNextProcess() {
 
 void terminateCurrentProcess() {
     uint32_t pid = currentProcess->pid;
+    uint64_t was_graphic = currentProcess->permissions & DRAWING_PERMISSION;
     removeProcessFromScheduler(pid);
+
     if(currentProcess == NULL){
-        return;
-        uint64_t was_graphic = 0; //todo
+        // return;
+        // uint64_t was_graphic = 0; //todo
         setPermissions(ROOT_PERMISSIONS);
         setCurrentProcess((char *)SYSTEM_PROCESS);
 
         InterruptStackFrame cri = getDefaultCRI();
         cri.rip = (uint64_t)callRestoreContextHandler;
-        cri.rsp = processState.systemStackBase;
+        cri.rsp = getSystemStackBase();
 
         magic_recover_old(&cri, was_graphic); // Restaurar el contexto del sistema
     } else {
