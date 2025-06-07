@@ -324,6 +324,7 @@ void clear_console()
 	scroll = current_string;
 	reset_markup();
 	redraw();
+	restoreContext(0);
 }
 
 void scroll_if_out_of_bounds()
@@ -459,6 +460,11 @@ void execute_program(int input_line)
 
 		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)arguments, 0, 0, 0);
 		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)logo_str, 0, 0, 0);
+		return;
+	} else if (strcmp(program_name, "clear") == 0)
+	{
+		// clear the console
+		clear_console();
 		return;
 	}
 
