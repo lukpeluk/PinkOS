@@ -22,6 +22,13 @@ static uint32_t nextPID = 1;       // Contador para asignar PIDs únicos
 
 static uint32_t ticksSinceLastSwitch = 0; // Contador de ticks desde el último cambio de proceso
 
+uint32_t getCurrentProcessPID() {
+    if (currentProcess == NULL) {
+        return 0; // No hay proceso actual
+    }
+    return currentProcess->pid;
+}
+
 void initScheduler() {
     log_to_serial("initScheduler: Iniciando el scheduler");
     processList = NULL;

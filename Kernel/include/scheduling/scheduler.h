@@ -24,4 +24,6 @@ void scheduleNextProcess();
 void terminateCurrentProcess();
 void schedulerLoop();
 
+uint32_t getCurrentProcessPID();
+
 #endif
