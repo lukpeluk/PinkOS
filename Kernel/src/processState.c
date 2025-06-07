@@ -13,6 +13,7 @@ extern uint64_t get_stack_pointer();
 extern void loader();
 
 // stores pointers to the handler functions
+// no es de scheduling, es sobre el estado de lo que corre ahora
 typedef struct ProcessState {
     int rootMode;       // 1 if the kernel is running in root mode, 0 otherwise
     uint32_t permissions; // Permissions for the current process

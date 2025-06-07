@@ -3,10 +3,9 @@
 #include <processState.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <memoryManager/memoryManager.h>
 
-#define STACK_BASE_ADDRESS 0x800000
 #define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
-#define MAX_PROCESSES 1000        // Número máximo de procesos simultáneos
 #define TICKS_TILL_SWITCH 10     // Cantidad de ticks hasta cambiar de proceso
 
 #define NULL 0
@@ -29,21 +28,19 @@ void initScheduler() {
     currentProcess = NULL;
 }
 
-ProcessControlBlock processPool[MAX_PROCESSES]; // Pool estático para los PCBs
-
 ProcessControlBlock *allocateProcessMemory(size_t size) {
-    static int allocatedProcesses = 0;
-    if (allocatedProcesses >= MAX_PROCESSES) {
-        return NULL; // No hay más espacio disponible
-    }
-    return &processPool[allocatedProcesses++];
+    return (ProcessControlBlock *)malloc(sizeof(ProcessControlBlock));
 }
 
 uint64_t allocateStack(uint32_t processIndex) {
-    if (processIndex >= MAX_PROCESSES) {
-        return 0; // Error: no hay más espacio para stacks
+    // Allocar STACK_SIZE bytes usando malloc
+    void* stackMemory = malloc(STACK_SIZE);
+    if (stackMemory == NULL) {
+        return 0; // Error: no se pudo allocar memoria para el stack
     }
-    return STACK_BASE_ADDRESS + (processIndex * STACK_SIZE);
+    
+    // El stack crece hacia abajo, así que el stack base debe ser el final de la memoria allocada
+    return (uint64_t)stackMemory + STACK_SIZE;
 }
 
 
@@ -116,14 +113,9 @@ void addProcessToScheduler(Program *program, char *arguments) {
     }
     log_to_serial("addProcessToScheduler: Agregando proceso");
 
-    if (processCount >= MAX_PROCESSES) {
-        // Error: no se pueden crear más procesos
-        return;
-    }
-
-    // Por ahora los objetos que representan un proceso en el stack, están en un pool estático porq no tenemos malloc
+    // Allocar memoria para el PCB usando malloc
     // Se guardan los datos del programa, se asigna un pid, y se inicializan los punteros
-    // El stack está en un lugar harcodeado, también porq no tenemos malloc
+    // El stack se alloca dinámicamente usando malloc
     ProcessControlBlock *newProcess = (ProcessControlBlock *)allocateProcessMemory(sizeof(ProcessControlBlock));
     newProcess->name = program->name;
     newProcess->pid = nextPID++;
@@ -168,8 +160,8 @@ void addProcessToScheduler(Program *program, char *arguments) {
 }
 
 // Elimina un proceso del planificador por su PID
-// No hace free ni nada porque no hay malloc, pero debería hacerlo cuando se implemente
-// Como no se hace free, no pasa nada si se mata el proceso actual porque igual se puede acceder a él, pero después habría q ver qué onda...
+// TODO: Implementar free() para liberar la memoria del PCB y stack cuando se termine el memory manager
+// Por ahora free() no hace nada, pero al menos la memoria está siendo tracked por el memory manager
 void removeProcessFromScheduler(uint32_t pid) {
     log_to_serial("removeProcessFromScheduler: Eliminando proceso");
 
