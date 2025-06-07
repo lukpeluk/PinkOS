@@ -77,7 +77,13 @@ void videoLoop() {
 }
 
 uint8_t * createVideoBuffer() {
-	return malloc(VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	uint8_t * buffer = malloc(VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	if(buffer == NULL) {
+		return NULL; // Memory allocation failed
+	}
+	// Clear the buffer to black
+	memset(buffer, 0, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	return buffer;
 }
 
 
