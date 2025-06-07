@@ -9,6 +9,8 @@
 #include <drivers/rtcDriver.h>
 #include <drivers/audioDriver.h>
 #include <drivers/serialDriver.h>
+#include <scheduling/scheduler.h>
+#include <windowManager/windowManager.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
@@ -67,60 +69,61 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
 
 // --- VIDEO DRIVER SYSCALLS ---
 void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+    uint8_t * videoBuffer = getBufferByPID(getCurrentProcessPID());
     switch (syscall)
     {
         // BASIC SHAPES
         case DRAW_PIXEL_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            putPixel(arg1, arg2, arg3);
+            putPixel(videoBuffer, arg1, arg2, arg3);
             break;
         case DRAW_RECTANGLE_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawRectangle((Point *)arg1, (Point *)arg2, arg3);
+            drawRectangle(videoBuffer, (Point *)arg1, (Point *)arg2, arg3);
             break;
         case DRAW_RECTANGLE_BORDER_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawRectangleBoder((Point *)arg1, (Point *)arg2, arg3, arg4);
+            drawRectangleBoder(videoBuffer, (Point *)arg1, (Point *)arg2, arg3, arg4);
             break; 
 
         // TEXT
         case DRAW_CHAR_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawChar(arg1, arg2, arg3, 1);
+            drawChar(videoBuffer, arg1, arg2, arg3, 1);
             break;
         case DRAW_STRING_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawString((char *)arg1, arg2, arg3);
+            drawString(videoBuffer, (char *)arg1, arg2, arg3);
             break;
         case DRAW_CHAR_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawCharAt(arg1, arg2, arg3, (Point *) arg4);
+            drawCharAt(videoBuffer, arg1, arg2, arg3, (Point *) arg4);
             break;
         case DRAW_STRING_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawStringAt((char *) arg1, arg2, arg3, (Point *) arg4);
+            drawStringAt(videoBuffer, (char *) arg1, arg2, arg3, (Point *) arg4);
             break;
         case DRAW_NUMBER_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawNumber(arg1, arg2, arg3, 1);
+            drawNumber(videoBuffer, arg1, arg2, arg3, 1);
             break;
         case DRAW_NUMBER_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawNumberAt(arg1, arg2, arg3, (Point *) arg4);
+            drawNumberAt(videoBuffer, arg1, arg2, arg3, (Point *) arg4);
             break;
         case DRAW_HEX_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawHex(arg1, arg2, arg3, 1);
+            drawHex(videoBuffer, arg1, arg2, arg3, 1);
             break;
         case DRAW_HEX_AT_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawHexAt(arg1, arg2, arg3, (Point *) arg4);
+            drawHexAt(videoBuffer, arg1, arg2, arg3, (Point *) arg4);
             break;
 
         // BITMAPS
         case DRAW_BITMAP_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            drawBitmap((uint32_t *)arg1, arg2, arg3, (Point *)arg4, arg5);
+            drawBitmap(videoBuffer, (uint32_t *)arg1, arg2, arg3, (Point *)arg4, arg5);
             break;
 
         // CURSOR
@@ -166,7 +169,7 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
 
         case CLEAR_SCREEN_SYSCALL:
             VALIDATE_PERMISSIONS(DRAWING_PERMISSION);
-            clearScreen(arg1);
+            clearScreen(videoBuffer, arg1);
             break;
 
         case SET_FONT_SIZE_SYSCALL:

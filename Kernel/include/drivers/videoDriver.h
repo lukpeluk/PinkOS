@@ -11,38 +11,41 @@ typedef struct {
 
 typedef uint8_t **Font;
 
+// Video driver initialization
+void initVideoDriver();
+
 // main loop (intended to be called every timer tick, to manage the video stream)
 // This function is responsible for updating the video buffer and rendering it to the screen.
 void videoLoop();
 
 // Buffer initialization
 // Returns a pointer to the video buffer, which is a 2D array of pixels. Each pixel is represented by a 32-bit integer.
-void * createVideoBuffer();
+uint8_t * createVideoBuffer();
 
 // BASIC SHAPES
-void putPixel(uint32_t hexColor, uint64_t x, uint64_t y);
+void putPixel(uint8_t videoBuffer, uint32_t hexColor, uint64_t x, uint64_t y);
 
-void drawRectangle(Point * start, Point * end, uint32_t hexColor);
-void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t hexColor);
+void drawRectangle(uint8_t videoBuffer, Point * start, Point * end, uint32_t hexColor);
+void drawRectangleBoder(uint8_t videoBuffer, Point * start, Point * end, uint32_t thickness, uint32_t hexColor);
 
 // TEXT AND NUMBERS
 
 // sabe la posición del último caracter dibujado y dibuja el siguiente
 // hace wrapping automático, aunque debería ser configurable con un flag
-void drawChar(char c, uint32_t textColor, uint32_t bgColor, int wrap);
-void drawString(char * string, uint32_t textColor, uint32_t bgColor);
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position);
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position);
+void drawChar(uint8_t videoBuffer, char c, uint32_t textColor, uint32_t bgColor, int wrap);
+void drawString(uint8_t videoBuffer, char * string, uint32_t textColor, uint32_t bgColor);
+void drawCharAt(uint8_t videoBuffer, char c, uint32_t textColor, uint32_t bgColor, Point * position);
+void drawStringAt(uint8_t videoBuffer, char * string, uint32_t textColor, uint32_t bgColor, Point * position);
 
-void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap);
-void drawNumberAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position);
-void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap);
-void drawHexAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position);
+void drawNumber(uint8_t videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap);
+void drawNumberAt(uint8_t videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position);
+void drawHex(uint8_t videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap);
+void drawHexAt(uint8_t videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position);
 
 // BITMAPS
 
 // draw a bitmap image at a given position
-void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * position, uint32_t scale); 
+void drawBitmap(uint8_t videoBuffer, uint32_t * bitmap, uint64_t width, uint64_t height, Point * position, uint32_t scale); 
 
 // CURSOR
 
@@ -61,7 +64,7 @@ uint64_t getCharHeight();
 
 // GENERAL
 
-void clearScreen(uint32_t bgColor);
+void clearScreen(uint8_t videoBuffer, uint32_t bgColor);
 
 // range: 1-8
 void setFontSize(uint8_t fontSize);

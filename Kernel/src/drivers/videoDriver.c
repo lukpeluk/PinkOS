@@ -1,6 +1,10 @@
 #include <drivers/videoDriver.h>
+#include <drivers/pitDriver.h>
+
 #include <drivers/defaultFont.h>
 #include <memoryManager/memoryManager.h>
+#include <windowManager/windowManager.h>
+#include <lib.h>
 #include <stdint.h>
 
 struct vbe_mode_info_structure {
@@ -49,22 +53,39 @@ static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
 
+#define FRAME_RATE 24 // 24 frames per second
+
+static int last_frame_time = 0; // last time the video buffer was updated, in milliseconds
+
+
+void initVideoDriver() {
+	// Nothing to do here, yet...
+}
+
 void videoLoop() {
 	// This function is intended to be called every timer tick to update the video buffer.
 	// Currently, it does nothing as the video buffer is updated directly when drawing.
+	void * focusedBuffer = getFocusedBuffer();
+	if(focusedBuffer == NULL)
+		return; // No focused window, nothing to do
 	
+	if (milliseconds_elapsed() - last_frame_time < (1000 / FRAME_RATE)) {
+		return; // Not enough time has passed since the last frame, skip this update
+	}
+	memcpy(focusedBuffer, (void *)(uintptr_t)VBE_mode_info->framebuffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+
 }
 
-void * createVideoBuffer() {
+uint8_t * createVideoBuffer() {
 	return malloc(VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 }
 
 
-void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
-    if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
+void putPixel(uint8_t * videoBuffer, uint32_t hexColor, uint64_t x, uint64_t y) {
+    if(x >= VBE_mode_info->width || y >= VBE_mode_info->height || videoBuffer == NULL) {
         return;
     }
-    uint8_t * framebuffer = (uint8_t *)(uintptr_t) VBE_mode_info->framebuffer;
+    uint8_t * framebuffer = (uint8_t *)(uintptr_t) videoBuffer;
     uint64_t offset = (x * ((VBE_mode_info->bpp)/8)) + (y * VBE_mode_info->pitch);
     framebuffer[offset]     =  (hexColor) & 0xFF;
     framebuffer[offset+1]   =  (hexColor >> 8) & 0xFF; 
@@ -73,19 +94,19 @@ void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
 
 // BASIC SHAPES
 
-void drawRectangle(Point * start, Point * end, uint32_t hexColor){
+void drawRectangle(uint8_t * videoBuffer, Point * start, Point * end, uint32_t hexColor){
 	for(uint64_t i = start->x; i < end->x; i++){
 		for(uint64_t j = start->y; j < end->y; j++){
-			putPixel(hexColor, i, j);
+			putPixel(videoBuffer, hexColor, i, j);
 		}
 	}
 }
 
-void drawRectangleBoder(Point * start, Point * end, uint32_t thickness, uint32_t hexColor){
+void drawRectangleBoder(uint8_t * videoBuffer, Point * start, Point * end, uint32_t thickness, uint32_t hexColor){
 	for(uint64_t i = start->x; i < end->x; i++){
 		for(uint64_t j = start->y; j < end->y; j++){
 			if(i < start->x + thickness || i >= end->x - thickness || j < start->y + thickness || j >= end->y - thickness){
-				putPixel(hexColor, i, j);
+				putPixel(videoBuffer, hexColor, i, j);
 			}
 		}
 	}
@@ -103,7 +124,7 @@ static char INTERLINE = 4;
 // funca con caracteres imprimibles soportados por la tipografía, y con el salto de línea y delete
 // hace wrapping automático, podría configurarse con un flag
 // para borrar le escribe un espacio en blanco por arriba
-void drawChar(char c, uint32_t textColor, uint32_t bgColor, int wrap) {
+void drawChar(uint8_t * videoBuffer, char c, uint32_t textColor, uint32_t bgColor, int wrap) {
     int is_deleting = 0;
 
 	// si el caracter es un espacio, no lo dibuja
@@ -155,9 +176,9 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 			for (uint64_t k = 0; k < font_size; k++) {
 				for (uint64_t l = 0; l < font_size; l++) {
 					if (character[i] & (1 << (7 - j))) {
-						putPixel(textColor, x + j * font_size + l, y + i * font_size + k);
+						putPixel(videoBuffer, textColor, x + j * font_size + l, y + i * font_size + k);
 					} else {
-						putPixel(bgColor, x + j * font_size + l, y + i * font_size + k);
+						putPixel(videoBuffer, bgColor, x + j * font_size + l, y + i * font_size + k);
 					}
 				}
 			}
@@ -167,37 +188,37 @@ void drawChar(char c, uint32_t textColor, uint32_t bgColor, int wrap) {
 	x += (CHAR_WIDTH * font_size) * !is_deleting; // si estoy borrando, no incremento x
 }
 
-void drawCharAt(char c, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawCharAt(uint8_t * videoBuffer, char c, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
 	y = position->y;
-	drawChar(c, textColor, bgColor, 0);
+	drawChar(videoBuffer, c, textColor, bgColor, 0);
 	x = oldX;
 	y = oldY;
 }
 
-void drawString(char * string, uint32_t textColor, uint32_t bgColor) {
+void drawString(uint8_t * videoBuffer, char * string, uint32_t textColor, uint32_t bgColor) {
 	while (*string) {
-		drawChar(*string++, textColor, bgColor, 1);
+		drawChar(videoBuffer, *string++, textColor, bgColor, 1);
 	}
 }
 
-void drawStringAt(char * string, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawStringAt(uint8_t * videoBuffer, char * string, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
 	y = position->y;
 	while (*string) {
-		drawChar(*string++, textColor, bgColor, 0);
+		drawChar(videoBuffer, *string++, textColor, bgColor, 0);
 	}
 	x = oldX;
 	y = oldY;
 }
 
-void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
+void drawNumber(uint8_t * videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 	if(num == 0){
-		drawChar('0', textColor, bgColor, wrap);
+		drawChar(videoBuffer, '0', textColor, bgColor, wrap);
 		return;
 	}
 
@@ -212,24 +233,24 @@ void drawNumber(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 
 	i--;
 	while(i >= 0){
-		drawChar(buffer[i], textColor, bgColor, wrap);
+		drawChar(videoBuffer, buffer[i], textColor, bgColor, wrap);
 		i--;
 	}
 }
 
-void drawNumberAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawNumberAt(uint8_t * videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
 	y = position->y;
-	drawNumber(num, textColor, bgColor, 0);
+	drawNumber(videoBuffer, num, textColor, bgColor, 0);
 	x = oldX;
 	y = oldY;
 }
 
-void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
+void drawHex(uint8_t * videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 	if(num == 0){
-		drawChar('0', textColor, bgColor, wrap);
+		drawChar(videoBuffer, '0', textColor, bgColor, wrap);
 		return;
 	}
 
@@ -244,28 +265,28 @@ void drawHex(uint64_t num, uint32_t textColor, uint32_t bgColor, int wrap){
 
 	i--;
 	while(i >= 0){
-		drawChar(buffer[i], textColor, bgColor, wrap);
+		drawChar(videoBuffer, buffer[i], textColor, bgColor, wrap);
 		i--;
 	}
 }
 
-void drawHexAt(uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position){
+void drawHexAt(uint8_t * videoBuffer, uint64_t num, uint32_t textColor, uint32_t bgColor, Point * position){
 	uint64_t oldX = x;
 	uint64_t oldY = y;
 	x = position->x;
 	y = position->y;
-	drawHex(num, textColor, bgColor, 0);
+	drawHex(videoBuffer, num, textColor, bgColor, 0);
 	x = oldX;
 	y = oldY;
 }
 
 // imprime un número pero sin necesidad de especificar color ni nada (para debugging)
-void simpleDrawNumber(uint64_t num){
+void simpleDrawNumber(uint8_t * videoBuffer, uint64_t num){
 	uint64_t textColor = 0xFFFFFF;
 	uint64_t bgColor = 0x000000;
 	
 	if(num == 0){
-		drawChar('0', textColor, bgColor, 1);
+		drawChar(videoBuffer, '0', textColor, bgColor, 1);
 		return;
 	}
 
@@ -280,7 +301,7 @@ void simpleDrawNumber(uint64_t num){
 
 	i--;
 	while(i >= 0){
-		drawChar(buffer[i], textColor, bgColor, 1);
+		drawChar(videoBuffer, buffer[i], textColor, bgColor, 1);
 		i--;
 	}
 }
@@ -290,7 +311,7 @@ void simpleDrawNumber(uint64_t num){
 
 // bitmap format is an array of 32 bit integers, each one representing a pixel color in hexa
 // maybe it would be more efficent not to use putPixel, but to write directly to the framebuffer
-void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * position, uint32_t scale){
+void drawBitmap(uint8_t * videoBuffer, uint32_t * bitmap, uint64_t width, uint64_t height, Point * position, uint32_t scale){
 	if(scale < 1){
 		return;
 	}
@@ -299,7 +320,7 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point * posi
 		for(uint64_t j = 0; j < width; j++){
 			for(uint64_t k = 0; k < scale; k++){
 				for(uint64_t l = 0; l < scale; l++){
-					putPixel(bitmap[i * width + j], position->x + j * scale + k, position->y + i * scale + l);
+					putPixel(videoBuffer, bitmap[i * width + j], position->x + j * scale + k, position->y + i * scale + l);
 				}
 			}
 		}
@@ -344,8 +365,11 @@ uint64_t getCharHeight(){
 
 // GENERAL
 
-void clearScreen(uint32_t bgColor){
-    uint8_t * framebuffer = (uint8_t *)(uintptr_t) VBE_mode_info->framebuffer;
+void clearScreen(uint8_t * videoBuffer, uint32_t bgColor){
+    uint8_t * framebuffer = (uint8_t *)(uintptr_t) videoBuffer;
+	if(framebuffer == NULL)
+		return; // No framebuffer to clear
+
     uint64_t offset = 0;
 
     uint8_t channel1 = (bgColor) & 0xFF;
