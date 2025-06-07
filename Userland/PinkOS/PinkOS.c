@@ -904,12 +904,11 @@ int main()
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
-	// home_screen();
-	// redraw();
+	home_screen();
+	redraw();
 
-	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
-
-	idle((char *)"idle from main");
+	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
+	// idle((char *)"idle from main");
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
