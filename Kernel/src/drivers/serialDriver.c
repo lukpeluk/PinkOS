@@ -75,6 +75,22 @@ void make_ethereal_request(char * request, EtherPinkResponse * response){
     } 
 }
 
+// Manda un mensaje al puerto serie, para debug
+void log_to_serial(char * message){
+    if (!message) return;
+
+    char *log = "LOG: ";
+    while(*log){
+        write_serial(*log);
+        log++;
+    }
+    while(*message){
+        write_serial(*message);
+        message++;
+    }
+    write_serial('\n'); 
+}
+
 
 // Las cosas se reciben byte a byte, pero algunos elementos son de más de un byte...
 // Así que se espera que vengan en little-endian

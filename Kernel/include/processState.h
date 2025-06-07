@@ -5,6 +5,18 @@
 
 typedef void (*ProgramEntry)(char*);
 
+
+// Struct for the structuring of the "stack int" of the interrupts
+typedef struct {
+    // uint64_t error;   // Error code
+    uint64_t ss;      // Stack Segment
+    uint64_t rsp;     // Stack Pointer
+    uint64_t rflags;  // Flags Register
+    uint64_t cs;      // Code Segment
+    uint64_t rip;     // Instruction Pointer
+} InterruptStackFrame;
+
+
 typedef struct {
     char* command;
     char* name;
@@ -16,7 +28,7 @@ typedef struct {
 
 
 void initProcessState();
-
+InterruptStackFrame getDefaultCRI();
 
 // getters and setters
 

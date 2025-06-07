@@ -1,10 +1,7 @@
 #include <drivers/registersDriver.h>
 
-extern uint64_t rax_backup, rbx_backup, rcx_backup, rdx_backup, rsi_backup, rdi_backup, rbp_backup, r8_backup, r9_backup, r10_backup, r11_backup, r12_backup, r13_backup, r14_backup, r15_backup;
+extern uint64_t rax_backup, rbx_backup, rcx_backup, rdx_backup, rsi_backup, rdi_backup, rsp_backup, rbp_backup, r8_backup, r9_backup, r10_backup, r11_backup, r12_backup, r13_backup, r14_backup, r15_backup;
 extern uint64_t cri_rip, cri_rsp, cri_rflags;
-
-
-
 
 
 static BackupRegisters backupRegisters;
@@ -16,6 +13,7 @@ void saveRegisters() {
 	backupRegisters.registers.rdx = rdx_backup;
 	backupRegisters.registers.rsi = rsi_backup;
 	backupRegisters.registers.rdi = rdi_backup;
+	backupRegisters.registers.rsp = rsp_backup;
 	backupRegisters.registers.rbp = rbp_backup;
 	backupRegisters.registers.r8 = r8_backup;
 	backupRegisters.registers.r9 = r9_backup;

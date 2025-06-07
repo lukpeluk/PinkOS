@@ -13,6 +13,8 @@
 #include <drivers/pitDriver.h>
 #include <drivers/audioDriver.h>
 
+#include <scheduling/scheduler.h>
+
 extern uint8_t text;
 extern uint8_t rodata;
 extern uint8_t data;
@@ -291,8 +293,10 @@ int main()
 {	
     // ncClear();
     ncPrint((const char *)"se llego al main\n");
+    log_to_serial("En el main de kernel\n");
 
 	initProcessState();
+    initScheduler();
 	init_rtc();
 	set_timezone(-3);
 	load_idt();

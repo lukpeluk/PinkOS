@@ -2,6 +2,7 @@
 #include <drivers/registersDriver.h>
 #include <drivers/videoDriver.h>
 #include <drivers/audioDriver.h>
+#include <scheduling/scheduler.h>
 
 // 18.2 Hz
 #define MILLISECONDS_PER_TICK 54.9450549451
@@ -15,6 +16,7 @@ void timer_handler() {
 	ticks++;
 	saveRegisters();  // Backup of the registers at any time, in case of wanting them for logging or debugging
 
+	schedulerLoop(); // Call the scheduler to switch processes if needed
 	audioLoop();
 }
 

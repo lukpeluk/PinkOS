@@ -74,7 +74,13 @@ def main():
                 while '\n' in buffer:
                     # Procesar línea completa
                     line, buffer = buffer.split('\n', 1)
-                    print(f"Recibido: {line}")
+                    # print(f"Recibido: {line}")
+
+                    # Manejar logs del sistema operativo
+                    if line.startswith("LOG: "):
+                        log_message = line[5:]  # Remover el prefijo "LOG: "
+                        print(f"🔍 [PINKOS DEBUG] {log_message}")
+                        continue
 
                     # Manejar comandos especiales
                     if line == "francis":
@@ -146,12 +152,12 @@ def main():
                         print(f"Enviado: {respuesta}")
                         continue
 
-                    # Responder al servidor con un mensaje por defecto
-                    respuesta = input("mensage: ")
-                    response_data = respuesta.encode('utf-8') + b'\x00'
-                    # SUCCESS(2), PLAIN_TEXT(0), ASCII_STREAM(1)
-                    send_response_with_header(client_socket, 2, 0, 1, response_data)
-                    print(f"Enviado: {respuesta}")
+                    # # Responder al servidor con un mensaje por defecto
+                    # respuesta = input("mensaje: ")
+                    # response_data = respuesta.encode('utf-8') + b'\x00'
+                    # # SUCCESS(2), PLAIN_TEXT(0), ASCII_STREAM(1)
+                    # send_response_with_header(client_socket, 2, 0, 1, response_data)
+                    # print(f"Enviado: {respuesta}")
 
     except ConnectionRefusedError:
         print("No se pudo conectar al servidor. Asegúrate de que esté ejecutándose.")

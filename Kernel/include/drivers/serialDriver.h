@@ -33,6 +33,7 @@ typedef struct EtherPinkResponse{
 void process_serial(char c);
 void make_ethereal_request(char * request, EtherPinkResponse * response); 
 
+void log_to_serial(char * message);
 
 // asm, low level
 extern void init_serial();

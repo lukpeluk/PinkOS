@@ -149,6 +149,7 @@ SECTION .text
 	mov [rbx_backup], rbx
 	mov [rcx_backup], rcx
 	mov [rdx_backup], rdx
+	mov [rsp_backup], rsp
 	mov [rbp_backup], rbp
 	mov [rdi_backup], rdi
 	mov [rsi_backup], rsi

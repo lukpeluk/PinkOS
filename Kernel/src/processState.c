@@ -3,23 +3,14 @@
 #include <permissions.h>
 #include <stdint.h>
 #include <drivers/videoDriver.h>
+#include <scheduling/scheduler.h>
+#include <drivers/serialDriver.h>
 
 #define ACTIVATE_ROOT_MODE 1
 #define DESACTIVATE_ROOT_MODE 0
 #define SYSTEM_PROCESS "system"
 
 // If you are looking for specific state variables like timezone, font size, etc... you should look at the respective drivers
-
-// Struct for the structuring of the "stack int" of the interrupts
-typedef struct {
-    // uint64_t error;   // Error code
-    uint64_t ss;      // Stack Segment
-    uint64_t rsp;     // Stack Pointer
-    uint64_t rflags;  // Flags Register
-    uint64_t cs;      // Code Segment
-    uint64_t rip;     // Instruction Pointer
-} InterruptStackFrame;
-
 
 extern void magic_recover(InterruptStackFrame * stackBase, uint64_t was_graphic);
 extern void push_to_custom_stack_pointer(uint64_t stack_pointer, uint64_t value_to_push);
@@ -89,34 +80,46 @@ void loadStackBase(uint64_t stackBase) {
 }
 
 
-void runProgram(Program * program, char * arguments) {
-    desactivateRootMode();
-    setPermissions(program->perms);
-    setCurrentProcess(program->name);           // Save the name and not the command, because the purpose of this is to be used in crash reports and logs
+// void runProgram(Program * program, char * arguments) {
+//     desactivateRootMode();
+//     setPermissions(program->perms);
+//     setCurrentProcess(program->name);           // Save the name and not the command, because the purpose of this is to be used in crash reports and logs
     
-    // ↓↓↓↓ Versión que limpia el stack antes de llamar a la función del programa ↓↓↓↓
-    InterruptStackFrame cri = getDefaultCRI();
-    cri.rip = (uint64_t) program->entry;
-    cri.rsp = processState.systemStackBase - 8; // -8 because the return address is pushed in the stack
-    push_to_custom_stack_pointer(processState.systemStackBase, (uint64_t)quitProgram);
-    magic_recover(&cri, (uint64_t) arguments);             
+//     // ↓↓↓↓ Versión que limpia el stack antes de llamar a la función del programa ↓↓↓↓
+//     InterruptStackFrame cri = getDefaultCRI();
+//     cri.rip = (uint64_t) program->entry;
+//     cri.rsp = processState.systemStackBase - 8; // -8 because the return address is pushed in the stack
+//     push_to_custom_stack_pointer(processState.systemStackBase, (uint64_t)quitProgram);
+//     magic_recover(&cri, (uint64_t) arguments);             
 
-    // ↓↓↓↓ Versión que preserva el stack antes de llamar a la función del programa ↓↓↓↓
-    // InterruptStackFrame cri = getDefaultCRI();
-    // cri.rip = program->entry;
-    // cri.rsp = get_stack_pointer() - 8; 
-    // magic_recover(&cri, arguments);
-    // quitProgram();
+//     // ↓↓↓↓ Versión que preserva el stack antes de llamar a la función del programa ↓↓↓↓
+//     // InterruptStackFrame cri = getDefaultCRI();
+//     // cri.rip = program->entry;
+//     // cri.rsp = get_stack_pointer() - 8; 
+//     // magic_recover(&cri, arguments);
+//     // quitProgram();
+// }
+
+void runProgram(Program *program, char *arguments) {
+    log_to_serial("runProgram: Iniciando");
+    log_to_serial(program->name);
+    addProcessToScheduler(program, arguments);
+    log_to_serial("runProgram: Proceso agregado al scheduler");
 }
 
 void quitProgram() {
-    uint64_t was_graphic = processState.permissions & DRAWING_PERMISSION;
-    setPermissions(ROOT_PERMISSIONS);
-    setCurrentProcess((char *)SYSTEM_PROCESS);
-    InterruptStackFrame cri = getDefaultCRI();
-    cri.rip = (uint64_t)callRestoreContextHandler;
-    cri.rsp = processState.systemStackBase;
-    magic_recover(&cri, was_graphic);      // We need to pass the argument to the function that will be called
+    log_to_serial("quitProgram: Terminando el proceso actual");
+    terminateCurrentProcess(); // Eliminar el proceso del scheduler
+
+    // uint64_t was_graphic = processState.permissions & DRAWING_PERMISSION;
+    // setPermissions(ROOT_PERMISSIONS);
+    // setCurrentProcess((char *)SYSTEM_PROCESS);
+
+    // InterruptStackFrame cri = getDefaultCRI();
+    // cri.rip = (uint64_t)callRestoreContextHandler;
+    // cri.rsp = processState.systemStackBase;
+
+    // magic_recover(&cri, was_graphic); // Restaurar el contexto del sistema
 }
 
 // receives a uint32_t with the required permissions and returns 1 if the current process has those permissions, 0 otherwise
