@@ -11,6 +11,14 @@ typedef struct {
 
 typedef uint8_t **Font;
 
+// main loop (intended to be called every timer tick, to manage the video stream)
+// This function is responsible for updating the video buffer and rendering it to the screen.
+void videoLoop();
+
+// Buffer initialization
+// Returns a pointer to the video buffer, which is a 2D array of pixels. Each pixel is represented by a 32-bit integer.
+void * createVideoBuffer();
+
 // BASIC SHAPES
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y);
 

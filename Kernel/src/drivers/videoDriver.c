@@ -1,5 +1,6 @@
 #include <drivers/videoDriver.h>
 #include <drivers/defaultFont.h>
+#include <memoryManager/memoryManager.h>
 #include <stdint.h>
 
 struct vbe_mode_info_structure {
@@ -46,6 +47,18 @@ VBEInfoPtr VBE_mode_info = (VBEInfoPtr) 0x0000000000005C00;
 static Font font = ibm_bios_font;
 static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
+
+
+void videoLoop() {
+	// This function is intended to be called every timer tick to update the video buffer.
+	// Currently, it does nothing as the video buffer is updated directly when drawing.
+	
+}
+
+void * createVideoBuffer() {
+	return malloc(VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+}
+
 
 void putPixel(uint32_t hexColor, uint64_t x, uint64_t y) {
     if(x >= VBE_mode_info->width || y >= VBE_mode_info->height){
