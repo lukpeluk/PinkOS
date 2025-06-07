@@ -1,5 +1,4 @@
 #include <keyboard.h>
-#include <syscall.h>
 #include <stdint.h>
 #include <syscallCodes.h>
 

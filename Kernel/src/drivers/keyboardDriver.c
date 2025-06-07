@@ -8,9 +8,9 @@ extern char getKeyCode();
 
 #define ADVANCE_INDEX(index) index = (index + 1) % BUFFER_SIZE
 
-// otra opción sería un arreglo con un elemento por scan code, a modo de flag
-// pero me parece innecesario siendo que los teclados rara vez soportan más de 6 teclas a la vez (por como funcionan electrónicamente y por limitaciones en la interfaz HID)
-// volvería O(1) el seteo y el borrado de teclas, pero tampoco es que recorrer 6 posiciones cueste tanto, además empeora el caso de listar las teclas apretadas
+// otra opciï¿½n serï¿½a un arreglo con un elemento por scan code, a modo de flag
+// pero me parece innecesario siendo que los teclados rara vez soportan mï¿½s de 6 teclas a la vez (por como funcionan electrï¿½nicamente y por limitaciones en la interfaz HID)
+// volverï¿½a O(1) el seteo y el borrado de teclas, pero tampoco es que recorrer 6 posiciones cueste tanto, ademï¿½s empeora el caso de listar las teclas apretadas
 static char pressed_keys[PRESSED_KEYS_CACHE_SIZE] = {0x00};
 static char pressed_keys_special_keycode_flag[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // if a one, the key is a special keycode
 static char pressed_keys_hold_times[PRESSED_KEYS_CACHE_SIZE] = {0x00};  // times the key was pressed before being released
@@ -79,6 +79,7 @@ int isKeyPressed(char scan_code, char is_special) {
 
 // Dequeue a KeyboardEvent from the buffer, returns NULL if the buffer is empty
 // returns as copy, so it cannot be given directly to the handler
+// TODO: solo si el proceso que lo llama estÃ¡ en focus (capaz el dispatcher mismo deberÃ­a hacer la validaciÃ³n)
 void getKeyboardEvent(KeyboardEvent * keyboardEvent) {
     if (bufferReadIndex == bufferWriteIndex) {
         *keyboardEvent = (KeyboardEvent) {0};  // If the buffer is empty, return an empty event
@@ -171,7 +172,7 @@ char base_layer[256] = {
     '9',              // 0x0A
     '0',              // 0x0B
     '\'',             // 0x0C (Apostrofe)
-    '¡',              // 0x0D (Signo de exclamación)
+    'ï¿½',              // 0x0D (Signo de exclamaciï¿½n)
     ASCII_BS,         // 0x0E (Backspace)
     ASCII_HT,         // 0x0F (Tab)
     'q',              // 0x10
@@ -185,7 +186,7 @@ char base_layer[256] = {
     'o',              // 0x18
     'p',              // 0x19
     '`',              // 0x1A (Acento grave)
-    '+',              // 0x1B (Signo más)
+    '+',              // 0x1B (Signo mï¿½s)
     ASCII_LF,         // 0x1C (Enter)
     ASCII_NUL,        // 0x1D (Control izquierdo)
     'a',              // 0x1E
@@ -197,7 +198,7 @@ char base_layer[256] = {
     'j',              // 0x24
     'k',              // 0x25
     'l',              // 0x26
-    'ñ',              // 0x27
+    'ï¿½',              // 0x27
     '{',              // 0x28
     '<',              // 0x29
     ASCII_NUL,        // 0x2A (Shift izquierdo)
@@ -213,10 +214,10 @@ char base_layer[256] = {
     '.',              // 0x34
     '-',              // 0x35
     ASCII_NUL,        // 0x36 (Shift derecho)
-    '*',              // 0x37 (Teclado numérico *)
+    '*',              // 0x37 (Teclado numï¿½rico *)
     ASCII_NUL,        // 0x38 (Alt izquierdo)
     ' ',              // 0x39 (Espacio)
-    ASCII_NUL,        // 0x3A (Bloq Mayús)
+    ASCII_NUL,        // 0x3A (Bloq Mayï¿½s)
     ASCII_NUL,        // 0x3B (F1)
     ASCII_NUL,        // 0x3C (F2)
     ASCII_NUL,        // 0x3D (F3)
@@ -229,20 +230,20 @@ char base_layer[256] = {
     ASCII_NUL,        // 0x44 (F10)
     ASCII_NUL,        // 0x45 (Bloq Num)
     ASCII_NUL,        // 0x46 (Bloq Despl)
-    '7',              // 0x47 (Teclado numérico 7)
-    '8',              // 0x48 (Teclado numérico 8)
-    '9',              // 0x49 (Teclado numérico 9)
-    '-',              // 0x4A (Teclado numérico -)
-    '4',              // 0x4B (Teclado numérico 4)
-    '5',              // 0x4C (Teclado numérico 5)
-    '6',              // 0x4D (Teclado numérico 6)
-    '+',              // 0x4E (Teclado numérico +)
-    '1',              // 0x4F (Teclado numérico 1)
-    '2',              // 0x50 (Teclado numérico 2)
-    '3',              // 0x51 (Teclado numérico 3)
-    '0',              // 0x52 (Teclado numérico 0)
-    '.',              // 0x53 (Teclado numérico .)
-    ASCII_NUL,        // 0x54 (Teclado numérico Enter)
+    '7',              // 0x47 (Teclado numï¿½rico 7)
+    '8',              // 0x48 (Teclado numï¿½rico 8)
+    '9',              // 0x49 (Teclado numï¿½rico 9)
+    '-',              // 0x4A (Teclado numï¿½rico -)
+    '4',              // 0x4B (Teclado numï¿½rico 4)
+    '5',              // 0x4C (Teclado numï¿½rico 5)
+    '6',              // 0x4D (Teclado numï¿½rico 6)
+    '+',              // 0x4E (Teclado numï¿½rico +)
+    '1',              // 0x4F (Teclado numï¿½rico 1)
+    '2',              // 0x50 (Teclado numï¿½rico 2)
+    '3',              // 0x51 (Teclado numï¿½rico 3)
+    '0',              // 0x52 (Teclado numï¿½rico 0)
+    '.',              // 0x53 (Teclado numï¿½rico .)
+    ASCII_NUL,        // 0x54 (Teclado numï¿½rico Enter)
     ASCII_NUL,        // 0x55 (Control derecho)
     '<',        // 0x56 (Menor que)
     ASCII_NUL,        // 0x57 (F11)
@@ -264,7 +265,7 @@ char shift_layer[256] = {
     ')',               // 0x0A
     '=',               // 0x0B
     '?',               // 0x0C
-    '¿',               // 0x0D
+    'ï¿½',               // 0x0D
     ASCII_NUL,          // 0x0E
     ASCII_NUL,          // 0x0F
     'Q',               // 0x10
@@ -290,7 +291,7 @@ char shift_layer[256] = {
     'J',               // 0x24
     'K',               // 0x25
     'L',               // 0x26
-    'Ñ',               // 0x27
+    'ï¿½',               // 0x27
     '[',               // 0x28
     '>',               // 0x29
     ASCII_NUL,          // 0x2A
@@ -370,7 +371,7 @@ char caps_lock_layer[256] = {
     'J', // 0x24
     'K', // 0x25
     'L', // 0x26
-    'Ñ', // 0x27
+    'ï¿½', // 0x27
     ASCII_NUL, // 0x28
     ASCII_NUL, // 0x29
     ASCII_NUL, // 0x2A
@@ -395,7 +396,7 @@ char altgr_layer[256] = {
     [0x11 ... 0xFF] = ASCII_NUL,
 };
     
-// caps-lock no funca por algún motivo... pero bueno, no es tan importante
+// caps-lock no funca por algï¿½n motivo... pero bueno, no es tan importante
 // keycode must be in the ascii range (TODO: fix)
 // should handle both press and release keycodes
 char keycodeToAscii(char keycode) {
