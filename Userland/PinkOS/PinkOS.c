@@ -57,7 +57,7 @@ typedef struct
 	uint64_t cri_rip, cri_rsp, cri_rflags;
 } BackupRegisters;
 
-int running_program = 0; // 0 if no program is running (besides the shell itself, ofc)
+int running_program = 0; // 0 if no program is running (besides the shell itself, ofc), the pid of the running program otherwise
 int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
 
 #define BUFFER_SIZE 500
@@ -451,17 +451,19 @@ void execute_program(int input_line)
 
 
 	// Si el programa es el texto "async", se ejecuta forrestgump 2 veces para probar el manejo de procesos asíncronos
-	if (strcmp(program_name, "async") == 0)
-	{
-		add_str_to_stdout((char *)"Running two instances of Forrest Gump simultaneously\n");
-		running_program = 1;
+	// if (strcmp(program_name, "async") == 0)
+	// {
+	// 	add_str_to_stdout((char *)"Running two instances of Forrest Gump simultaneously\n");
+	// 	running_program = 1;
 
-		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
+	// 	syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 
-		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)arguments, 0, 0, 0);
-		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)logo_str, 0, 0, 0);
-		return;
-	} else if (strcmp(program_name, "clear") == 0)
+	// 	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)arguments, 0, 0, 0);
+	// 	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)logo_str, 0, 0, 0);
+	// 	return;
+	// }
+
+	if (strcmp(program_name, "clear") == 0)
 	{
 		// clear the console
 		clear_console();
@@ -481,7 +483,7 @@ void execute_program(int input_line)
 	// if the program is found, execute it
 	else
 	{
-		running_program = 1;
+		// running_program = 1;
 
 		if (program->perms & DRAWING_PERMISSION)
 		{
@@ -501,7 +503,8 @@ void execute_program(int input_line)
 
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 
-		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
+		// Guardo el PID en running_program para que luego el quit sepa qué matar
+		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, &running_program, 0, 0);
 	}
 }
 
@@ -540,9 +543,11 @@ void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 
 
 	// --- HOLDING ESC FORCE QUITS THE CURRENT PROGRAM ---
+	// (the program that this shell started, not the current meaning the currently scheduled process)
 	if (ascii == ASCII_ESC && running_program && hold_times == 1)
 	{
-		syscall(QUIT_PROGRAM_SYSCALL, 0, 0, 0, 0, 0);
+		syscall(QUIT_PROGRAM_SYSCALL, running_program, 0, 0, 0, 0);
+		restoreContext(0); // restore the context to the shell
 		return;
 	}
 	
@@ -898,8 +903,7 @@ void home_screen()
 	}
 }
 
-int main()
-{
+int shell_main(char * args){
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
@@ -907,12 +911,10 @@ int main()
 	home_screen();
 	redraw();
 
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
-	// idle((char *)"idle from main");
-
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
+	syscall(SET_HANDLER_SYSCALL, (uint64_t)USER_ENVIRONMENT_API_HANDLER, (uint64_t)api_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)KEY_HANDLER, (uint64_t)key_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)RTC_HANDLER, (uint64_t)status_bar_handler, 0, 0, 0);
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
@@ -925,3 +927,21 @@ int main()
 	idle((char *)"idle from main");
 	return 0;
 }
+
+// Volver a la shell un proceso más
+int main(){
+	static Program shell = {
+		.command = "shell",
+		.name = "PinkOS Shell",
+		.entry = shell_main,
+		.perms = 0xFFFFFFFF,
+		.help = "The PinkOS shell",
+		.description = "This is the PinkOS shell. It allows you to run programs and interact with the system."
+	};
+
+	// Sé que mi PID va a ser 1 ya que es el primer programa que se ejecuta
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&shell, (uint64_t)arguments, 0, 0, 0);
+	idle((char *)"idle from main");
+}
+
+

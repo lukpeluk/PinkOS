@@ -93,7 +93,7 @@ void removeWindow(uint32_t pid){
     return; // No se encontró la ventana con el PID especificado
 }
 
-// WIP
+// Alt tab (le indicás el pid al cual cambiar)
 int switchToWindow(uint32_t pid) {
     if (focusedWindow == NULL) {
         log_to_serial("switchWindow: No hay ventanas para cambiar");
@@ -101,16 +101,24 @@ int switchToWindow(uint32_t pid) {
     }
 
     WindowControlBlock *current = focusedWindow;
+    WindowControlBlock *prev = NULL;
     while (current != NULL) {
         if (current->pid == pid) {
             // Si la ventana ya es el foco, no hacer nada
             if (current == focusedWindow) {
                 return 0; // Ya es el foco actual
             }
-            // Cambiar el foco a la ventana encontrada
+            
+            // Remover la ventana de su posición actual
+            prev->next = current->next;
+            
+            // Mover la ventana al frente de la lista
+            current->next = focusedWindow;
             focusedWindow = current;
+            
             return 1; // Cambio exitoso
         }
+        prev = current;
         current = current->next;
     }
 

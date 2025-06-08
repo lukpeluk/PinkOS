@@ -109,15 +109,37 @@ void log_string(char* message) {
 
 void quitWrapper(){
     log_to_serial("quitWrapper: Programa saliendo naturalmente");
-    quitProgram();
+
+    // uint64_t was_graphic = IS_GRAPHIC(currentProcess);
+
+    // if(was_graphic) {
+    //     log_to_serial("terminateProcess: El proceso actual es gráfico, eliminando ventana asociada");
+    //     removeWindow(currentProcess->pid); // Eliminar la ventana asociada al proceso gráfico
+    // }
+
+    // removeProcessFromScheduler(currentProcess->pid); // Eliminar el proceso del scheduler
+
+    terminateProcess(0); // Terminar el proceso actual (0 significa el proceso actual)
+
+    uint64_t was_graphic = IS_GRAPHIC(currentProcess);
+
+    setPermissions(ROOT_PERMISSIONS);
+    setCurrentProcess((char *)SYSTEM_PROCESS);
+
+    InterruptStackFrame cri = getDefaultCRI();
+    cri.rip = (uint64_t)callRestoreContextHandler;
+    cri.rsp = getSystemStackBase();
+
+    magic_recover_old(&cri, was_graphic); // Restaurar el contexto del sistema (esto porque el programa salió naturalmente y hay que avisar a la shell)
 }
 
 // Agrega un nuevo proceso al planificador, no lo ejecuta inmediatamente
-void addProcessToScheduler(Program *program, char *arguments) {
+// Devuelve el PID del nuevo proceso
+uint32_t addProcessToScheduler(Program *program, char *arguments) {
     static uint32_t processCount = 0; // Contador de procesos creados
     if (program == NULL || program->entry == NULL) {
         log_to_serial("addProcessToScheduler: Error, programa o entry no válido");
-        return;
+        return 0;
     }
     log_to_serial("addProcessToScheduler: Agregando proceso");
 
@@ -173,11 +195,13 @@ void addProcessToScheduler(Program *program, char *arguments) {
             log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso gráfico");
         }
     }
+
+    return newProcess->pid; // Devolver el PID del nuevo proceso
 }
 
 // Elimina un proceso del planificador por su PID
+// Es de uso interno, se debe usar terminateProcess() para eliminar un proceso
 // TODO: Implementar free() para liberar la memoria del PCB y stack cuando se termine el memory manager
-// Por ahora free() no hace nada, pero al menos la memoria está siendo tracked por el memory manager
 void removeProcessFromScheduler(uint32_t pid) {
     log_to_serial("removeProcessFromScheduler: Eliminando proceso");
 
@@ -233,34 +257,57 @@ void scheduleNextProcess() {
     log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcess->stackBase);
     log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcess->registers.rsp);
 
-
     magic_recover(&currentProcess->registers);
 }
 
-void terminateCurrentProcess() {
-    uint32_t pid = currentProcess->pid;
-    uint64_t was_graphic = IS_GRAPHIC(currentProcess);
+ProcessControlBlock * getProcessByPID(uint32_t pid) {
+    if (processList == NULL) return NULL; // No hay procesos
+
+    ProcessControlBlock *current = processList;
+    do {
+        if (current->pid == pid) {
+            return current; // Proceso encontrado
+        }
+        current = current->next;
+    } while (current != processList);
+
+    return NULL; // Proceso no encontrado
+}
+
+
+void terminateProcess(uint32_t pid) {
+    pid = pid ? pid : currentProcess->pid;
+    ProcessControlBlock *processToTerminate = getProcessByPID(pid);
+
+    if(processToTerminate == NULL) {
+        log_to_serial("terminateProcess: Proceso no encontrado");
+        return; // No se encontró el proceso
+    }
+
+    uint64_t was_graphic = IS_GRAPHIC(processToTerminate);
 
     if(was_graphic) {
-        log_to_serial("terminateCurrentProcess: El proceso actual es gráfico, eliminando ventana asociada");
+        log_to_serial("terminateProcess: El proceso actual es gráfico, eliminando ventana asociada");
         removeWindow(pid); // Eliminar la ventana asociada al proceso gráfico
     }
 
     removeProcessFromScheduler(pid);
 
-    if(currentProcess == NULL){
-        setPermissions(ROOT_PERMISSIONS);
-        setCurrentProcess((char *)SYSTEM_PROCESS);
-
-        InterruptStackFrame cri = getDefaultCRI();
-        cri.rip = (uint64_t)callRestoreContextHandler;
-        cri.rsp = getSystemStackBase();
-
-        magic_recover_old(&cri, was_graphic); // Restaurar el contexto del sistema
-    } else {
-        scheduleNextProcess();
-    }
+    // Antes si se mataba el último proceso, se iba a la shell, pero ahora la shell es un proceso más así que no tiene sentido
+    // La shell es la que debe encargarse de resumir su estado cuando se termina un proceso (a futuro los eventos/waits ayudarían capaz)
+    // Por ahora la shell se entera porque llamamos al callRestoreContextHandler desde el quitProgramWrapper
+        
+    // scheduleNextProcess();
 }
+
+// void terminateFocusedProcess() {
+//     log_to_serial("terminateFocusedProcess: Terminando el proceso enfocado");
+
+    
+
+//     // Terminar el proceso actual
+//     terminateCurrentProcess();
+// }
 
 
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick

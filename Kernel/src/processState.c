@@ -100,16 +100,18 @@ uint64_t getSystemStackBase() {
 //     // quitProgram();
 // }
 
-void runProgram(Program *program, char *arguments) {
+// devuelve el PID
+uint32_t runProgram(Program *program, char *arguments) {
     log_to_serial("runProgram: Iniciando");
     log_to_serial(program->name);
-    addProcessToScheduler(program, arguments);
+    uint32_t pid = addProcessToScheduler(program, arguments);
     log_to_serial("runProgram: Proceso agregado al scheduler");
+    return pid;
 }
 
-void quitProgram() {
+void quitProgram(uint32_t pid) {
     log_to_serial("quitProgram: Terminando el proceso actual");
-    terminateCurrentProcess(); // Eliminar el proceso del scheduler
+    terminateProcess(pid); // Eliminar el proceso del scheduler
 
     // uint64_t was_graphic = processState.permissions & DRAWING_PERMISSION;
     // setPermissions(ROOT_PERMISSIONS);

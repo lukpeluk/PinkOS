@@ -8,6 +8,6 @@
 void exceptionDispatcher(int exception) {
 	saveRegisters();
 	callExceptionHandler(exception, getBackupRegisters());
-	quitProgram();
+	quitProgram(0); // 0 means the current process, which is the one that caused the exception
 }
 

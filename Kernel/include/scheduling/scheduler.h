@@ -17,13 +17,20 @@ typedef struct ProcessControlBlock {
 } ProcessControlBlock;
 
 void initScheduler();
-
-void addProcessToScheduler(Program *program, char *arguments);
-void removeProcessFromScheduler(uint32_t pid);
-void scheduleNextProcess();
-void terminateCurrentProcess();
 void schedulerLoop();
 
+// devuelve el PID del proceso agregado al scheduler, o 0 si hubo un error
+uint32_t addProcessToScheduler(Program *program, char *arguments);
+
+void scheduleNextProcess();
+
+// Si el PID es 0, se mata el proceso actual
+// Útil para que un proceso pueda terminarse a sí mismo
+void terminateProcess(uint32_t pid);
+
+// A nivel externo no es útil ya que para el usuario todo corre "a la vez", pero es necesario para el kernel para saber cosas como en qué buffer de video escribir
 uint32_t getCurrentProcessPID();
+
+
 
 #endif
