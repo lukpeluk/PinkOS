@@ -132,18 +132,53 @@ void process_header(char c){
 
 // Funciones auxiliares para logging
 void log_hex(char* prefix, uint64_t value) {
-    log_to_serial(prefix);
+    char buffer[100]; // Buffer temporal para construir el mensaje completo
     char hexStr[20];
-    log_to_serial("0x");
+    char *p = buffer;
+    
+    // Copiar el prefijo
+    while (*prefix) {
+        *p++ = *prefix++;
+    }
+    
+    // Agregar "0x"
+    *p++ = '0';
+    *p++ = 'x';
+    
+    // Convertir a hexadecimal
     itoa(value, hexStr, 16);
-    log_to_serial(hexStr);
+    char *hex_p = hexStr;
+    while (*hex_p) {
+        *p++ = *hex_p++;
+    }
+    
+    *p = '\0'; // Terminar el string
+    
+    // Enviar todo en una sola llamada
+    log_to_serial(buffer);
 }
 
 void log_decimal(char* prefix, uint64_t value) {
-    log_to_serial(prefix);
-    char decStr[12];
+    char buffer[100]; // Buffer temporal para construir el mensaje completo
+    char decStr[25];  // Suficiente para un uint64_t
+    char *p = buffer;
+    
+    // Copiar el prefijo
+    while (*prefix) {
+        *p++ = *prefix++;
+    }
+    
+    // Convertir a decimal
     itoa(value, decStr, 10);
-    log_to_serial(decStr);
+    char *dec_p = decStr;
+    while (*dec_p) {
+        *p++ = *dec_p++;
+    }
+    
+    *p = '\0'; // Terminar el string
+    
+    // Enviar todo en una sola llamada
+    log_to_serial(buffer);
 }
 
 void log_string(char* message) {

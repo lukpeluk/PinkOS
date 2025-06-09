@@ -16,6 +16,7 @@
 #include <processManager/scheduler.h>
 #include <windowManager/windowManager.h>
 #include <eventManager/eventManager.h>
+#include <processManager/scheduler.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -291,6 +292,52 @@ void testAudio(){
 
 // }
 
+void shell_main(char * args)
+{
+
+    log_to_serial("schedulerTest: -------------------- PinkOS Shell started");
+    log_to_serial("schedulerTest: args: ");
+    log_to_serial(args);
+
+    // Aquí iría el código del shell, por ahora solo un bucle infinito
+    while (1)
+    {
+        // Esperar a que se reciba un comando
+        // Por ahora solo un bucle infinito
+        _hlt();
+    }
+}
+
+void testScheduler(){
+
+    log_to_serial("schedulerTest: -------------------- Testing scheduler");
+
+    static Program shell = {
+		.command = "shell",
+		.name = "PinkOS Shell",
+		.entry = shell_main,
+		.permissions = 0xFFFFFFFF,
+		.help = "The PinkOS Shell",
+		.description = "Starts the PinkOS shell",
+	};
+
+    // Test scheduler by creating a few processes and checking if they run
+    for (int i = 0; i < 5; i++) {
+        // Pid pid = runProgram(&shell, "Test process", 0, 0, 0, 0, 0);
+
+        Pid pid = newProcess(shell, "#################################################### Test process", 0, i);
+        Pid parent_pid = getParent(getCurrentProcessPID()).pid;
+
+        if (pid == 0) {
+            log_to_serial("schedulerTest: Failed to create process");
+        } else {
+            log_to_serial("schedulerTest: Process created successfully");
+            log_decimal("schedulerTest: Process PID: ", pid);
+            log_decimal("schedulerTest: Process Parent: ", parent_pid);
+        }
+    }
+}
+
 int main()
 {	
     // ncClear();
@@ -308,6 +355,7 @@ int main()
     initEventManager();
 
     // test_serial();
+    testScheduler();
 
 	// testScreen();
 	// testAudio();
