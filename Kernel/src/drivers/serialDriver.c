@@ -128,3 +128,25 @@ void process_header(char c){
         }
     }
 }
+
+
+// Funciones auxiliares para logging
+void log_hex(char* prefix, uint64_t value) {
+    log_to_serial(prefix);
+    char hexStr[20];
+    log_to_serial("0x");
+    itoa(value, hexStr, 16);
+    log_to_serial(hexStr);
+}
+
+void log_decimal(char* prefix, uint32_t value) {
+    log_to_serial(prefix);
+    char decStr[12];
+    itoa(value, decStr, 10);
+    log_to_serial(decStr);
+}
+
+void log_string(char* message) {
+    log_to_serial(message);
+}
+

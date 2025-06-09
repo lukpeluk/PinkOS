@@ -52,60 +52,6 @@ uint64_t allocateStack(uint32_t processIndex) {
 }
 
 
-void itoa(int value, char *str, int base) {
-    char *p = str;
-    int num = value;
-    int sign = 0;
-
-    if (value == 0) {
-        *p++ = '0';
-        *p = '\0';
-        return;
-    }
-
-    if (value < 0 && base == 10) {
-        sign = 1;
-        num = -value;
-    }
-
-    char buf[32];
-    int i = 0;
-
-    while (num != 0) {
-        int digit = num % base;
-        buf[i++] = (digit < 10) ? ('0' + digit) : ('a' + digit - 10);
-        num /= base;
-    }
-
-    if (sign)
-        *p++ = '-';
-
-    while (i--)
-        *p++ = buf[i];
-
-    *p = '\0';
-}
-
-// Funciones auxiliares para logging
-void log_hex(char* prefix, uint64_t value) {
-    log_to_serial(prefix);
-    char hexStr[20];
-    log_to_serial("0x");
-    itoa(value, hexStr, 16);
-    log_to_serial(hexStr);
-}
-
-void log_decimal(char* prefix, uint32_t value) {
-    log_to_serial(prefix);
-    char decStr[12];
-    itoa(value, decStr, 10);
-    log_to_serial(decStr);
-}
-
-void log_string(char* message) {
-    log_to_serial(message);
-}
-
 
 void quitWrapper(){
     log_to_serial("quitWrapper: Programa saliendo naturalmente");

@@ -49,9 +49,9 @@ char * getCurrentProcess();
 void loadStackBase(uint64_t stackBase);
 uint64_t getSystemStackBase();
 
-void runProgram(Program * programName, char * arguments);
+Pid runProgram(Program * programName, char * arguments);
 
-void quitProgram();
+void quitProgram(Pid pid);
 
 // recibe un uint32_t con los permisos requeridos y devuelve 1 si el proceso actual tiene esos permisos, 0 en caso contrario
 int validatePermissions(uint32_t requiredPermissions);

@@ -6,17 +6,16 @@
 
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
 
-void initWindowManager();
+void initWindowManager(){};
 
-// ojo piojo, no puedo tener un PID 0
-uint32_t getFocusedWindow(){
+Pid getFocusedWindow(){
     if (focusedWindow == NULL) {
         return NULL;
     }
     return focusedWindow->pid;
 }
 
-int isFocusedWindow(uint32_t pid){
+int isFocusedWindow(Pid pid){
     if (focusedWindow == NULL) {
         return 0; 
     }
@@ -30,7 +29,7 @@ uint8_t * getFocusedBuffer(){
     return focusedWindow->buffer;
 }
 
-uint8_t * getBufferByPID(uint32_t pid){
+uint8_t * getBufferByPID(Pid pid){
     WindowControlBlock *current = focusedWindow;
     while (current != NULL) {
         if (current->pid == pid) {
@@ -41,10 +40,8 @@ uint8_t * getBufferByPID(uint32_t pid){
     return NULL; // No se encontró la ventana con el PID especificado
 }
 
-// Agregar y eliminar ventanas, se encarga de allocar y liberar memoria
-// Agregar una ventana devuelve un puntero al buffer de la ventana, o NULL si no se pudo allocar memoria
 // TODO: capaz permitir elegir si focusear la ventana o si ponerla como segunda
-uint8_t * addWindow(uint32_t pid){
+uint8_t * addWindow(Pid pid){
     WindowControlBlock *newWindow = (WindowControlBlock *)malloc(sizeof(WindowControlBlock));
     if (newWindow == NULL) {
         log_to_serial("addWindow: Error al allocar memoria para la nueva ventana");
@@ -64,9 +61,7 @@ uint8_t * addWindow(uint32_t pid){
     focusedWindow = newWindow;
 }
 
-
-// Aguanten las linked lists
-void removeWindow(uint32_t pid){
+int removeWindow(Pid pid){
     if (focusedWindow == NULL) {
         log_to_serial("removeWindow: No hay ventanas para eliminar");
         return; 
@@ -84,33 +79,42 @@ void removeWindow(uint32_t pid){
             }
             free(current->buffer); // Liberar el buffer de video
             free(current); // Liberar la memoria del WindowControlBlock
-            return;
+            return 0; // Eliminación exitosa
         }
         prev = current;
         current = current->next;
     }
     log_to_serial("removeWindow: No se encontró la ventana con el PID especificado");
-    return; // No se encontró la ventana con el PID especificado
+    return -1; // No se encontró la ventana con el PID especificado
 }
 
-// WIP
-int switchToWindow(uint32_t pid) {
+// Aguanten las linked lists
+// Alt tab (le indicás el pid al cual cambiar)
+int switchToWindow(Pid pid) {
     if (focusedWindow == NULL) {
         log_to_serial("switchWindow: No hay ventanas para cambiar");
         return -1; // No hay ventanas para cambiar
     }
 
     WindowControlBlock *current = focusedWindow;
+    WindowControlBlock *prev = NULL;
     while (current != NULL) {
         if (current->pid == pid) {
             // Si la ventana ya es el foco, no hacer nada
             if (current == focusedWindow) {
                 return 0; // Ya es el foco actual
             }
-            // Cambiar el foco a la ventana encontrada
+            
+            // Remover la ventana de su posición actual
+            prev->next = current->next;
+            
+            // Mover la ventana al frente de la lista
+            current->next = focusedWindow;
             focusedWindow = current;
+            
             return 1; // Cambio exitoso
         }
+        prev = current;
         current = current->next;
     }
 
