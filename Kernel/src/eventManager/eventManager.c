@@ -4,12 +4,6 @@
 #include <memoryManager/memoryManager.h>
 #include <lib.h>
 
-// Drivers and Modules
-#include <drivers/keyboardDriver.h>
-#include <drivers/pitDriver.h>
-#include <drivers/rtcDriver.h>
-#include <exceptions/exceptions.h>
-#include <processManager/scheduler.h>
 
 #define MAX_EVENTS 6
 
@@ -19,13 +13,13 @@ typedef enum {
     SUSCRIPTION,
     WAITING,
 } EventType;
-typedef struct {
+typedef struct Listener {
     Pid pid;
     void (*handler)(void* data);            // Para las suscripciones, es el handler que se va a llamar cuando ocurra el evento, como argumento se le pasa un puntero a los datos del evento
     void* data;                             // Para los waiting, es el dato que se memcopiará al puntero del evento
     EventType type;
     // char * arguments; // Arguments for the handler, if needed
-    Listener* next; // Pointer to the next listener in the linked list
+    struct Listener* next; // Pointer to the next listener in the linked list
 } Listener;
 
 typedef struct {
@@ -36,7 +30,7 @@ typedef struct {
 } Event;
 
 
-typedef struct {
+typedef struct EventManager {
     Event events[MAX_EVENTS];
 } EventManager;
 
@@ -69,7 +63,7 @@ void initEventManager() {
     
 }
 
-void registerEventSuscription(int eventId, Pid pid, void (*handler)(void* data)) {
+void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)) {
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID
     }
@@ -111,7 +105,7 @@ void registerEventWaiting(int eventId, Pid pid, void* data) {
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 }
 
-void unregisterEventSuscription(int eventId, Pid pid) {
+void unregisterEventSubscription(int eventId, Pid pid) {
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID
     }
@@ -157,7 +151,7 @@ void notifyEvent(int eventId, void* data) {
             memcpy(eventData, data, eventManager.events[eventId].size);
 
             // Create a thread to handle the event
-            Pid pid = newThread(current->handler, eventData, current->pid);
+            Pid pid = newThread(current->handler, eventData, PRIORITY_NORMAL, current->pid);
             if (pid == 0) {
                 // Handle error: could not create thread
                 // You might want to log this or take some other action

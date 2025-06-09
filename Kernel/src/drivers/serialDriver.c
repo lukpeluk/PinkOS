@@ -139,7 +139,7 @@ void log_hex(char* prefix, uint64_t value) {
     log_to_serial(hexStr);
 }
 
-void log_decimal(char* prefix, uint32_t value) {
+void log_decimal(char* prefix, uint64_t value) {
     log_to_serial(prefix);
     char decStr[12];
     itoa(value, decStr, 10);

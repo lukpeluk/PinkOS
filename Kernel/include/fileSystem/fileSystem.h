@@ -2,40 +2,7 @@
 #define FILE_SYSTEM_H
 
 #include <stdint.h>
-#include <processManager/scheduler.h>
-#include <processManager/processState.h>
-
-typedef enum {
-    FILE_TYPE_FIFO = 0,
-    FILE_TYPE_RAW_DATA = 1,
-    FILE_TYPE_SONG = 2,
-    FILE_TYPE_PROGRAM = 3,
-} FileType;
-
-typedef enum {
-    FILE_READ = 'r',  
-    FILE_WRITE = 'w', 
-    FILE_READ_WRITE = 'a',
-} FileAction;
-
-// Quién puede leer y escribir en un archivo, no necesariamente quien puede leer es quien puede escribir
-// (especialmente en el caso de FIFO (pipes), donde al ser consumible no quiero que quien escribe pueda leer)
-// Las condiciones de lectura/escritura son:
-// '*' para todos, '-' para nadie, '.' para el proceso owner, '+' para el proceso owner y sus hijos/threads y 'p' para todos los procesos del mismo programa que el owner
-typedef struct FilePermissions{
-    Pid writing_owner;
-    char writing_conditions;
-    Pid reading_owner;
-    char reading_conditions;
-} FilePermissions;
-
-typedef struct File{
-    uint64_t id;    // ID único del archivo
-    char path[256]; // Ruta al archivo incluyendo el nombre
-    FileType type;  // Tipo de archivo, si es FIFO, raw_data, etc. Afecta a cómo se lee y escribe el archivo
-    uint32_t size;  // Tamaño del archivo en bytes
-    FilePermissions permissions; // Quién puede leer/escribir el archivo
-} File;
+#include <types.h>
 
 void initFileSystem();
 

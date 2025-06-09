@@ -3,7 +3,7 @@
 #include <lib.h>
 #include <moduleLoader.h>
 #include <naiveConsole.h>
-#include <processState.h>
+#include <processManager/processState.h>
 #include <interrupts/idtLoader.h>
 #include <serial.h>
 
@@ -13,7 +13,7 @@
 #include <drivers/pitDriver.h>
 #include <drivers/audioDriver.h>
 
-#include <scheduling/scheduler.h>
+#include <processManager/scheduler.h>
 
 extern uint8_t text;
 extern uint8_t rodata;

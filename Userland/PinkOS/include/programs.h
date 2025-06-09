@@ -10,7 +10,7 @@ typedef struct {
     char* command;
     char* name;
     ProgramEntry entry;
-    uint32_t perms;
+    uint32_t permissions;
     char* help;         // This is the help command (a very brief description)
     char* description;  // All the information about the command
 } Program;

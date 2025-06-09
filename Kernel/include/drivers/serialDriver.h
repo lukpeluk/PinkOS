@@ -38,7 +38,7 @@ void log_to_serial(char * message);
 
 
 void log_hex(char* prefix, uint64_t value);
-void log_decimal(char* prefix, uint32_t value);
+void log_decimal(char* prefix, uint64_t value);
 void log_string(char* message);
 
 

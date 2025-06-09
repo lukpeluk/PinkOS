@@ -483,12 +483,12 @@ void execute_program(int input_line)
 	{
 		running_program = 1;
 
-		if (program->perms & DRAWING_PERMISSION)
+		if (program->permissions & DRAWING_PERMISSION)
 		{
 			graphics_mode = 1;
 			syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
 		}
-		if ((program->perms & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
+		if ((program->permissions & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
 		{
 			// Si voy a ejecutar un programa con permisos de audio, y se estaba reproduciendo algo en segundo plano, guardo el estado
 			// E indico que luego de terminar la ejecución debe restaurarse el estado guardado
@@ -900,6 +900,10 @@ void home_screen()
 
 int main()
 {
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
+	idle((char *)"idle from main");
+
+
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
@@ -907,8 +911,6 @@ int main()
 	home_screen();
 	redraw();
 
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
-	// idle((char *)"idle from main");
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	syscall(SET_HANDLER_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);

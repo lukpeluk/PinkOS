@@ -2,6 +2,15 @@
 #define EVENT_MANAGER_H
 
 #include <stdint.h>
+#include <types.h>
+
+// Drivers and Modules
+#include <drivers/keyboardDriver.h>
+#include <drivers/pitDriver.h>
+#include <drivers/rtcDriver.h>
+#include <exceptions/exceptions.h>
+#include <processManager/scheduler.h>
+
 
 void initEventManager();
 void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data));

@@ -1,6 +1,6 @@
 #include <drivers/serialDriver.h>
 #include <processManager/scheduler.h>
-#include <processState.h>
+#include <processManager/processState.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <memoryManager/memoryManager.h>
@@ -15,7 +15,7 @@ typedef struct ProcessControlBlock {
     Process process;
     uint64_t stackBase;             // Dirección base del stack asignado, no es lo mismo que el rbp guardado ya que eso puede ser modificado por el proceso
     Registers registers;            // Registros del proceso, incluyendo el stack pointer (que en realidad apunta al interrupt stack frame, no al stack del proceso en sí)
-    ProcessControlBlock * parent;
+    struct ProcessControlBlock * parent;
     struct ProcessControlBlock *next; // Siguiente proceso (lista circular)
 } ProcessControlBlock;
 
@@ -102,13 +102,23 @@ void quitWrapper(){
 }
 
 // Agrega un nuevo proceso al planificador, no lo ejecuta inmediatamente
+// Le asigna un PID, inicializa el stack y los registros, y lo agrega a la lista de procesos
 ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry, char *arguments, ProcessType type, Priority priority, ProcessControlBlock *parent) {
+
+    log_to_serial("addProcessToScheduler: Iniciando la creación de un nuevo proceso");
+
     static uint32_t processCount = 0; // Contador de procesos creados
-    if (program.entry == NULL, entry == NULL, parent == NULL) {
+    if (program.entry == NULL, entry == NULL) {
         log_to_serial("addProcessToScheduler: Error, invalid input");
         return NULL;
     }
     log_to_serial("addProcessToScheduler: Agregando proceso");
+
+    if( parent == NULL && processList != NULL) {
+        log_to_serial("newProcess: Init ya existe, error!");
+        return NULL; // No se puede crear un proceso sin padre si ya hay un init
+    }
+        
 
     // Allocar memoria para el PCB usando malloc
     // Se guardan los datos del programa, se asigna un pid, y se inicializan los punteros
@@ -125,6 +135,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     newProcessBlock->process.type = type; // Tipo de proceso (normal, gráfico, etc.)
     newProcessBlock->process.state = PROCESS_STATE_NEW;     // Estado inicial del proceso
     newProcessBlock->process.priority = priority;
+    newProcessBlock->parent = parent; // Guardar el padre del proceso, si es que tiene uno
     
     newProcessBlock->stackBase = allocateStack(processCount); // Asignar stack predefinido
     newProcessBlock->registers.rsp = newProcessBlock->stackBase - 8; // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
@@ -173,9 +184,20 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
 
 Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_pid) {
+    // para debug
+    if(parent_pid == 0) {
+        log_to_serial("newProcess: Creando nuevo proceso sin padre, Init");
+    } else {
+        log_to_serial("newProcess: Creando nuevo proceso con padre");
+    }
+
+    if(parent_pid == 0 && processList != NULL) {
+        log_to_serial("newProcess: Init ya existe, error!");
+        return 0; // No se puede crear un proceso sin padre si ya hay un init
+    }
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
-    if(parent == NULL){
+    if(parent == NULL  && processList != NULL){
         log_to_serial("invalid parent process");
         return NULL;
     }
@@ -249,7 +271,7 @@ int terminateSingleProcess(uint32_t pid) {
 // Matar un proceso borra su ventana, avisa que murió con un evento, y lo marca como terminado para que el bucle del scheduler lo elimine
 // Es recursivo para así matar también a los hijos
 int terminateProcess(Pid pid) {
-    log_to_serial("removeProcessFromScheduler: Eliminando proceso y sus hijos");
+    // log_to_serial("removeProcessFromScheduler: Eliminando proceso y sus hijos");
 
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
@@ -262,7 +284,7 @@ int terminateProcess(Pid pid) {
     } 
 
     runOnChilds(terminateSingleProcess, pid); // Ejecutar el callback recursivamente en todos los descendientes del proceso especificado
-    log_to_serial("terminateProcess: Proceso y sus hijos eliminados");
+    // log_to_serial("terminateProcess: Proceso y sus hijos eliminados");
 
     terminateSingleProcess(pid); // Terminar el proceso actual
 
@@ -338,6 +360,7 @@ void scheduleNextProcess() {
     log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
     log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
 
+    log_string(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     magic_recover(&currentProcessBlock->registers);
 }
 
@@ -365,8 +388,10 @@ void scheduleNextProcess() {
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
 void schedulerLoop() {
     // Si no hay procesos, no hacer nada
+
     ticksSinceLastSwitch++;
     if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0) {
+        log_to_serial("schedulerLoop: nada que hacer");
         return;
     }
 

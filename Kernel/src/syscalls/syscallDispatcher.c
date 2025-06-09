@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <eventHandling/eventHandlers.h>
-#include <processState.h>
+#include <processManager/processState.h>
 #include <permissions.h>
 #include <syscalls/syscallCodes.h>
 #include <drivers/pitDriver.h>
@@ -9,9 +9,10 @@
 #include <drivers/rtcDriver.h>
 #include <drivers/audioDriver.h>
 #include <drivers/serialDriver.h>
-#include <scheduling/scheduler.h>
+#include <processManager/scheduler.h>
 #include <windowManager/windowManager.h>
 #include <eventManager/eventManager.h>
+#include <types.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
@@ -52,28 +53,31 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
             break;
         case RUN_PROGRAM_SYSCALL:
             VALIDATE_PERMISSIONS(SET_PROCESS_PERMISSION);
-            runProgram((Program *)arg1, (char *)arg2);
+            // runProgram((Program *)arg1, (char *)arg2);
+            newProcess(*((Program*)arg1), (char *)arg2, PRIORITY_NORMAL, 0);
             break;
         case QUIT_PROGRAM_SYSCALL:
-            quitProgram();
+            // quitProgram();
+            terminateProcess(getCurrentProcessPID());
             break;
         case USER_ENVIRONMENT_API_SYSCALL:
             callUserEnvironmentApiHandler(arg1, arg2, arg3, arg4, arg5);
             break;
         case SET_SYSTEM_STACK_BASE_SYSCALL:
-            loadStackBase(arg1);
+            // ! DEPRECATED
+            // loadStackBase(arg1);
             break;
         case REGISTER_EVENT_SUSCRIPTION_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
-            registerEventSubscription(arg1, getCurrentProcessPID(), (void (*)(void *))arg2);
+            registerEventSubscription((int) arg1, getCurrentProcessPID(), arg2);
             break;
         case REGISTER_EVENT_WAITING_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_WAITING_PERMISSION);
-            registerEventWaiting(arg1, getCurrentProcessPID(), (void *)arg2);
+            registerEventWaiting((int) arg1, getCurrentProcessPID(), (void *)arg2);
             break;
         case UNREGISTER_EVENT_SUSCRIPTION_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
-            unregisterEventSubscription(arg1, getCurrentProcessPID());
+            unregisterEventSubscription((int) arg1, getCurrentProcessPID());
             break;
         default:
             break;

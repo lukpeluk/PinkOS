@@ -1,4 +1,4 @@
-#include <processState.h>
+#include <processManager/processState.h>
 #include <stdint.h>
 #include <drivers/videoDriver.h>
 #include <processManager/scheduler.h>
@@ -42,7 +42,7 @@ void desactivateRootMode() {
 // }
 
 uint32_t getPermissions() {
-    Process currentProcess = getCurrentProcess();
+    Process currentProcess = getProcess(getCurrentProcessPID());
     if(currentProcess.pid)
         return currentProcess.program.permissions;
     return 0; // No hay proceso actual, permisos por defecto
