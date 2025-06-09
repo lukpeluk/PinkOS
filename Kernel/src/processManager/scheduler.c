@@ -59,6 +59,7 @@ Process getProcess(Pid pid) {
     
 }
 
+
 ProcessControlBlock * getProcessControlBlock(Pid pid){
     if(processList == NULL) return NULL;
 
@@ -72,6 +73,15 @@ ProcessControlBlock * getProcessControlBlock(Pid pid){
 
     return NULL; 
 }
+
+Process getParent(Pid pid){
+    ProcessControlBlock * process = getProcessControlBlock(pid);
+    if(process == NULL || process->parent == NULL) {
+        return (Process){.pid = 0}; // No hay padre, devuelve un proceso inválido
+    }
+    return process->parent->process; // Devuelve el proceso padre
+}
+
 
 void initScheduler() {
     log_to_serial("initScheduler: Iniciando el scheduler");
@@ -234,9 +244,16 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     if(parent->process.type != PROCESS_TYPE_MAIN){
         parent = getProcessControlBlock(parent->parent);
     }
+
+    // le saco permisos gráficos al thread
+    Program threadProgram = parent->process.program;
+    threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
+
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(parent->process.program, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
     
     log_to_serial("newThread: Agregando nuevo thread al scheduler:");
+    log_to_serial("newThread: Nuevo thread creado con los siguientes argumentos:");
+    log_string(arguments);
     log_decimal("newThread with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }

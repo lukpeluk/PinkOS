@@ -14,6 +14,8 @@
 #include <drivers/audioDriver.h>
 
 #include <processManager/scheduler.h>
+#include <windowManager/windowManager.h>
+#include <eventManager/eventManager.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -301,6 +303,9 @@ int main()
 	set_timezone(-3);
 	load_idt();
     init_serial();
+    initVideoDriver();
+    initWindowManager();
+    initEventManager();
 
     // test_serial();
 

@@ -12,6 +12,8 @@
 #include <audioLib.h>
 #include <pictures.h>
 #include <colors.h>
+#include <eventIds.h>
+#include <serialLib.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index, array_size) index = (index + 1) % array_size;
@@ -530,8 +532,14 @@ void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t ar
 	}
 }
 
-void key_handler(char event_type, int hold_times, char ascii, char scan_code)
+// void key_handler(char event_type, int hold_times, char ascii, char scan_code)
+void key_handler(KeyboardEvent * event)
 {
+	char event_type = event->event_type;
+	int hold_times = event->hold_times;
+	char ascii = event->ascii;
+	char scan_code = event->scan_code;
+	
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
@@ -640,13 +648,32 @@ void status_bar_handler(RTC_Time *time)
 	time_str[8] = time->seconds / 10 + '0';
 	time_str[9] = time->seconds % 10 + '0';
 
+	char buffer[BUFFER_SIZE];
+    char c;
+    EtherPinkResponse response;
+	buffer[0] = 'L';
+	buffer[1] = 'O';
+	buffer[2] = 'G';
+	buffer[3] = ':';
+	buffer[4] = ' ';
+	for (int i = 0; i < 8; i++)
+	{
+		c = time_str[i + 2];
+		buffer[i + 5] = c;
+	}
+	buffer[12] = '\n';
+	buffer[13] = 0;
+
+	
+	make_ethereal_request(buffer, &response);
+
 	draw_status_bar();
 }
 
 void draw_status_bar()
 {
-	if (graphics_mode)
-		return;
+	// if (graphics_mode)
+	// 	return;
 
 	int screen_width = 0;
 	syscall(GET_SCREEN_WIDTH_SYSCALL, (uint64_t)&screen_width, 0, 0, 0, 0);
@@ -848,6 +875,7 @@ void idle(char *message)
 		// if (message != 0){
 		// 	syscall(DRAW_STRING_SYSCALL, message, ColorSchema->text, ColorSchema->background, 0, 0);
 		// }
+		redraw();
 		_hlt();
 	}
 }
@@ -855,12 +883,13 @@ void idle(char *message)
 void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
 {
 	show_home_screen = 0;
+	syscall(UNREGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)KEY_EVENT, 0, 0, 0, 0);
 }
 
 void home_screen()
 {
 
-	syscall(SET_HANDLER_SYSCALL, (uint64_t)KEY_HANDLER, (uint64_t)home_screen_exit_handler, 0, 0, 0);
+	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)home_screen_exit_handler, 0, 0, 0);
 
 	Point position = {0};
 	int scale = 12;
@@ -899,28 +928,22 @@ void home_screen()
 }
 
 
-
-int init_main()
+int shell_main()
 {
-	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"", 0, 0, 0);
-	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
-	idle((char *)"idle from main");
-
-
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
-	syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
+	// syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
-	home_screen();
+	// home_screen();
 	redraw();
 
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
-	syscall(SET_HANDLER_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, (uint64_t)KEY_HANDLER, (uint64_t)key_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, (uint64_t)RTC_HANDLER, (uint64_t)status_bar_handler, 0, 0, 0);
-	syscall(SET_HANDLER_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
+	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
+	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
+	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)key_handler, 0, 0, 0);
+	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
+	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	current_text_color = ColorSchema->text;
 	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
@@ -931,12 +954,34 @@ int init_main()
 	return 0;
 }
 
+int init_main()
+{
+	static Program shell = {
+		.command = "shell",
+		.name = "PinkOS Shell",
+		.entry = shell_main,
+		.permissions = 0xFFFFFFFF,
+		.help = "The PinkOS Shell",
+		.description = "Starts the PinkOS shell",
+	};
+	// Inicializa el shell
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&shell, (uint64_t)"", 0, 0, 0);
+
+	// Si no se pudo inicializar el shell, se queda en un bucle infinito
+	while (1)
+	{
+		_hlt();
+	}
+
+	return 0;
+}
+
 int main(){
 	static Program init = {
 		.command = "init",
 		.name = "Init",
 		.entry = init_main,
-		.permissions = 0xFFFFFFFF,
+		.permissions = 0xFFFFFFFF & ~DRAWING_PERMISSION,
 		.help = "The PinkOS init process",
 		.description = "Starts the system and runs the first program (the shell)",
 	};

@@ -5,8 +5,12 @@
 #define NULL 0
 
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
+// static uint8_t *overlayBuffer;   
 
-void initWindowManager(){};
+void initWindowManager(){
+    // overlayBuffer = createVideoBuffer();
+    // drawRectangle(overlayBuffer, (Point *) {50, 50}, (Point *) {90, 90}, 0x000000); 
+};
 
 Pid getFocusedWindow(){
     if (focusedWindow == NULL) {
@@ -29,14 +33,28 @@ uint8_t * getFocusedBuffer(){
     return focusedWindow->buffer;
 }
 
+// uint8_t * getOverlayBuffer(){
+//     return overlayBuffer;
+// }
+
 uint8_t * getBufferByPID(Pid pid){
     WindowControlBlock *current = focusedWindow;
+    Process parent;
+
+    log_to_serial("getBufferByPID: Buscando la ventana con el PID especificado");
     while (current != NULL) {
+        parent = getParent(current->pid);
+
         if (current->pid == pid) {
+            log_to_serial("getBufferByPID: Encontrada la ventana del proceso");
+            return current->buffer;
+        } else if (parent.pid != 0 && parent.pid == current->pid) {
+            log_to_serial("getBufferByPID: Encontrada ventana por padre");
             return current->buffer;
         }
         current = current->next;
     }
+    log_to_serial("getBufferByPID: No se encontró la ventana con el PID especificado");
     return NULL; // No se encontró la ventana con el PID especificado
 }
 

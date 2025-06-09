@@ -32,6 +32,9 @@ Pid getCurrentProcessPID();
 // En ese caso program queda con basura
 Process getProcess(Pid pid); // Devuelve el proceso del pid especificado
 
+// Devuelve el proceso padre del proceso especificado, si devuelve un proceso con pid 0, significa que no hay padre (es el init o no existe el proceso)
+Process getParent(Pid pid);
+
 int setWaiting(Pid pid); // Deja el proceso en espera 
 int wakeProcess(Pid pid); // Despierta un proceso que estaba en espera
 
