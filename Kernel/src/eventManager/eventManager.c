@@ -108,6 +108,7 @@ void registerEventWaiting(int eventId, Pid pid, void* data) {
     Listener* current = eventManager.events[eventId].listeners;
     newListener->next = current;
     eventManager.events[eventId].listeners = newListener;       // Para que sea O(1) en vez de O(n) al agregar un listener (el señorito se quejaba de que era O(n))
+    setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 }
 
 void unregisterEventSuscription(int eventId, Pid pid) {

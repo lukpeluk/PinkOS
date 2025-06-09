@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+void initEventManager();
+void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data));
+void registerEventWaiting(int eventId, Pid pid, void* data);
+void unregisterEventSubscription(int eventId, Pid pid);
+
 void handleProcessDeath(Pid pid);
 void handleSleep(uint64_t millis);
 void handleRTCEvent(RTC_Time time);

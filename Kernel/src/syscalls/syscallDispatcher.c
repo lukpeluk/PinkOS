@@ -11,6 +11,7 @@
 #include <drivers/serialDriver.h>
 #include <scheduling/scheduler.h>
 #include <windowManager/windowManager.h>
+#include <eventManager/eventManager.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
@@ -61,6 +62,18 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
             break;
         case SET_SYSTEM_STACK_BASE_SYSCALL:
             loadStackBase(arg1);
+            break;
+        case REGISTER_EVENT_SUSCRIPTION_SYSCALL:
+            // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
+            registerEventSubscription(arg1, getCurrentProcessPID(), (void (*)(void *))arg2);
+            break;
+        case REGISTER_EVENT_WAITING_SYSCALL:
+            // VALIDATE_PERMISSIONS(EVENT_WAITING_PERMISSION);
+            registerEventWaiting(arg1, getCurrentProcessPID(), (void *)arg2);
+            break;
+        case UNREGISTER_EVENT_SUSCRIPTION_SYSCALL:
+            // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
+            unregisterEventSubscription(arg1, getCurrentProcessPID());
             break;
         default:
             break;
