@@ -175,6 +175,29 @@ void notifyEvent(int eventId, void* data) {
 }
 
 void handleProcessDeath(Pid pid) {
+    // Remove all the listeners with the given PID from all events
+    for (int i = 0; i < MAX_EVENTS; i++) {
+        Listener* current = eventManager.events[i].listeners;
+        Listener* previous = NULL;  
+        while (current != NULL) {
+            if (current->pid == pid) {
+                // Found the listener to remove
+                if (previous == NULL) {
+                    // Removing the first listener in the list
+                    eventManager.events[i].listeners = current->next;
+                } else {
+                    // Removing a listener in the middle or end of the list
+                    previous->next = current->next;
+                }
+                free(current); // Free the memory allocated for the listener
+                current = (previous == NULL) ? eventManager.events[i].listeners : previous->next; // Move to next listener
+            } else {
+                previous = current;
+                current = current->next;
+            }
+        }
+    }
+
     notifyEvent(PROCESS_DEATH_EVENT, &pid);
 }
 
