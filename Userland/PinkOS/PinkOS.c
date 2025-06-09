@@ -898,8 +898,11 @@ void home_screen()
 	}
 }
 
-int main()
+
+
+int init_main()
 {
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"", 0, 0, 0);
 	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"2", 0, 0, 0);
 	idle((char *)"idle from main");
 
@@ -926,4 +929,19 @@ int main()
 
 	idle((char *)"idle from main");
 	return 0;
+}
+
+int main(){
+	static Program init = {
+		.command = "init",
+		.name = "Init",
+		.entry = init_main,
+		.permissions = 0xFFFFFFFF,
+		.help = "The PinkOS init process",
+		.description = "Starts the system and runs the first program (the shell)",
+	};
+
+	// Sé que mi PID va a ser 1 ya que es el primer programa que se ejecuta
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&init, (uint64_t)"", 0, 0, 0);
+	idle((char *)"idle from main");
 }

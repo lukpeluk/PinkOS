@@ -49,7 +49,7 @@ Process getProcess(Pid pid) {
 
     ProcessControlBlock * current = processList;
     do {
-        if(current->process.pid = pid){
+        if(current->process.pid == pid){
             return current->process; // Devuelve el proceso actual, NULL si no hay ninguno
         }
         current = current->next;
@@ -64,7 +64,7 @@ ProcessControlBlock * getProcessControlBlock(Pid pid){
 
     ProcessControlBlock * current = processList;
     do {
-        if(current->process.pid = pid){
+        if(current->process.pid == pid){
             return current; // Devuelve el proceso actual, NULL si no hay ninguno
         }
         current = current->next;
@@ -115,7 +115,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     log_to_serial("addProcessToScheduler: Agregando proceso");
 
     if( parent == NULL && processList != NULL) {
-        log_to_serial("newProcess: Init ya existe, error!");
+        log_to_serial("addProcessToScheduler: Init ya existe, error!");
         return NULL; // No se puede crear un proceso sin padre si ya hay un init
     }
         
@@ -132,6 +132,9 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     
     newProcessBlock->process.program = program; // Nombre del programa
     newProcessBlock->process.pid = nextPID++;
+    log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
+    log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
+
     newProcessBlock->process.type = type; // Tipo de proceso (normal, gráfico, etc.)
     newProcessBlock->process.state = PROCESS_STATE_NEW;     // Estado inicial del proceso
     newProcessBlock->process.priority = priority;
@@ -363,26 +366,6 @@ void scheduleNextProcess() {
     log_string(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     magic_recover(&currentProcessBlock->registers);
 }
-
-// void terminateCurrentProcess() {
-//     removeProcessFromScheduler(pid);
-
-//     // Creo que no debería poder matar init... no sé
-//     // Si quiero que puedas matar init, supongo que después cagaste, el scheduler va a retornar a la nada misma y chau sistema
-//     if(currentProcessBlock == NULL){
-//         // NO VA MÁS (Deprecado)
-//         // setPermissions(ROOT_PERMISSIONS);
-//         // setCurrentProcess((char *)SYSTEM_PROCESS);
-
-//         InterruptStackFrame cri = getDefaultCRI();
-//         cri.rip = (uint64_t)callRestoreContextHandler;
-//         cri.rsp = getSystemStackBase();
-
-//         magic_recover_old(&cri, was_graphic); // Restaurar el contexto del sistema
-//     } else {
-//         scheduleNextProcess();
-//     }
-// }
 
 
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
