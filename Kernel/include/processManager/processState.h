@@ -4,17 +4,16 @@
 #include <stdint.h>
 #include <permissions.h>
 #include <eventHandling/eventHandlers.h>
+#include <fileSystem/fileSystem.h>
 
-#define ACTIVATE_ROOT_MODE 1
-#define DESACTIVATE_ROOT_MODE 0
-#define SYSTEM_PROCESS "system"
-
+//TODO: args deberían ser void* para poder pasar cualquier cosa, cada programa sabrá qué recibe (normalmente sería un string pero en el caso de threads podría ser un struct con más información)
 typedef void (*ProgramEntry)(char*);
 
+#define SMALL_TEXT_SIZE 64
+#define MEDIUM_TEXT_SIZE 56
 
-// Struct for the structuring of the "stack int" of the interrupts
+// CRI (Context recovery info) -> nos re inventamos el nombre el cuatri pasado lol, cosas de querer implementar pseudo procesos antes de cursar SO
 typedef struct {
-    // uint64_t error;   // Error code
     uint64_t ss;      // Stack Segment
     uint64_t rsp;     // Stack Pointer
     uint64_t rflags;  // Flags Register
@@ -22,14 +21,14 @@ typedef struct {
     uint64_t rip;     // Instruction Pointer
 } InterruptStackFrame;
 
-
 typedef struct {
-    char* command;
-    char* name;
+    char command[SMALL_TEXT_SIZE];
+    char name[SMALL_TEXT_SIZE];
     ProgramEntry entry;
-    uint32_t perms;
-    char* help;         // This is the help command (a very brief description)
-    char* description;  // All the information about the command
+    uint32_t permissions;
+    char help[MEDIUM_TEXT_SIZE];  // A very brief description
+    char* description;  // All the information about the command (deprecated by the man page file)
+    File man_page; // A publically readable but unmodifiable file with the program's manual
 } Program;
 
 
@@ -43,8 +42,6 @@ void activateRootMode();
 void desactivateRootMode();
 
 uint32_t getPermissions();
-
-char * getCurrentProcess();
 
 void loadStackBase(uint64_t stackBase);
 uint64_t getSystemStackBase();

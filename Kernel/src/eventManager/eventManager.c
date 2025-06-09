@@ -9,7 +9,7 @@
 #include <drivers/pitDriver.h>
 #include <drivers/rtcDriver.h>
 #include <exceptions/exceptions.h>
-#include <scheduling/scheduler.h>
+#include <processManager/scheduler.h>
 
 #define MAX_EVENTS 6
 

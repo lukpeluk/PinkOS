@@ -1,6 +1,6 @@
 
 #include <stdint.h>
-#include <scheduling/scheduler.h>
+#include <processManager/scheduler.h>
 
 // objeto que representa la linked list de windows
 // una window tiene un pid asociado, un buffer, 

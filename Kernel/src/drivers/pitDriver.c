@@ -2,7 +2,7 @@
 #include <drivers/registersDriver.h>
 #include <drivers/videoDriver.h>
 #include <drivers/audioDriver.h>
-#include <scheduling/scheduler.h>
+#include <processManager/scheduler.h>
 
 // 18.2 Hz
 #define MILLISECONDS_PER_TICK 54.9450549451
