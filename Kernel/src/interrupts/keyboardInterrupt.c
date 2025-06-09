@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <naiveConsole.h>
 #include <eventHandling/eventHandlers.h>
+#include <eventManager/eventManager.h>
 #include <drivers/videoDriver.h>
 #include <drivers/keyboardDriver.h>
 #include <drivers/registersDriver.h>
@@ -17,8 +18,11 @@ extern char getKeyCode();
 // assumes scan code set is 1
 void int_21() {
 	KeyboardEvent event = processKeyPress();
-	if(event.scan_code == BACKUP_REGISTERS_KEY && event.event_type == 1) {
-		callRegistersHandler(getBackupRegisters());
+	// if(event.scan_code == BACKUP_REGISTERS_KEY && event.event_type == 1) {
+	// 	callRegistersHandler(getBackupRegisters());
+	// }
+	// callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);	
+	if(event.event_type != 0) {
+		handleKeyEvent(event);
 	}
-	callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);	
 }

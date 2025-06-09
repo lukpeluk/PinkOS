@@ -3,7 +3,13 @@
 
 #include <stdint.h>
 
-void handleProcessDeath(uint32_t pid);
+void handleProcessDeath(Pid pid);
+void handleSleep(uint64_t millis);
+void handleRTCEvent(RTC_Time time);
+void handleKeyEvent(KeyboardEvent keyEvent);
+void handleException(Exception exception);
+
+
 
 
 // Muerte de un proceso
@@ -12,6 +18,7 @@ void handleProcessDeath(uint32_t pid);
 // Teclado
 // Excepción
 // Broadcast
+
 
 
 #endif
