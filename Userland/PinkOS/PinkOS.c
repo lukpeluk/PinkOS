@@ -656,18 +656,20 @@ void status_bar_handler(RTC_Time *time)
 	buffer[2] = 'G';
 	buffer[3] = ':';
 	buffer[4] = ' ';
+
+	// Print the time in the format HH:MM:SS (add to buffer after the LOG:, time_str)
 	for (int i = 0; i < 8; i++)
 	{
-		c = time_str[i + 2];
+		c = time_str[i+2];
 		buffer[i + 5] = c;
 	}
-	buffer[12] = '\n';
-	buffer[13] = 0;
+	buffer[13] = '\n'; // null terminate the string
+	buffer[14] = 0; // null terminate the string
 
+	draw_status_bar();
 	
 	make_ethereal_request(buffer, &response);
 
-	draw_status_bar();
 }
 
 void draw_status_bar()
@@ -875,7 +877,7 @@ void idle(char *message)
 		// if (message != 0){
 		// 	syscall(DRAW_STRING_SYSCALL, message, ColorSchema->text, ColorSchema->background, 0, 0);
 		// }
-		redraw();
+		// redraw();
 		_hlt();
 	}
 }

@@ -43,8 +43,7 @@ uint8_t * getBufferByPID(Pid pid){
 
     log_to_serial("getBufferByPID: Buscando la ventana con el PID especificado");
     while (current != NULL) {
-        parent = getParent(current->pid);
-
+        parent = getParent(pid);
         if (current->pid == pid) {
             log_to_serial("getBufferByPID: Encontrada la ventana del proceso");
             return current->buffer;

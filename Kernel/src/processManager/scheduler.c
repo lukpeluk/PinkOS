@@ -247,9 +247,8 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 
     // le saco permisos gráficos al thread
     Program threadProgram = parent->process.program;
-    threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
-
-    ProcessControlBlock * newProcessBlock = addProcessToScheduler(parent->process.program, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
+    // threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
+    ProcessControlBlock * newProcessBlock = addProcessToScheduler(threadProgram, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
     
     log_to_serial("newThread: Agregando nuevo thread al scheduler:");
     log_to_serial("newThread: Nuevo thread creado con los siguientes argumentos:");

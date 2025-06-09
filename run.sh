@@ -10,7 +10,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     -serial tcp::4444,server,nowait
     # -rtc base=localtime \
 
-    -serial tcp::4444,server,nowait
+    # -serial tcp::4444,server,nowait
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Para Mac
   qemu-system-x86_64 \
