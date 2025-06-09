@@ -50,7 +50,7 @@ int removeWindow(Pid pid);
 */
 int switchToWindow(Pid pid);
 
-// Devuelve los pids de las ventanas abiertas, iterando por esto y buscando el nombre del programa asociado al proceso implementás alt+tab
-Pid getWindows();
+// Devuelve los pids de las ventanas abiertas, null terminated, iterando por esto y buscando el nombre del programa asociado al proceso implementás alt+tab
+Pid * getWindows();
 
 
