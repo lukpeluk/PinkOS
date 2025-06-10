@@ -4,6 +4,7 @@ import json
 import struct
 import os
 import time
+import sys
 
 # Prompt constante o inicial
 CONSTANT_PROMPT = "No uses emojis, por favor responde únicamente con texto en ASCII reducido. Sé conciso."
@@ -50,20 +51,36 @@ def send_response_with_header(client_socket, header_code, content_type, response
     client_socket.sendall(header + data)
     print(f"Enviado header: code={header_code}, content_type={content_type}, response_type={response_type}, size={total_size}")
 
+def show_connecting_animation():
+    """Muestra una animación simple mientras se intenta conectar"""
+    frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    for i in range(10):  # 10 frames * 0.1s = 1 segundo
+        sys.stdout.write(f'\r🔌 Conectando {frames[i % len(frames)]}')
+        sys.stdout.flush()
+        time.sleep(0.1)
+    sys.stdout.write('\r' + ' ' * 20 + '\r')  # Limpiar la línea
+    sys.stdout.flush()
+
 def main():
     # Configuración del cliente TCP
     host = 'localhost'
     port = 4444
     reconnect_delay = 0.25  # segundos entre intentos de reconexión
+    first_attempt = True
 
     while True:  # Bucle principal para reconexión
         try:
             # Crear el socket
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
                 # Conectarse al servidor
-                print(f"Conectando a {host}:{port}...")
+                if first_attempt:
+                    print(f"Conectando a {host}:{port}...")
+                    first_attempt = False
+                else:
+                    show_connecting_animation()
+                
                 client_socket.connect((host, port))
-                print("Conexión establecida. Escuchando...")
+                print("✅ Conexión establecida. Escuchando...")
 
                 buffer = ""
                 while True:
@@ -164,23 +181,22 @@ def main():
                             # print(f"Enviado: {respuesta}")
                     
                     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
-                        print(f"Conexión perdida: {e}")
+                        print(f"\n❌ Conexión perdida: {e}")
                         break  # Salir del bucle interno para reconectar
                     
                     except socket.error as e:
-                        print(f"Error de socket: {e}")
+                        print(f"\n❌ Error de socket: {e}")
                         break  # Salir del bucle interno para reconectar
 
         except ConnectionRefusedError:
-            print(f"No se pudo conectar al servidor en {host}:{port}. Reintentando en {reconnect_delay} segundos...")
+            pass  # No imprimir nada, solo mostrar animación en el siguiente intento
         except socket.gaierror as e:
-            print(f"Error de resolución de nombre: {e}. Reintentando en {reconnect_delay} segundos...")
+            print(f"\n❌ Error de resolución de nombre: {e}")
         except Exception as e:
-            print(f"Error inesperado: {e}. Reintentando en {reconnect_delay} segundos...")
+            print(f"\n❌ Error inesperado: {e}")
         
-        # Esperar antes de reintentar
+        # Esperar antes de reintentar (sin mostrar mensaje)
         time.sleep(reconnect_delay)
-        print("Reintentando conexión...")
 
 if __name__ == "__main__":
     main()
