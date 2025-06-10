@@ -55,11 +55,35 @@ def show_connecting_animation():
     """Muestra una animación simple mientras se intenta conectar"""
     frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     for i in range(10):  # 10 frames * 0.1s = 1 segundo
-        sys.stdout.write(f'\r🔌 Conectando {frames[i % len(frames)]}')
+        sys.stdout.write(f'\rConectando {frames[i % len(frames)]}')
         sys.stdout.flush()
         time.sleep(0.1)
     sys.stdout.write('\r' + ' ' * 20 + '\r')  # Limpiar la línea
     sys.stdout.flush()
+
+def format_log_message(log_message):
+    """Formatea el mensaje de log con colores de fondo según el tipo"""
+    # Códigos de colores ANSI para fondos y formato
+    colors = {
+        'RESET': '\033[0m',
+        'BOLD': '\033[1m',          # Texto en negrita
+        'BG_RED': '\033[101m',      # Error - fondo rojo
+        'BG_YELLOW': '\033[103m',   # Warning - fondo amarillo
+        'BG_GREEN': '\033[102m',    # Success - fondo verde
+        'BG_BLUE': '\033[104m',     # Info - fondo azul
+        'BG_CYAN': '\033[106m',     # Default - fondo cyan
+    }
+    
+    if log_message.startswith("E:"):
+        return f"{colors['BG_RED']}{colors['BOLD']}[ERROR]{colors['RESET']} {log_message[2:].strip()}"
+    elif log_message.startswith("W:"):
+        return f"{colors['BG_YELLOW']}{colors['BOLD']}[WARNING]{colors['RESET']} {log_message[2:].strip()}"
+    elif log_message.startswith("S:"):
+        return f"{colors['BG_GREEN']}{colors['BOLD']}[SUCCESS]{colors['RESET']} {log_message[2:].strip()}"
+    elif log_message.startswith("I:"):
+        return f"{colors['BG_BLUE']}{colors['BOLD']}[INFO]{colors['RESET']} {log_message[2:].strip()}"
+    else:
+        return f"{colors['BG_CYAN']}{colors['BOLD']}[PINKOS DEBUG]{colors['RESET']} {log_message}"
 
 def main():
     # Configuración del cliente TCP
@@ -80,7 +104,7 @@ def main():
                     show_connecting_animation()
                 
                 client_socket.connect((host, port))
-                print("✅ Conexión establecida. Escuchando...")
+                print("Conexion establecida. Escuchando...")
 
                 buffer = ""
                 while True:
@@ -100,7 +124,8 @@ def main():
                             # Manejar logs del sistema operativo
                             if line.startswith("LOG: "):
                                 log_message = line[5:]  # Remover el prefijo "LOG: "
-                                print(f"🔍 [PINKOS DEBUG] {log_message}")
+                                formatted_log = format_log_message(log_message)
+                                print(formatted_log)
                                 continue
 
                             # Manejar comandos especiales
@@ -181,19 +206,19 @@ def main():
                             # print(f"Enviado: {respuesta}")
                     
                     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
-                        print(f"\n❌ Conexión perdida: {e}")
+                        print(f"\nConexion perdida: {e}")
                         break  # Salir del bucle interno para reconectar
                     
                     except socket.error as e:
-                        print(f"\n❌ Error de socket: {e}")
+                        print(f"\nError de socket: {e}")
                         break  # Salir del bucle interno para reconectar
 
         except ConnectionRefusedError:
             pass  # No imprimir nada, solo mostrar animación en el siguiente intento
         except socket.gaierror as e:
-            print(f"\n❌ Error de resolución de nombre: {e}")
+            print(f"\nError de resolucion de nombre: {e}")
         except Exception as e:
-            print(f"\n❌ Error inesperado: {e}")
+            print(f"\nError inesperado: {e}")
         
         # Esperar antes de reintentar (sin mostrar mensaje)
         time.sleep(reconnect_delay)
