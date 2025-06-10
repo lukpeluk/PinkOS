@@ -341,21 +341,22 @@ void testScheduler(){
 int main()
 {	
     // ncClear();
-    ncPrint((const char *)"se llego al main\n");
-    log_to_serial("En el main de kernel\n");
-
-	initProcessState();
-    initScheduler();
-	init_rtc();
-	set_timezone(-3);
 	load_idt();
     init_serial();
+
+    ncPrint((const char *)"se llego al main\n");
+    log_to_serial("En el main de kernel\n");
+    
+	initProcessState();
+    initScheduler();
     initVideoDriver();
     initWindowManager();
     initEventManager();
+	init_rtc();
+	set_timezone(-3);
 
     // test_serial();
-    testScheduler();
+    // testScheduler();
 
 	// testScreen();
 	// testAudio();

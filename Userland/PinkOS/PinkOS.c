@@ -648,28 +648,28 @@ void status_bar_handler(RTC_Time *time)
 	time_str[8] = time->seconds / 10 + '0';
 	time_str[9] = time->seconds % 10 + '0';
 
-	char buffer[BUFFER_SIZE];
-    char c;
-    EtherPinkResponse response;
-	buffer[0] = 'L';
-	buffer[1] = 'O';
-	buffer[2] = 'G';
-	buffer[3] = ':';
-	buffer[4] = ' ';
+	// char buffer[BUFFER_SIZE];
+    // char c;
+    // EtherPinkResponse response;
+	// buffer[0] = 'L';
+	// buffer[1] = 'O';
+	// buffer[2] = 'G';
+	// buffer[3] = ':';
+	// buffer[4] = ' ';
 
-	// Print the time in the format HH:MM:SS (add to buffer after the LOG:, time_str)
-	for (int i = 0; i < 8; i++)
-	{
-		c = time_str[i+2];
-		buffer[i + 5] = c;
-	}
-	buffer[13] = '\n'; // null terminate the string
-	buffer[14] = 0; // null terminate the string
+	// // Print the time in the format HH:MM:SS (add to buffer after the LOG:, time_str)
+	// for (int i = 0; i < 8; i++)
+	// {
+	// 	c = time_str[i+2];
+	// 	buffer[i + 5] = c;
+	// }
+	// buffer[13] = '\n'; // null terminate the string
+	// buffer[14] = 0; // null terminate the string
 
-	draw_status_bar();
 	
-	make_ethereal_request(buffer, &response);
-
+	// make_ethereal_request(buffer, &response);
+	
+	draw_status_bar();
 }
 
 void draw_status_bar()

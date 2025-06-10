@@ -41,19 +41,15 @@ uint8_t * getBufferByPID(Pid pid){
     WindowControlBlock *current = focusedWindow;
     Process parent;
 
-    log_to_serial("getBufferByPID: Buscando la ventana con el PID especificado");
     while (current != NULL) {
         parent = getParent(pid);
         if (current->pid == pid) {
-            log_to_serial("getBufferByPID: Encontrada la ventana del proceso");
             return current->buffer;
         } else if (parent.pid != 0 && parent.pid == current->pid) {
-            log_to_serial("getBufferByPID: Encontrada ventana por padre");
             return current->buffer;
         }
         current = current->next;
     }
-    log_to_serial("getBufferByPID: No se encontró la ventana con el PID especificado");
     return NULL; // No se encontró la ventana con el PID especificado
 }
 
@@ -101,7 +97,7 @@ int removeWindow(Pid pid){
         prev = current;
         current = current->next;
     }
-    log_to_serial("removeWindow: No se encontró la ventana con el PID especificado");
+    log_to_serial("removeWindow: No se encontro la ventana con el PID especificado");
     return -1; // No se encontró la ventana con el PID especificado
 }
 
@@ -135,7 +131,7 @@ int switchToWindow(Pid pid) {
         current = current->next;
     }
 
-    log_to_serial("switchWindow: No se encontró la ventana con el PID especificado");
+    log_to_serial("switchWindow: No se encontro la ventana con el PID especificado");
     return -1; // No se encontró la ventana con el PID especificado
 }
 

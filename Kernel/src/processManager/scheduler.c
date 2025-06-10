@@ -115,7 +115,7 @@ void quitWrapper(){
 // Le asigna un PID, inicializa el stack y los registros, y lo agrega a la lista de procesos
 ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry, char *arguments, ProcessType type, Priority priority, ProcessControlBlock *parent) {
 
-    log_to_serial("addProcessToScheduler: Iniciando la creación de un nuevo proceso");
+    log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
 
     static uint32_t processCount = 0; // Contador de procesos creados
     if (program.entry == NULL, entry == NULL) {
@@ -191,7 +191,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     processListTail = newProcessBlock;        
 
     processCount++;
-    log_to_serial("addProcessToScheduler: Proceso agregado con éxito");
+    log_to_serial("addProcessToScheduler: Proceso agregado con exito");
     return newProcessBlock; // Retornar el nuevo proceso agregado
 }
 
@@ -223,7 +223,7 @@ Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_p
     if (IS_GRAPHIC(newProcessBlock)) {
         uint8_t *buffer = addWindow(newProcessBlock->process.pid);
         if (buffer == NULL) {
-            log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso gráfico");
+            log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
             return 0;
         }
     }
@@ -251,8 +251,6 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(threadProgram, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
     
     log_to_serial("newThread: Agregando nuevo thread al scheduler:");
-    log_to_serial("newThread: Nuevo thread creado con los siguientes argumentos:");
-    log_string(arguments);
     log_decimal("newThread with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }
@@ -275,7 +273,7 @@ int terminateSingleProcess(uint32_t pid) {
     // Si el proceso es gráfico, eliminar la ventana asociada
     uint64_t was_graphic = IS_GRAPHIC(to_remove);
     if(was_graphic) {
-        log_to_serial("terminateCurrentProcess: El proceso actual es gráfico, eliminando ventana asociada");
+        log_to_serial("terminateCurrentProcess: El proceso actual es grafico, eliminando ventana asociada");
         removeWindow(pid); 
     }
 
@@ -324,7 +322,7 @@ void scheduleNextProcess() {
 
     ProcessControlBlock *nextProcess = currentProcessBlock->next; // Guardar el siguiente proceso antes de liberar el actual
     if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
-        log_to_serial("scheduleNextProcess: El proceso actual ya está terminado, no se puede programar otro proceso");
+        log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
         free(currentProcessBlock->stackBase); // Liberar el stack del proceso actual
         free(currentProcessBlock); // Liberar el PCB del proceso actual
 
@@ -339,7 +337,7 @@ void scheduleNextProcess() {
         if(current->process.state == PROCESS_STATE_TERMINATED) {
             nextProcess = current->next; // Guardar el siguiente proceso antes de liberar el actual
 
-            log_to_serial("scheduleNextProcess: El proceso actual ya está terminado, no se puede programar otro proceso");
+            log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
             free(current->stackBase); // Liberar el stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
 
@@ -413,7 +411,7 @@ void schedulerLoop() {
 // No corre en el parent, solo en los descendientes
 void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
     if (processList == NULL || callback == NULL) {
-        log_to_serial("runOnChilds: Lista de procesos vacía o callback inválido");
+        log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
         return;
     }
 
