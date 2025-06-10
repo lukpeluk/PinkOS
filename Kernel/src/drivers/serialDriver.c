@@ -155,7 +155,7 @@ void log_hex(char* prefix, uint64_t value) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-//     log_to_serial(buffer);
+    log_to_serial(buffer);
 }
 
 void log_decimal(char* prefix, uint64_t value) {
@@ -178,6 +178,26 @@ void log_decimal(char* prefix, uint64_t value) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-//     log_to_serial(buffer);
+    log_to_serial(buffer);
+}
+
+void log_string(char* prefix, char* str) {
+    char buffer[100]; // Buffer temporal para construir el mensaje completo
+    char *p = buffer;
+    
+    // Copiar el prefijo
+    while (*prefix) {
+        *p++ = *prefix++;
+    }
+    
+    // Agregar la cadena
+    while (*str) {
+        *p++ = *str++;
+    }
+    
+    *p = '\0'; // Terminar el string
+    
+    // Enviar todo en una sola llamada
+    log_to_serial(buffer);
 }
 

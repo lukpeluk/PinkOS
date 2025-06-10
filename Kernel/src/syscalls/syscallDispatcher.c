@@ -54,7 +54,7 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
         case RUN_PROGRAM_SYSCALL:
             VALIDATE_PERMISSIONS(SET_PROCESS_PERMISSION);
             // runProgram((Program *)arg1, (char *)arg2);
-            newProcess(*((Program*)arg1), (char *)arg2, PRIORITY_NORMAL, getCurrentProcessPID());
+            newProcess(*((Program*)arg1), (char *)arg2, PRIORITY_LOW, getCurrentProcessPID());
             break;
         case QUIT_PROGRAM_SYSCALL:
             // quitProgram();

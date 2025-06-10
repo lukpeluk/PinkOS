@@ -55,6 +55,8 @@ GLOBAL cri_rip, cri_rflags, cri_rsp
 EXTERN irqDispatcher
 EXTERN syscallDispatcher
 EXTERN exceptionDispatcher
+EXTERN saveRegisters
+EXTERN backupCurrentProcessRegisters
 
 SECTION .text
 
@@ -131,7 +133,10 @@ SECTION .text
 
 
 %macro irqHandlerMaster 1
+	makeBackup
 	pushState
+	call saveRegisters
+	call backupCurrentProcessRegisters
 
 	mov rdi, %1 ; pasaje de parametro
 	call irqDispatcher
@@ -218,7 +223,7 @@ picSlaveMask:
 
 ;8254 Timer (Timer Tick)
 _irq00Handler:
-	makeBackup
+	; makeBackup
 	irqHandlerMaster 0
 
 ;Keyboard
