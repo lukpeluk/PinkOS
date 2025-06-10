@@ -244,9 +244,9 @@ void testAudio(){
 	// sleep(1000);
 	// stop_sound();
 
-	// play_audio(pinkPanther, 1, 140);
-    // sleep(6000);
-    // pause_audio();
+	play_audio(pinkPanther, 1, 140);
+    sleep(6000);
+    pause_audio();
     // AudioState prev_audio = get_audio_state();
 
     // play_audio(testAudioNotes, 1, 60);
@@ -261,26 +261,26 @@ void testAudio(){
     // play_audio(testChromaticScaleLigated, 1, 120);
 
     // test rapid notes to see if the delay is registered
-    Note * rapidNotes[] = {
-        &(Note) {660, 32, 0},
-        &(Note) {440, 32, 0},
-        &(Note) {440, 32, 0},
-        &(Note) {440, 32, 0},
-        0,
-        &(Note) {660, 4, 0},
-        &(Note) {440, 4, 0},
-        &(Note) {440, 4, 0},
-        &(Note) {440, 4, 0},
-        &(Note) {660, 4, 0},
-        &(Note) {440, 4, 0},
-        &(Note) {440, 4, 0},
-        &(Note) {440, 4, 0},
-        0,
-    };
+    // Note * rapidNotes[] = {
+    //     &(Note) {660, 32, 0},
+    //     &(Note) {440, 32, 0},
+    //     &(Note) {440, 32, 0},
+    //     &(Note) {440, 32, 0},
+    //     0,
+    //     &(Note) {660, 4, 0},
+    //     &(Note) {440, 4, 0},
+    //     &(Note) {440, 4, 0},
+    //     &(Note) {440, 4, 0},
+    //     &(Note) {660, 4, 0},
+    //     &(Note) {440, 4, 0},
+    //     &(Note) {440, 4, 0},
+    //     &(Note) {440, 4, 0},
+    //     0,
+    // };
 
-    play_audio(rapidNotes, 1, 135);
-    sleep(5000);
-    stop_audio();
+    // play_audio(rapidNotes, 1, 135);
+    // sleep(5000);
+    // stop_audio();
 
     // print the delay
     // drawString((char *)"Delay: ", 0x00ffffff, 0x00000000);
@@ -342,6 +342,7 @@ int main()
 {	
     // ncClear();
 	load_idt();
+    init_pit();
     init_serial();
     log_to_serial("I: Usa ':I' adelante de los mensajes para que el sea informativo");
     log_to_serial("W: Usa ':W' adelante de los mensajes para que el sea de advertencia");
@@ -365,7 +366,10 @@ int main()
     // testScheduler();
 
 	// testScreen();
+
+    // log_to_serial("I: Testing audio driver");
 	// testAudio();
+    // log_to_serial("I: Audio test finished");
 
     ncPrint((const char *)"ya se termino todo lo de kernel, yendo a userspace\n");
 

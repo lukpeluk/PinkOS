@@ -3,9 +3,14 @@
 #include <drivers/videoDriver.h>
 #include <drivers/audioDriver.h>
 #include <processManager/scheduler.h>
+#include <drivers/serialDriver.h>
 
 // 18.2 Hz
-#define MILLISECONDS_PER_TICK 54.9450549451
+// #define MILLISECONDS_PER_TICK 54.9450549451
+
+// 1 000 Hz
+#define MILLISECONDS_PER_TICK 1 // 1 millisecond per tick, 1000 ticks per second
+
 
 extern void _hlt();
 
@@ -14,6 +19,7 @@ static uint64_t ticks = 0;
 // Executes jobs that need to supervising something, like the main loop of the audio driver
 void timer_handler() {
 	ticks++;
+	// log_to_serial("TICK");
 	saveRegisters();  // Backup of the registers at any time, in case of wanting them for logging or debugging
 
 	audioLoop(); // Call the audio driver main loop to update the audio stream

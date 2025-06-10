@@ -7,7 +7,7 @@
 #include <windowManager/windowManager.h>
 
 #define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
-#define TICKS_TILL_SWITCH 10     // Cantidad de ticks hasta cambiar de proceso
+#define TICKS_TILL_SWITCH 50     // Cantidad de ticks hasta cambiar de proceso
 
 #define NULL 0
 
@@ -191,7 +191,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     processListTail = newProcessBlock;        
 
     processCount++;
-//     log_to_serial("addProcessToScheduler: Proceso agregado con exito");
+    //     log_to_serial("addProcessToScheduler: Proceso agregado con exito");
     return newProcessBlock; // Retornar el nuevo proceso agregado
 }
 
@@ -250,8 +250,8 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     // threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(threadProgram, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
     
-//     log_to_serial("newThread: Agregando nuevo thread al scheduler:");
-//     log_decimal("newThread with PID: ", newProcessBlock->process.pid);
+    log_to_serial("W: newThread: Agregando nuevo thread al scheduler:");
+    log_decimal("I: newThread with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }
 
@@ -314,19 +314,20 @@ int terminateProcess(Pid pid) {
 
 
 void scheduleNextProcess() {
-//     log_to_serial("scheduleNextProcess: Programando el siguiente proceso");
+    // log_to_serial("I: scheduleNextProcess: Programando el siguiente proceso");
 
     if (currentProcessBlock == NULL) return;
 
     currentProcessBlock->process.state = currentProcessBlock->process.state == PROCESS_STATE_RUNNING ? PROCESS_STATE_READY : currentProcessBlock->process.state; // Cambiar el estado del proceso actual a READY
 
     ProcessControlBlock *nextProcess = currentProcessBlock->next; // Guardar el siguiente proceso antes de liberar el actual
-    if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
-//         log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
-        free(currentProcessBlock->stackBase); // Liberar el stack del proceso actual
-        free(currentProcessBlock); // Liberar el PCB del proceso actual
+//     if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
+// //         log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
+//         free(currentProcessBlock->stackBase); // Liberar el stack del proceso actual
+//         free(currentProcessBlock); // Liberar el PCB del proceso actual
 
-    } 
+
+//     } 
 
     ProcessControlBlock * current = nextProcess;
     ProcessControlBlock * prev = currentProcessBlock; // Empezar desde el final de la lista para poder eliminar el proceso actual si es necesario
@@ -337,9 +338,19 @@ void scheduleNextProcess() {
         if(current->process.state == PROCESS_STATE_TERMINATED) {
             nextProcess = current->next; // Guardar el siguiente proceso antes de liberar el actual
 
-//             log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
+            // Caso especial: borre la tail o head de la lista
+            if (current == processList) {
+                // Si el proceso eliminado era el head, actualizar el head
+                processList = nextProcess;
+            }
+            if (current == processListTail) {
+                // Si el proceso eliminado era la tail, actualizar la tail
+                processListTail = prev;
+            }
+            // log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
             free(current->stackBase); // Liberar el stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
+
 
             prev->next = nextProcess; // Eliminar el proceso actual de la lista
             current = nextProcess;
@@ -369,10 +380,10 @@ void scheduleNextProcess() {
     desactivateRootMode();
 
     // LOGS    
-//     log_to_serial("scheduleNextProcess: Proceso actual:");
-//     log_to_serial(currentProcessBlock->process.program.name);
-//     log_decimal("scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
-//     log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
+    // log_to_serial("I: scheduleNextProcess: Proceso actual:");
+    // log_to_serial(currentProcessBlock->process.program.name);
+    log_decimal("I: scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
+    // log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
 
 //     log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
 //     log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
@@ -388,11 +399,11 @@ void schedulerLoop() {
 
     ticksSinceLastSwitch++;
     if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0) {
-//         log_to_serial("schedulerLoop: nada que hacer");
+        // log_to_serial("E: schedulerLoop: nada que hacer");
         return;
     }
 
-//     log_to_serial("schedulerLoop: Ejecutando el bucle del scheduler");
+    log_to_serial("W: schedulerLoop: Ejecutando el bucle del scheduler");
 
     if(currentProcessBlock == NULL){
         currentProcessBlock = processList;

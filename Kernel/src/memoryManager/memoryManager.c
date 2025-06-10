@@ -28,14 +28,14 @@ void* malloc(size_t size) {
     
     // Verificar si hay espacio suficiente
     if (heapCurrent + aligned_size > heapEnd) {
-//         log_to_serial("malloc: Error - no hay espacio suficiente en el heap");
+        // log_to_serial("malloc: Error - no hay espacio suficiente en el heap");
         return NULL;
     }
 
     void* allocated_ptr = (void*)heapCurrent;
     heapCurrent += aligned_size;
 
-//     log_to_serial("malloc: Memoria asignada exitosamente");
+    // log_to_serial("malloc: Memoria asignada exitosamente");
     
     return allocated_ptr;
 }

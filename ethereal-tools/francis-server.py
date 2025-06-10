@@ -5,6 +5,7 @@ import struct
 import os
 import time
 import sys
+import threading
 
 # Prompt constante o inicial
 CONSTANT_PROMPT = "No uses emojis, por favor responde únicamente con texto en ASCII reducido. Sé conciso."
@@ -61,6 +62,122 @@ def show_connecting_animation():
     sys.stdout.write('\r' + ' ' * 20 + '\r')  # Limpiar la línea
     sys.stdout.flush()
 
+class TickCounter:
+    def __init__(self):
+        self.tick_count = 0
+        self.last_reset_time = time.time()
+        self.is_monitoring = False
+        self.display_thread = None
+        self.stop_display = False
+        
+    def add_tick(self):
+        """Añade un tick al contador"""
+        current_time = time.time()
+        if not self.is_monitoring:
+            self.is_monitoring = True
+            self.last_reset_time = current_time
+            self.tick_count = 0
+            self.start_display()
+            
+        self.tick_count += 1
+        
+    def start_display(self):
+        """Inicia el hilo de visualización"""
+        if self.display_thread is None or not self.display_thread.is_alive():
+            self.stop_display = False
+            self.display_thread = threading.Thread(target=self._display_loop, daemon=True)
+            self.display_thread.start()
+            
+    def _display_loop(self):
+        """Loop de visualización que se ejecuta cada segundo"""
+        while not self.stop_display:
+            current_time = time.time()
+            elapsed = current_time - self.last_reset_time
+            
+            if elapsed >= 5.0:  # Cada 5 segundos
+                ticks_per_second = self.tick_count / elapsed
+                
+                # Limpiar la línea actual
+                sys.stdout.write('\r' + ' ' * 100 + '\r')
+                
+                # Mostrar resultado final con colores
+                colors = {
+                    'RESET': '\033[0m',
+                    'BOLD': '\033[1m',
+                    'GREEN': '\033[92m',
+                    'CYAN': '\033[96m',
+                    'YELLOW': '\033[93m',
+                    'BLUE': '\033[94m'
+                }
+                
+                final_message = (f"{colors['GREEN']}{colors['BOLD']}[TICK FINAL]{colors['RESET']} "
+                               f"{colors['CYAN']}{self.tick_count}{colors['RESET']} ticks en "
+                               f"{colors['YELLOW']}{elapsed:.2f}s{colors['RESET']} = "
+                               f"{colors['BLUE']}{colors['BOLD']}{ticks_per_second:.1f} ticks/s{colors['RESET']}")
+                
+                print(final_message)
+                
+                # Resetear contador
+                self.tick_count = 0
+                self.last_reset_time = current_time
+            else:
+                # Mostrar progreso con colores
+                ticks_per_second = self.tick_count / elapsed if elapsed > 0 else 0
+                
+                colors = {
+                    'RESET': '\033[0m',
+                    'BOLD': '\033[1m',
+                    'MAGENTA': '\033[95m',
+                    'CYAN': '\033[96m',
+                    'YELLOW': '\033[93m',
+                    'WHITE': '\033[97m'
+                }
+                
+                progress_message = (f'\r{colors["MAGENTA"]}{colors["BOLD"]}[TICK MONITOR]{colors["RESET"]} '
+                                  f'{colors["CYAN"]}{self.tick_count}{colors["RESET"]} ticks en '
+                                  f'{colors["YELLOW"]}{elapsed:.1f}s{colors["RESET"]} = '
+                                  f'{colors["WHITE"]}{colors["BOLD"]}{ticks_per_second:.1f} ticks/s{colors["RESET"]} '
+                                  f'{colors["MAGENTA"]}(actualizando...){colors["RESET"]}')
+                
+                sys.stdout.write(progress_message)
+                sys.stdout.flush()
+                
+            time.sleep(0.5)  # Actualizar cada 0.5 segundos
+            
+    def stop_monitoring(self):
+        """Detiene el monitoreo"""
+        if self.is_monitoring:
+            # Mostrar mensaje final antes de parar
+            current_time = time.time()
+            elapsed = current_time - self.last_reset_time
+            
+            if elapsed > 0 and self.tick_count > 0:
+                ticks_per_second = self.tick_count / elapsed
+                
+                # Limpiar la línea actual
+                sys.stdout.write('\r' + ' ' * 100 + '\r')
+                
+                colors = {
+                    'RESET': '\033[0m',
+                    'BOLD': '\033[1m',
+                    'RED': '\033[91m',
+                    'CYAN': '\033[96m',
+                    'YELLOW': '\033[93m',
+                    'WHITE': '\033[97m'
+                }
+                
+                final_message = (f"{colors['RED']}{colors['BOLD']}[TICK STOPPED]{colors['RESET']} "
+                               f"{colors['CYAN']}{self.tick_count}{colors['RESET']} ticks en "
+                               f"{colors['YELLOW']}{elapsed:.2f}s{colors['RESET']} = "
+                               f"{colors['WHITE']}{colors['BOLD']}{ticks_per_second:.1f} ticks/s{colors['RESET']}")
+                
+                print(final_message)
+        
+        self.stop_display = True
+        self.is_monitoring = False
+        if self.display_thread and self.display_thread.is_alive():
+            self.display_thread.join(timeout=1.0)
+
 def format_log_message(log_message):
     """Formatea el mensaje de log con colores de fondo según el tipo"""
     # Códigos de colores ANSI para fondos y formato
@@ -91,6 +208,7 @@ def main():
     port = 4444
     reconnect_delay = 0.25  # segundos entre intentos de reconexión
     first_attempt = True
+    tick_counter = TickCounter()
 
     while True:  # Bucle principal para reconexión
         try:
@@ -124,7 +242,16 @@ def main():
                             # Manejar logs del sistema operativo
                             if line.startswith("LOG: "):
                                 log_message = line[5:]  # Remover el prefijo "LOG: "
+                                
+                                # Verificar si es un TICK
+                                if log_message.strip() == "TICK":
+                                    tick_counter.add_tick()
+                                    continue  # No mostrar los TICKs individuales
+                                
                                 formatted_log = format_log_message(log_message)
+                                # Limpiar la línea del contador antes de mostrar otros logs
+                                if tick_counter.is_monitoring:
+                                    sys.stdout.write('\r' + ' ' * 80 + '\r')
                                 print(formatted_log)
                                 continue
 
@@ -207,18 +334,22 @@ def main():
                     
                     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
                         print(f"\nConexion perdida: {e}")
+                        tick_counter.stop_monitoring()
                         break  # Salir del bucle interno para reconectar
                     
                     except socket.error as e:
                         print(f"\nError de socket: {e}")
+                        tick_counter.stop_monitoring()
                         break  # Salir del bucle interno para reconectar
 
         except ConnectionRefusedError:
             pass  # No imprimir nada, solo mostrar animación en el siguiente intento
         except socket.gaierror as e:
             print(f"\nError de resolucion de nombre: {e}")
+            tick_counter.stop_monitoring()
         except Exception as e:
             print(f"\nError inesperado: {e}")
+            tick_counter.stop_monitoring()
         
         # Esperar antes de reintentar (sin mostrar mensaje)
         time.sleep(reconnect_delay)
