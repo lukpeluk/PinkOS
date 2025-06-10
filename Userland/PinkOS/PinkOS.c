@@ -967,6 +967,7 @@ int init_main()
 		.description = "Starts the PinkOS shell",
 	};
 	// Inicializa el shell
+	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"1", 0, 0, 0);
 	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&shell, (uint64_t)"", 0, 0, 0);
 
 	// Si no se pudo inicializar el shell, se queda en un bucle infinito

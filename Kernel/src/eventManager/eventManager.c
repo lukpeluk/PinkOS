@@ -4,7 +4,7 @@
 #include <memoryManager/memoryManager.h>
 #include <drivers/serialDriver.h>
 #include <lib.h>
-
+#include <drivers/pitDriver.h>
 
 #define MAX_EVENTS 6
 
@@ -118,7 +118,12 @@ void registerEventWaiting(int eventId, Pid pid, void* data) {
     Listener* current = eventManager.events[eventId].listeners;
     newListener->next = current;
     eventManager.events[eventId].listeners = newListener;       // Para que sea O(1) en vez de O(n) al agregar un listener (el señorito se quejaba de que era O(n))
+
+    log_to_serial("W: ------ EventManager: Registering waiting event");
+
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
+
+    log_to_serial("E: EventManager: Le chupó un webo el wait... no esperó una chota");
 }
 
 void unregisterEventSubscription(int eventId, Pid pid) {

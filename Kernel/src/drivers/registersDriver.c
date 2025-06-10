@@ -7,6 +7,7 @@ extern uint64_t cri_rip, cri_rsp, cri_rflags;
 static BackupRegisters backupRegisters;
 
 void saveRegisters() {
+	// log_to_serial("E:       ---------> Saving registers...\n");
 	backupRegisters.registers.rax = rax_backup;
 	backupRegisters.registers.rbx = rbx_backup;
 	backupRegisters.registers.rcx = rcx_backup;
@@ -26,6 +27,7 @@ void saveRegisters() {
 	backupRegisters.cri_rip = cri_rip;
 	backupRegisters.cri_rsp = cri_rsp;
 	backupRegisters.cri_rflags = cri_rflags;
+	// log_to_serial("E:       ---------> Guardado registers...\n");
 }
 
 BackupRegisters * getBackupRegisters() {

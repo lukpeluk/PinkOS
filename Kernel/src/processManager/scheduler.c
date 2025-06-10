@@ -11,12 +11,22 @@
 
 #define NULL 0
 
+
+typedef struct Semaphore {
+    uint64_t id;                    // ID único del semáforo
+    int value;                      // Contador del semáforo
+    struct Semaphore *next;         // Siguiente semáforo (lista null terminated)
+} Semaphore;
+
+
 typedef struct ProcessControlBlock {
     Process process;
+    uint32_t quantum;               // Cantidad de ticks que el proceso puede ejecutar antes de ser interrumpido
     uint64_t stackBase;             // Dirección base del stack asignado, no es lo mismo que el rbp guardado ya que eso puede ser modificado por el proceso
     Registers registers;            // Registros del proceso, incluyendo el stack pointer (que en realidad apunta al interrupt stack frame, no al stack del proceso en sí)
     struct ProcessControlBlock * parent;
     struct ProcessControlBlock *next; // Siguiente proceso (lista circular)
+    Semaphore * waiting_for;          // Semáforo que el proceso está esperando, NULL si no tiene
 } ProcessControlBlock;
 
 
@@ -28,9 +38,36 @@ extern void push_to_custom_stack_pointer(uint64_t stack_pointer, uint64_t value_
 static ProcessControlBlock *currentProcessBlock = NULL;  // Proceso actualmente en ejecución
 static ProcessControlBlock *processList = NULL;     // Lista circular de procesos
 static ProcessControlBlock *processListTail = NULL; 
-static uint32_t nextPID = 1;       // Contador para asignar PIDs únicos
+static Pid nextPID = 1;       // Contador para asignar PIDs únicos
+
+static Semaphore *firstSemaphore = NULL;
+static uint64_t nextSemaphoreId = 1; // Contador para asignar IDs únicos a los semáforos
 
 static uint32_t ticksSinceLastSwitch = 0; // Contador de ticks desde el último cambio de proceso
+
+
+
+void initScheduler() {
+//     log_to_serial("initScheduler: Iniciando el scheduler");
+    processList = NULL;
+    currentProcessBlock = NULL;
+    firstSemaphore = NULL; 
+}
+
+// Mayor quantum significa que el proceso tiene más tiempo para ejecutarse
+uint32_t getQuantumByPriority(Priority priority) {
+    // Asignar quantum según la prioridad del proceso
+    switch (priority) {
+        case PRIORITY_LOW:
+            return 2; 
+        case PRIORITY_NORMAL:
+            return 5; 
+        case PRIORITY_HIGH:
+            return 10; 
+        default:
+            return 5; 
+    }
+}
 
 
 Pid getCurrentProcessPID() {
@@ -80,13 +117,6 @@ Process getParent(Pid pid){
         return (Process){.pid = 0}; // No hay padre, devuelve un proceso inválido
     }
     return process->parent->process; // Devuelve el proceso padre
-}
-
-
-void initScheduler() {
-//     log_to_serial("initScheduler: Iniciando el scheduler");
-    processList = NULL;
-    currentProcessBlock = NULL;
 }
 
 ProcessControlBlock *allocateProcessMemory(size_t size) {
@@ -145,14 +175,16 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 //     log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
 //     log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
 
-    newProcessBlock->process.type = type; // Tipo de proceso (normal, gráfico, etc.)
-    newProcessBlock->process.state = PROCESS_STATE_NEW;     // Estado inicial del proceso
+    newProcessBlock->process.type = type;                       // Tipo de proceso (normal, gráfico, etc.)
+    newProcessBlock->process.state = PROCESS_STATE_NEW;         // Estado inicial del proceso
     newProcessBlock->process.priority = priority;
-    newProcessBlock->parent = parent; // Guardar el padre del proceso, si es que tiene uno
+    newProcessBlock->parent = parent;                           // Guardar el padre del proceso, si es que tiene uno
+    newProcessBlock->quantum = getQuantumByPriority(priority);  // Cantidad de ticks que el proceso puede ejecutar antes de ser interrumpido
+    newProcessBlock->waiting_for = NULL;                        // Inicializar el semáforo de espera como NULL
     
-    newProcessBlock->stackBase = allocateStack(processCount); // Asignar stack predefinido
-    newProcessBlock->registers.rsp = newProcessBlock->stackBase - 8; // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
-    newProcessBlock->registers.rdi = (uint64_t)arguments; // Guardar el argumento en los registros del proceso, el resto de los registros son basura
+    newProcessBlock->stackBase = allocateStack(processCount);           // Asignar stack predefinido
+    newProcessBlock->registers.rsp = newProcessBlock->stackBase - 8;    // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
+    newProcessBlock->registers.rdi = (uint64_t)arguments;               // Guardar el argumento en los registros del proceso, el resto de los registros son basura
 
 
     if (newProcessBlock->stackBase == NULL) {
@@ -313,6 +345,7 @@ int terminateProcess(Pid pid) {
 }
 
 
+
 void scheduleNextProcess() {
     // log_to_serial("I: scheduleNextProcess: Programando el siguiente proceso");
 
@@ -320,15 +353,7 @@ void scheduleNextProcess() {
 
     currentProcessBlock->process.state = currentProcessBlock->process.state == PROCESS_STATE_RUNNING ? PROCESS_STATE_READY : currentProcessBlock->process.state; // Cambiar el estado del proceso actual a READY
 
-    ProcessControlBlock *nextProcess = currentProcessBlock->next; // Guardar el siguiente proceso antes de liberar el actual
-//     if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
-// //         log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
-//         free(currentProcessBlock->stackBase); // Liberar el stack del proceso actual
-//         free(currentProcessBlock); // Liberar el PCB del proceso actual
-
-
-//     } 
-
+    ProcessControlBlock *nextProcess = currentProcessBlock->next;
     ProcessControlBlock * current = nextProcess;
     ProcessControlBlock * prev = currentProcessBlock; // Empezar desde el final de la lista para poder eliminar el proceso actual si es necesario
     currentProcessBlock = nextProcess; // Actualizar el proceso actual al siguiente
@@ -359,7 +384,7 @@ void scheduleNextProcess() {
 
         // vuelvo a llegar, no había ningún proceso en estado READY o NEW
         if (current == currentProcessBlock) {
-//             log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
+            // log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
             return; // No hay procesos en estado READY ni NEW, no se puede programar otro proceso
         }
 
@@ -371,7 +396,7 @@ void scheduleNextProcess() {
     if (currentProcessBlock->process.state == PROCESS_STATE_NEW) {
         // Si el proceso es nuevo, inicializarlo
         currentProcessBlock->process.state = PROCESS_STATE_READY;
-//         log_to_serial("scheduleNextProcess: Proceso nuevo, inicializando");
+        // log_to_serial("scheduleNextProcess: Proceso nuevo, inicializando");
     }
 
     currentProcessBlock->process.state = PROCESS_STATE_RUNNING; // Cambiar el estado del nuevo proceso a RUNNING
@@ -385,38 +410,41 @@ void scheduleNextProcess() {
     log_decimal("I: scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
     // log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
 
-//     log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
-//     log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
+    // log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
+    // log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
 
-//     log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
+    // log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     magic_recover(&currentProcessBlock->registers);
 }
 
 
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
+// Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
 void schedulerLoop() {
-    // Si no hay procesos, no hacer nada
 
+    // Solo schedulea si hay procesos y pasó el quantum del proceso
     ticksSinceLastSwitch++;
-    if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0) {
-        // log_to_serial("E: schedulerLoop: nada que hacer");
+    if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0)
         return;
-    }
-
-    log_to_serial("W: schedulerLoop: Ejecutando el bucle del scheduler");
 
     if(currentProcessBlock == NULL){
         currentProcessBlock = processList;
-    } else {
-        // Guardar el contexto del proceso actual en base al backup de registros, para poder restaurarlo después
-        BackupRegisters * backup = getBackupRegisters();
-        currentProcessBlock->registers = backup->registers;
     }
-
-//     log_to_serial("schedulerLoop: pasando al siguiente proceso");
 
     scheduleNextProcess();
 }
+
+
+// Guardar el contexto del proceso actual en base al backup de registros, para poder restaurarlo después
+// La idea es que en cada interrupción se ejecute
+void backupCurrentProcessRegisters() {
+    // Guardar los registros del proceso actual en el backup
+    if (currentProcessBlock == NULL || currentProcessBlock->process.state != PROCESS_STATE_RUNNING) return; // No hay proceso actual
+    BackupRegisters * backup = getBackupRegisters();
+    currentProcessBlock->registers = backup->registers;
+}
+
+
 
 // Ejecuta un callback recursivamente en todos los descendientes del proceso especificado
 // No corre en el parent, solo en los descendientes
@@ -442,57 +470,158 @@ void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
 
 
 
+// ------ SEMÁFOROS Y ESPERAS ------
+
+
 // Deja el proceso en espera
-int setWaiting(Pid pid)
-{
-//     log_to_serial("setWaiting: Poniendo el proceso en espera");
-
-    // if (currentProcessBlock == NULL) {
-    //     log_to_serial("setWaiting: No hay proceso actual");
-    //     return -1; // Error: no hay proceso actual
-    // }
-
-    ProcessControlBlock *processControlBlocks = processList;
-    if (processControlBlocks == NULL) {
-//         log_to_serial("setWaiting: No hay procesos en la lista");
+// Si se waitea el actual, no se vuelve de esta función
+// En caso de exito, devuelve 0, en caso de error -1
+int setWaiting(Pid pid) {
+    ProcessControlBlock *current = processList;
+    if (current == NULL) {
         return -1; // Error: no hay procesos en la lista
     }
-    while (processControlBlocks != processListTail->next) {
-        if (processControlBlocks->process.pid == pid) {
+
+    do {
+        if (current->process.pid == pid) {
             // Cambiar el estado del proceso a WAITING
-            processControlBlocks->process.state = PROCESS_STATE_WAITING;
-//             log_decimal("setWaiting: Proceso ", pid);
-//             log_to_serial("setWaiting: Proceso puesto en espera");
-            scheduleNextProcess(); // Cambiar al siguiente proceso
+            current->process.state = PROCESS_STATE_WAITING;
+
+            if(current == currentProcessBlock) {
+                // Si el proceso actual es el que se está poniendo en espera, programar el siguiente proceso
+                scheduleNextProcess(); // Cambiar al siguiente proceso
+            }
             return 0; // Éxito
         }
-        processControlBlocks = processControlBlocks->next;
+        current = current->next;
     }
+    while (current != processList);
 
-//     log_to_serial("setWaiting: Proceso no encontrado");
     return -1; // Error: proceso no encontrado
 }
 
 
  // Despierta un proceso que estaba en espera
-int wakeProcess(Pid pid)
-{
-//     log_to_serial("wakeProcess: Despertando el proceso");
-    ProcessControlBlock *processControlBlocks = processList;
-    if (processControlBlocks == NULL) {
-//         log_to_serial("wakeProcess: No hay procesos en la lista");
+ // En caso de éxito devuelve 0, en caso de error -1
+int wakeProcess(Pid pid) {
+    ProcessControlBlock *current = processList;
+    if (current == NULL) {
         return -1; // Error: no hay procesos en la lista
     }
-    while (processControlBlocks != processListTail->next) {
-        if (processControlBlocks->process.pid == pid) {
-            // Cambiar el estado del proceso a READY
-            processControlBlocks->process.state = PROCESS_STATE_READY;
-//             log_decimal("wakeProcess: Proceso ", pid);
-//             log_to_serial("wakeProcess: Proceso despertado");
+
+    do {
+        if (current->process.pid == pid) {
+            // Cambiar el estado del proceso a WAITING
+            current->process.state = PROCESS_STATE_READY;
             return 0; // Éxito
         }
-        processControlBlocks = processControlBlocks->next;
+        current = current->next;
     }
-//     log_to_serial("wakeProcess: Proceso no encontrado");
+    while (current != processList);
+
     return -1; // Error: proceso no encontrado
+}
+
+
+
+// Función interna
+// null si no lo encuentra
+Semaphore * getSemaphore(uint64_t id) {
+    Semaphore *sem = firstSemaphore;
+    while (sem != NULL) {
+        if (sem->id == id) {
+            return sem; // Encontré el semáforo con el ID especificado
+        }
+        sem = sem->next; // Avanzar al siguiente semáforo
+    }
+    return NULL; // No encontré el semáforo con el ID especificado
+}
+
+
+void sem_init(uint64_t id, int initial_value) {
+    Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
+
+    sem->id = nextSemaphoreId++; 
+    sem->value = initial_value;
+    sem->next = firstSemaphore;
+    firstSemaphore = sem; 
+}
+
+
+void sem_destroy(uint64_t id) {
+    Semaphore *sem = getSemaphore(id);
+    if (sem == NULL) {
+        return; // No se encontró el semáforo, no hay nada que destruir
+    }
+
+    // validar que nadie esté esperando este semáforo
+    ProcessControlBlock *current = processList;
+    do {
+        if (current->waiting_for == sem) {
+            // Hay un proceso esperando este semáforo, no se puede destruir
+            return; 
+        }
+        current = current->next;
+    } while (current != processList);
+
+    // Buscar el semáforo en la lista y eliminarlo
+    Semaphore *currentSem = firstSemaphore;
+    Semaphore *prev = NULL;
+    while (currentSem != NULL) {
+        if (currentSem->id == id) {
+            // Encontré el semáforo a destruir
+            if (prev == NULL) {
+                // Es el primer semáforo
+                firstSemaphore = currentSem->next; // Actualizar la cabeza de la lista
+            } else {
+                prev->next = currentSem->next; // Eliminar el semáforo de la lista
+            }
+            free(currentSem); // Liberar la memoria del semáforo
+            return; // Salir después de destruir el semáforo
+        }
+        prev = currentSem;
+        currentSem = currentSem->next;
+    }
+}
+
+
+// Claramente esta función no vuelve, el proceso queda en espera
+void sem_wait(uint64_t id) {
+    Semaphore *sem = getSemaphore(id);
+
+    if(sem == NULL || currentProcessBlock == NULL) {
+        return;
+    }
+
+    sem->value--;
+
+    if (sem->value < 0) {
+        // No uso setWaiting porque es una función externa, iteraría al pedo
+        currentProcessBlock->process.state = PROCESS_STATE_WAITING; 
+        scheduleNextProcess();
+    }
+}
+
+void sem_post(uint64_t id) {
+    Semaphore *sem = getSemaphore(id);
+
+    if(sem == NULL) {
+        return;
+    }
+
+    sem->value++;
+
+    if (sem->value <= 0) {
+        // Desencolo un proceso que estaba esperando este semáforo
+        ProcessControlBlock *current = processList;
+        do {
+            if (current->waiting_for == sem) {
+                // Despertar el proceso
+                current->process.state = PROCESS_STATE_READY;
+                current->waiting_for = NULL; // Limpiar el semáforo que estaba esperando
+                return; // Salir después de despertar un proceso (no se despierta a todos)
+            }
+            current = current->next;
+        } while (current != processList);
+    }
 }
