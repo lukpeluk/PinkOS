@@ -345,21 +345,15 @@ int terminateProcess(Pid pid) {
 }
 
 
+
 void scheduleNextProcess() {
-//     log_to_serial("scheduleNextProcess: Programando el siguiente proceso");
+    // log_to_serial("I: scheduleNextProcess: Programando el siguiente proceso");
 
     if (currentProcessBlock == NULL) return;
 
     currentProcessBlock->process.state = currentProcessBlock->process.state == PROCESS_STATE_RUNNING ? PROCESS_STATE_READY : currentProcessBlock->process.state; // Cambiar el estado del proceso actual a READY
 
-    ProcessControlBlock *nextProcess = currentProcessBlock->next; // Guardar el siguiente proceso antes de liberar el actual
-    if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
-//         log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
-        free(currentProcessBlock->stackBase); // Liberar el stack del proceso actual
-        free(currentProcessBlock); // Liberar el PCB del proceso actual
-
-    } 
-
+    ProcessControlBlock *nextProcess = currentProcessBlock->next;
     ProcessControlBlock * current = nextProcess;
     ProcessControlBlock * prev = currentProcessBlock; // Empezar desde el final de la lista para poder eliminar el proceso actual si es necesario
     currentProcessBlock = nextProcess; // Actualizar el proceso actual al siguiente
@@ -369,9 +363,19 @@ void scheduleNextProcess() {
         if(current->process.state == PROCESS_STATE_TERMINATED) {
             nextProcess = current->next; // Guardar el siguiente proceso antes de liberar el actual
 
-//             log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
+            // Caso especial: borre la tail o head de la lista
+            if (current == processList) {
+                // Si el proceso eliminado era el head, actualizar el head
+                processList = nextProcess;
+            }
+            if (current == processListTail) {
+                // Si el proceso eliminado era la tail, actualizar la tail
+                processListTail = prev;
+            }
+            // log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
             free(current->stackBase); // Liberar el stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
+
 
             prev->next = nextProcess; // Eliminar el proceso actual de la lista
             current = nextProcess;
@@ -380,7 +384,7 @@ void scheduleNextProcess() {
 
         // vuelvo a llegar, no había ningún proceso en estado READY o NEW
         if (current == currentProcessBlock) {
-//             log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
+            // log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
             return; // No hay procesos en estado READY ni NEW, no se puede programar otro proceso
         }
 
@@ -392,25 +396,24 @@ void scheduleNextProcess() {
     if (currentProcessBlock->process.state == PROCESS_STATE_NEW) {
         // Si el proceso es nuevo, inicializarlo
         currentProcessBlock->process.state = PROCESS_STATE_READY;
-//         log_to_serial("scheduleNextProcess: Proceso nuevo, inicializando");
+        // log_to_serial("scheduleNextProcess: Proceso nuevo, inicializando");
     }
 
     currentProcessBlock->process.state = PROCESS_STATE_RUNNING; // Cambiar el estado del nuevo proceso a RUNNING
-    ticksSinceLastSwitch = 0; // Reiniciar el contador de ticks desde el último cambio de proceso
 
     // Actualizar el estado del kernel, indicando qué proceso está en ejecución, los permisos, y de-escalando los privilegios de kernel
     desactivateRootMode();
 
     // LOGS    
-//     log_to_serial("scheduleNextProcess: Proceso actual:");
-//     log_to_serial(currentProcessBlock->process.program.name);
-//     log_decimal("scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
-//     log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
+    // log_to_serial("I: scheduleNextProcess: Proceso actual:");
+    // log_to_serial(currentProcessBlock->process.program.name);
+    log_decimal("I: scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
+    // log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
 
-//     log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
-//     log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
+    // log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
+    // log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
 
-//     log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
+    // log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     magic_recover(&currentProcessBlock->registers);
 }
 
