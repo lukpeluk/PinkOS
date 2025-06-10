@@ -6,6 +6,7 @@ import os
 import time
 import sys
 import threading
+from datetime import datetime
 
 # Prompt constante o inicial
 CONSTANT_PROMPT = "No uses emojis, por favor responde únicamente con texto en ASCII reducido. Sé conciso."
@@ -55,11 +56,22 @@ def send_response_with_header(client_socket, header_code, content_type, response
 def show_connecting_animation():
     """Muestra una animación simple mientras se intenta conectar"""
     frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    colors = {
+        'RESET': '\033[0m',
+        'BOLD': '\033[1m',
+        'YELLOW': '\033[93m',
+        'GRAY': '\033[90m'
+    }
+    
+    timestamp = datetime.now().strftime("%H:%M:%S")
     for i in range(10):  # 10 frames * 0.1s = 1 segundo
-        sys.stdout.write(f'\rConectando {frames[i % len(frames)]}')
+        message = (f'{colors["GRAY"]}[{timestamp}]{colors["RESET"]} '
+                  f'{colors["YELLOW"]}{colors["BOLD"]}[RECONECTANDO]{colors["RESET"]} '
+                  f'{frames[i % len(frames)]} Intentando conectar...')
+        sys.stdout.write(f'\r{message}')
         sys.stdout.flush()
         time.sleep(0.1)
-    sys.stdout.write('\r' + ' ' * 20 + '\r')  # Limpiar la línea
+    sys.stdout.write('\r' + ' ' * 80 + '\r')  # Limpiar la línea
     sys.stdout.flush()
 
 class TickCounter:
@@ -100,6 +112,9 @@ class TickCounter:
                 # Limpiar la línea actual
                 sys.stdout.write('\r' + ' ' * 100 + '\r')
                 
+                # Obtener timestamp actual
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                
                 # Mostrar resultado final con colores
                 colors = {
                     'RESET': '\033[0m',
@@ -107,10 +122,12 @@ class TickCounter:
                     'GREEN': '\033[92m',
                     'CYAN': '\033[96m',
                     'YELLOW': '\033[93m',
-                    'BLUE': '\033[94m'
+                    'BLUE': '\033[94m',
+                    'GRAY': '\033[90m'
                 }
                 
-                final_message = (f"{colors['GREEN']}{colors['BOLD']}[TICK FINAL]{colors['RESET']} "
+                final_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                               f"{colors['GREEN']}{colors['BOLD']}[TICK FINAL]{colors['RESET']} "
                                f"{colors['CYAN']}{self.tick_count}{colors['RESET']} ticks en "
                                f"{colors['YELLOW']}{elapsed:.2f}s{colors['RESET']} = "
                                f"{colors['BLUE']}{colors['BOLD']}{ticks_per_second:.1f} ticks/s{colors['RESET']}")
@@ -151,11 +168,14 @@ class TickCounter:
             current_time = time.time()
             elapsed = current_time - self.last_reset_time
             
+            # Limpiar la línea actual del monitor
+            sys.stdout.write('\r' + ' ' * 100 + '\r')
+            
             if elapsed > 0 and self.tick_count > 0:
                 ticks_per_second = self.tick_count / elapsed
                 
-                # Limpiar la línea actual
-                sys.stdout.write('\r' + ' ' * 100 + '\r')
+                # Obtener timestamp actual
+                timestamp = datetime.now().strftime("%H:%M:%S")
                 
                 colors = {
                     'RESET': '\033[0m',
@@ -163,18 +183,23 @@ class TickCounter:
                     'RED': '\033[91m',
                     'CYAN': '\033[96m',
                     'YELLOW': '\033[93m',
-                    'WHITE': '\033[97m'
+                    'WHITE': '\033[97m',
+                    'GRAY': '\033[90m'
                 }
                 
-                final_message = (f"{colors['RED']}{colors['BOLD']}[TICK STOPPED]{colors['RESET']} "
-                               f"{colors['CYAN']}{self.tick_count}{colors['RESET']} ticks en "
+                final_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                               f"{colors['RED']}{colors['BOLD']}[TICK MONITOR DETENIDO]{colors['RESET']} "
+                               f"Último registro: {colors['CYAN']}{self.tick_count}{colors['RESET']} ticks en "
                                f"{colors['YELLOW']}{elapsed:.2f}s{colors['RESET']} = "
                                f"{colors['WHITE']}{colors['BOLD']}{ticks_per_second:.1f} ticks/s{colors['RESET']}")
                 
                 print(final_message)
         
+        # Detener completamente el monitoreo
         self.stop_display = True
         self.is_monitoring = False
+        self.tick_count = 0  # Resetear para que no muestre ceros
+        
         if self.display_thread and self.display_thread.is_alive():
             self.display_thread.join(timeout=1.0)
 
@@ -206,7 +231,7 @@ def main():
     # Configuración del cliente TCP
     host = 'localhost'
     port = 4444
-    reconnect_delay = 0.25  # segundos entre intentos de reconexión
+    reconnect_delay = 0.1  # segundos entre intentos de reconexión
     first_attempt = True
     tick_counter = TickCounter()
 
@@ -222,7 +247,20 @@ def main():
                     show_connecting_animation()
                 
                 client_socket.connect((host, port))
-                print("Conexion establecida. Escuchando...")
+                
+                # Mostrar mensaje de conexión establecida con timestamp y colores
+                timestamp = datetime.now().strftime("%H:%M:%S")
+                colors = {
+                    'RESET': '\033[0m',
+                    'BOLD': '\033[1m',
+                    'GREEN': '\033[92m',
+                    'GRAY': '\033[90m'
+                }
+                
+                connection_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                                    f"{colors['GREEN']}{colors['BOLD']}[CONEXIÓN ESTABLECIDA]{colors['RESET']} "
+                                    f"Escuchando en {host}:{port}...")
+                print(connection_message)
 
                 buffer = ""
                 while True:
@@ -230,7 +268,20 @@ def main():
                         # Recibir datos
                         data = client_socket.recv(1024).decode('utf-8')
                         if not data:
-                            print("El servidor cerró la conexión.")
+                            # Servidor cerró la conexión
+                            timestamp = datetime.now().strftime("%H:%M:%S")
+                            colors = {
+                                'RESET': '\033[0m',
+                                'BOLD': '\033[1m',
+                                'RED': '\033[91m',
+                                'GRAY': '\033[90m'
+                            }
+                            
+                            disconnect_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                                                f"{colors['RED']}{colors['BOLD']}[SERVIDOR DESCONECTADO]{colors['RESET']} "
+                                                f"El servidor cerró la conexión.")
+                            print(f"\n{disconnect_message}")
+                            tick_counter.stop_monitoring()
                             break
                         
                         buffer += data
@@ -333,22 +384,70 @@ def main():
                             # print(f"Enviado: {respuesta}")
                     
                     except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
-                        print(f"\nConexion perdida: {e}")
+                        # Conexión perdida de forma abrupta
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        colors = {
+                            'RESET': '\033[0m',
+                            'BOLD': '\033[1m',
+                            'RED': '\033[91m',
+                            'GRAY': '\033[90m'
+                        }
+                        
+                        disconnect_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                                            f"{colors['RED']}{colors['BOLD']}[CONEXIÓN PERDIDA]{colors['RESET']} "
+                                            f"{str(e)}")
+                        print(f"\n{disconnect_message}")
                         tick_counter.stop_monitoring()
                         break  # Salir del bucle interno para reconectar
                     
                     except socket.error as e:
-                        print(f"\nError de socket: {e}")
+                        # Error de socket
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        colors = {
+                            'RESET': '\033[0m',
+                            'BOLD': '\033[1m',
+                            'RED': '\033[91m',
+                            'GRAY': '\033[90m'
+                        }
+                        
+                        disconnect_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                                            f"{colors['RED']}{colors['BOLD']}[ERROR DE SOCKET]{colors['RESET']} "
+                                            f"{str(e)}")
+                        print(f"\n{disconnect_message}")
                         tick_counter.stop_monitoring()
                         break  # Salir del bucle interno para reconectar
 
         except ConnectionRefusedError:
-            pass  # No imprimir nada, solo mostrar animación en el siguiente intento
+            # No hacer nada - solo mostrar la animación de reconexión
+            if tick_counter.is_monitoring:
+                tick_counter.stop_monitoring()
         except socket.gaierror as e:
-            print(f"\nError de resolucion de nombre: {e}")
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            colors = {
+                'RESET': '\033[0m',
+                'BOLD': '\033[1m',
+                'RED': '\033[91m',
+                'GRAY': '\033[90m'
+            }
+            
+            error_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                           f"{colors['RED']}{colors['BOLD']}[ERROR DNS]{colors['RESET']} "
+                           f"Error de resolución de nombre: {e}")
+            print(f"\n{error_message}")
             tick_counter.stop_monitoring()
         except Exception as e:
-            print(f"\nError inesperado: {e}")
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            colors = {
+                'RESET': '\033[0m',
+                'BOLD': '\033[1m',
+                'RED': '\033[91m',
+                'GRAY': '\033[90m'
+            }
+            
+            error_message = (f"{colors['GRAY']}[{timestamp}]{colors['RESET']} "
+                           f"{colors['RED']}{colors['BOLD']}[ERROR INESPERADO]{colors['RESET']} "
+                           f"{str(e)}")
+            print(f"\n{error_message}")
             tick_counter.stop_monitoring()
         
         # Esperar antes de reintentar (sin mostrar mensaje)
