@@ -155,7 +155,7 @@ void log_hex(char* prefix, uint64_t value) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-    log_to_serial(buffer);
+//     log_to_serial(buffer);
 }
 
 void log_decimal(char* prefix, uint64_t value) {
@@ -178,10 +178,6 @@ void log_decimal(char* prefix, uint64_t value) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-    log_to_serial(buffer);
-}
-
-void log_string(char* message) {
-    log_to_serial(message);
+//     log_to_serial(buffer);
 }
 

@@ -84,7 +84,7 @@ Process getParent(Pid pid){
 
 
 void initScheduler() {
-    log_to_serial("initScheduler: Iniciando el scheduler");
+//     log_to_serial("initScheduler: Iniciando el scheduler");
     processList = NULL;
     currentProcessBlock = NULL;
 }
@@ -107,7 +107,7 @@ uint64_t allocateStack(uint32_t processIndex) {
 
 
 void quitWrapper(){
-    log_to_serial("quitWrapper: Programa saliendo naturalmente");
+//     log_to_serial("quitWrapper: Programa saliendo naturalmente");
     terminateProcess(getCurrentProcessPID()); // Terminar el proceso actual
 }
 
@@ -115,17 +115,17 @@ void quitWrapper(){
 // Le asigna un PID, inicializa el stack y los registros, y lo agrega a la lista de procesos
 ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry, char *arguments, ProcessType type, Priority priority, ProcessControlBlock *parent) {
 
-    log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
+//     log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
 
     static uint32_t processCount = 0; // Contador de procesos creados
     if (program.entry == NULL, entry == NULL) {
-        log_to_serial("addProcessToScheduler: Error, invalid input");
+//         log_to_serial("addProcessToScheduler: Error, invalid input");
         return NULL;
     }
-    log_to_serial("addProcessToScheduler: Agregando proceso");
+//     log_to_serial("addProcessToScheduler: Agregando proceso");
 
     if( parent == NULL && processList != NULL) {
-        log_to_serial("addProcessToScheduler: Init ya existe, error!");
+//         log_to_serial("addProcessToScheduler: Init ya existe, error!");
         return NULL; // No se puede crear un proceso sin padre si ya hay un init
     }
         
@@ -136,14 +136,14 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     ProcessControlBlock *newProcessBlock = (ProcessControlBlock *)allocateProcessMemory(sizeof(ProcessControlBlock));
 
     if (newProcessBlock == NULL) {
-        log_to_serial("addProcessToScheduler: Error al alocar memoria para el PCB");
+//         log_to_serial("addProcessToScheduler: Error al alocar memoria para el PCB");
         return NULL; // Error al alocar memoria
     }
     
     newProcessBlock->process.program = program; // Nombre del programa
     newProcessBlock->process.pid = nextPID++;
-    log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
-    log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
+//     log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
+//     log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
 
     newProcessBlock->process.type = type; // Tipo de proceso (normal, gráfico, etc.)
     newProcessBlock->process.state = PROCESS_STATE_NEW;     // Estado inicial del proceso
@@ -156,7 +156,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
 
     if (newProcessBlock->stackBase == NULL) {
-        log_to_serial("addProcessToScheduler: Error al alocar memoria para el stack del proceso");
+//         log_to_serial("addProcessToScheduler: Error al alocar memoria para el stack del proceso");
         free(newProcessBlock); // Liberar el PCB si no se pudo alocar el stack
         return NULL; // Error al alocar memoria para el stack
     }
@@ -170,15 +170,15 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     cri.rip = (uint64_t) entry; // Entry point del programa
     cri.rsp = newProcessBlock->registers.rsp; // Usar el stack pointer del proceso
 
-    log_hex("addProcessToScheduler: process stack base: ", newProcessBlock->stackBase);
-    log_hex("addProcessToScheduler: process initial rsp: ", newProcessBlock->registers.rsp);
-    log_hex("addProcessToScheduler: process rip: ", cri.rip);
-    log_decimal("addProcessToScheduler: process pid: ", newProcessBlock->process.pid);
+//     log_hex("addProcessToScheduler: process stack base: ", newProcessBlock->stackBase);
+//     log_hex("addProcessToScheduler: process initial rsp: ", newProcessBlock->registers.rsp);
+//     log_hex("addProcessToScheduler: process rip: ", cri.rip);
+//     log_decimal("addProcessToScheduler: process pid: ", newProcessBlock->process.pid);
 
     // cargar en el stack del proceso el cri generado, y actualizar el stack pointer para que apunte al interrupt stack frame
     newProcessBlock->registers.rsp = load_interrupt_frame(&cri, newProcessBlock->registers.rsp);
 
-    log_hex("addProcessToScheduler: process rsp after loading cri: ", newProcessBlock->registers.rsp);
+//     log_hex("addProcessToScheduler: process rsp after loading cri: ", newProcessBlock->registers.rsp);
 
     // Los procesos son listas circulares, round robin básico
     // Si es el primer proceso, inicializar la lista (solo pasaría con el init)
@@ -191,7 +191,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     processListTail = newProcessBlock;        
 
     processCount++;
-    log_to_serial("addProcessToScheduler: Proceso agregado con exito");
+//     log_to_serial("addProcessToScheduler: Proceso agregado con exito");
     return newProcessBlock; // Retornar el nuevo proceso agregado
 }
 
@@ -199,19 +199,19 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_pid) {
     // para debug
     if(parent_pid == 0) {
-        log_to_serial("newProcess: Creando nuevo proceso sin padre, Init");
+//         log_to_serial("newProcess: Creando nuevo proceso sin padre, Init");
     } else {
-        log_to_serial("newProcess: Creando nuevo proceso con padre");
+//         log_to_serial("newProcess: Creando nuevo proceso con padre");
     }
 
     if(parent_pid == 0 && processList != NULL) {
-        log_to_serial("newProcess: Init ya existe, error!");
+//         log_to_serial("newProcess: Init ya existe, error!");
         return 0; // No se puede crear un proceso sin padre si ya hay un init
     }
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL  && processList != NULL){
-        log_to_serial("invalid parent process");
+//         log_to_serial("invalid parent process");
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
@@ -223,13 +223,13 @@ Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_p
     if (IS_GRAPHIC(newProcessBlock)) {
         uint8_t *buffer = addWindow(newProcessBlock->process.pid);
         if (buffer == NULL) {
-            log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
+//             log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
             return 0;
         }
     }
 
-    log_to_serial("newMainProcess: Agregando nuevo proceso al scheduler");
-    log_decimal("newMain with PID: ", newProcessBlock->process.pid);
+//     log_to_serial("newMainProcess: Agregando nuevo proceso al scheduler");
+//     log_decimal("newMain with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }
 
@@ -238,7 +238,7 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL){
-        log_to_serial("invalid parent process");
+//         log_to_serial("invalid parent process");
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
@@ -250,8 +250,8 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     // threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(threadProgram, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
     
-    log_to_serial("newThread: Agregando nuevo thread al scheduler:");
-    log_decimal("newThread with PID: ", newProcessBlock->process.pid);
+//     log_to_serial("newThread: Agregando nuevo thread al scheduler:");
+//     log_decimal("newThread with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }
 
@@ -262,7 +262,7 @@ int terminateSingleProcess(uint32_t pid) {
 
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
-        log_to_serial("invalid parent process");
+//         log_to_serial("invalid parent process");
         return -1;
     }
     if(to_remove->process.pid == 1 || to_remove->next == to_remove){
@@ -273,7 +273,7 @@ int terminateSingleProcess(uint32_t pid) {
     // Si el proceso es gráfico, eliminar la ventana asociada
     uint64_t was_graphic = IS_GRAPHIC(to_remove);
     if(was_graphic) {
-        log_to_serial("terminateCurrentProcess: El proceso actual es grafico, eliminando ventana asociada");
+//         log_to_serial("terminateCurrentProcess: El proceso actual es grafico, eliminando ventana asociada");
         removeWindow(pid); 
     }
 
@@ -292,7 +292,7 @@ int terminateProcess(Pid pid) {
 
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
-        log_to_serial("invalid parent process");
+//         log_to_serial("invalid parent process");
         return -1;
     }
     if(to_remove->process.pid == 1 || to_remove->next == to_remove){
@@ -314,7 +314,7 @@ int terminateProcess(Pid pid) {
 
 
 void scheduleNextProcess() {
-    log_to_serial("scheduleNextProcess: Programando el siguiente proceso");
+//     log_to_serial("scheduleNextProcess: Programando el siguiente proceso");
 
     if (currentProcessBlock == NULL) return;
 
@@ -322,7 +322,7 @@ void scheduleNextProcess() {
 
     ProcessControlBlock *nextProcess = currentProcessBlock->next; // Guardar el siguiente proceso antes de liberar el actual
     if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
-        log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
+//         log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
         free(currentProcessBlock->stackBase); // Liberar el stack del proceso actual
         free(currentProcessBlock); // Liberar el PCB del proceso actual
 
@@ -337,7 +337,7 @@ void scheduleNextProcess() {
         if(current->process.state == PROCESS_STATE_TERMINATED) {
             nextProcess = current->next; // Guardar el siguiente proceso antes de liberar el actual
 
-            log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
+//             log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
             free(current->stackBase); // Liberar el stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
 
@@ -348,7 +348,7 @@ void scheduleNextProcess() {
 
         // vuelvo a llegar, no había ningún proceso en estado READY o NEW
         if (current == currentProcessBlock) {
-            log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
+//             log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
             return; // No hay procesos en estado READY ni NEW, no se puede programar otro proceso
         }
 
@@ -360,7 +360,7 @@ void scheduleNextProcess() {
     if (currentProcessBlock->process.state == PROCESS_STATE_NEW) {
         // Si el proceso es nuevo, inicializarlo
         currentProcessBlock->process.state = PROCESS_STATE_READY;
-        log_to_serial("scheduleNextProcess: Proceso nuevo, inicializando");
+//         log_to_serial("scheduleNextProcess: Proceso nuevo, inicializando");
     }
 
     currentProcessBlock->process.state = PROCESS_STATE_RUNNING; // Cambiar el estado del nuevo proceso a RUNNING
@@ -369,15 +369,15 @@ void scheduleNextProcess() {
     desactivateRootMode();
 
     // LOGS    
-    log_string("scheduleNextProcess: Proceso actual:");
-    log_string(currentProcessBlock->process.program.name);
-    log_decimal("scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
-    log_string("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
+//     log_to_serial("scheduleNextProcess: Proceso actual:");
+//     log_to_serial(currentProcessBlock->process.program.name);
+//     log_decimal("scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
+//     log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
 
-    log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
-    log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
+//     log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);
+//     log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
 
-    log_string(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
+//     log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     magic_recover(&currentProcessBlock->registers);
 }
 
@@ -388,11 +388,11 @@ void schedulerLoop() {
 
     ticksSinceLastSwitch++;
     if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0) {
-        log_to_serial("schedulerLoop: nada que hacer");
+//         log_to_serial("schedulerLoop: nada que hacer");
         return;
     }
 
-    log_to_serial("schedulerLoop: Ejecutando el bucle del scheduler");
+//     log_to_serial("schedulerLoop: Ejecutando el bucle del scheduler");
 
     if(currentProcessBlock == NULL){
         currentProcessBlock = processList;
@@ -402,7 +402,7 @@ void schedulerLoop() {
         currentProcessBlock->registers = backup->registers;
     }
 
-    log_to_serial("schedulerLoop: pasando al siguiente proceso");
+//     log_to_serial("schedulerLoop: pasando al siguiente proceso");
 
     scheduleNextProcess();
 }
@@ -411,7 +411,7 @@ void schedulerLoop() {
 // No corre en el parent, solo en los descendientes
 void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
     if (processList == NULL || callback == NULL) {
-        log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
+//         log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
         return;
     }
 
@@ -434,7 +434,7 @@ void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
 // Deja el proceso en espera
 int setWaiting(Pid pid)
 {
-    log_to_serial("setWaiting: Poniendo el proceso en espera");
+//     log_to_serial("setWaiting: Poniendo el proceso en espera");
 
     // if (currentProcessBlock == NULL) {
     //     log_to_serial("setWaiting: No hay proceso actual");
@@ -443,22 +443,22 @@ int setWaiting(Pid pid)
 
     ProcessControlBlock *processControlBlocks = processList;
     if (processControlBlocks == NULL) {
-        log_to_serial("setWaiting: No hay procesos en la lista");
+//         log_to_serial("setWaiting: No hay procesos en la lista");
         return -1; // Error: no hay procesos en la lista
     }
     while (processControlBlocks != processListTail->next) {
         if (processControlBlocks->process.pid == pid) {
             // Cambiar el estado del proceso a WAITING
             processControlBlocks->process.state = PROCESS_STATE_WAITING;
-            log_decimal("setWaiting: Proceso ", pid);
-            log_to_serial("setWaiting: Proceso puesto en espera");
+//             log_decimal("setWaiting: Proceso ", pid);
+//             log_to_serial("setWaiting: Proceso puesto en espera");
             scheduleNextProcess(); // Cambiar al siguiente proceso
             return 0; // Éxito
         }
         processControlBlocks = processControlBlocks->next;
     }
 
-    log_to_serial("setWaiting: Proceso no encontrado");
+//     log_to_serial("setWaiting: Proceso no encontrado");
     return -1; // Error: proceso no encontrado
 }
 
@@ -466,22 +466,22 @@ int setWaiting(Pid pid)
  // Despierta un proceso que estaba en espera
 int wakeProcess(Pid pid)
 {
-    log_to_serial("wakeProcess: Despertando el proceso");
+//     log_to_serial("wakeProcess: Despertando el proceso");
     ProcessControlBlock *processControlBlocks = processList;
     if (processControlBlocks == NULL) {
-        log_to_serial("wakeProcess: No hay procesos en la lista");
+//         log_to_serial("wakeProcess: No hay procesos en la lista");
         return -1; // Error: no hay procesos en la lista
     }
     while (processControlBlocks != processListTail->next) {
         if (processControlBlocks->process.pid == pid) {
             // Cambiar el estado del proceso a READY
             processControlBlocks->process.state = PROCESS_STATE_READY;
-            log_decimal("wakeProcess: Proceso ", pid);
-            log_to_serial("wakeProcess: Proceso despertado");
+//             log_decimal("wakeProcess: Proceso ", pid);
+//             log_to_serial("wakeProcess: Proceso despertado");
             return 0; // Éxito
         }
         processControlBlocks = processControlBlocks->next;
     }
-    log_to_serial("wakeProcess: Proceso no encontrado");
+//     log_to_serial("wakeProcess: Proceso no encontrado");
     return -1; // Error: proceso no encontrado
 }

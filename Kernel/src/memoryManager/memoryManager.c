@@ -12,9 +12,9 @@ static uint64_t heapEnd = HEAP_BASE_ADDRESS + HEAP_SIZE;
 
 // Está de onda por ahora, pero bueno, por las dudas está bueno que todo tenga su init
 void initMemoryManager() {
-    log_to_serial("initMemoryManager: Iniciando el memory manager");
+//     log_to_serial("initMemoryManager: Iniciando el memory manager");
     heapCurrent = heapStart;
-    log_to_serial("initMemoryManager: Memory manager inicializado");
+//     log_to_serial("initMemoryManager: Memory manager inicializado");
 }
 
 
@@ -28,14 +28,14 @@ void* malloc(size_t size) {
     
     // Verificar si hay espacio suficiente
     if (heapCurrent + aligned_size > heapEnd) {
-        log_to_serial("malloc: Error - no hay espacio suficiente en el heap");
+//         log_to_serial("malloc: Error - no hay espacio suficiente en el heap");
         return NULL;
     }
 
     void* allocated_ptr = (void*)heapCurrent;
     heapCurrent += aligned_size;
 
-    log_to_serial("malloc: Memoria asignada exitosamente");
+//     log_to_serial("malloc: Memoria asignada exitosamente");
     
     return allocated_ptr;
 }
@@ -43,7 +43,7 @@ void* malloc(size_t size) {
 void free(void* ptr) {
     // Por ahora no hace nada
     // En el futuro se podría implementar un sistema más sofisticado
-    log_to_serial("free: Llamada a free (no implementado)");
+//     log_to_serial("free: Llamada a free (no implementado)");
 }
 
 void* realloc(void* ptr, size_t new_size) {
@@ -54,10 +54,10 @@ void* realloc(void* ptr, size_t new_size) {
     // Simplemente asignar un nuevo chunk del tamaño pedido (sí, el realloc más de mierda que hay)
     void* new_ptr = malloc(new_size);
     if (new_ptr == NULL) {
-        log_to_serial("realloc: Error - no se pudo asignar nueva memoria");
+//         log_to_serial("realloc: Error - no se pudo asignar nueva memoria");
         return NULL;
     }
 
-    log_to_serial("realloc: Nueva memoria asignada");
+//     log_to_serial("realloc: Nueva memoria asignada");
     return new_ptr;
 }

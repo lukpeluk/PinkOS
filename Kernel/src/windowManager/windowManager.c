@@ -57,14 +57,14 @@ uint8_t * getBufferByPID(Pid pid){
 uint8_t * addWindow(Pid pid){
     WindowControlBlock *newWindow = (WindowControlBlock *)malloc(sizeof(WindowControlBlock));
     if (newWindow == NULL) {
-        log_to_serial("addWindow: Error al allocar memoria para la nueva ventana");
+//         log_to_serial("addWindow: Error al allocar memoria para la nueva ventana");
         return NULL; // No se pudo allocar memoria
     }
     newWindow->pid = pid;
     newWindow->buffer = createVideoBuffer(); // el video driver se encarga de allocar memoria para el buffer con la resolución adecuada
 
     if (newWindow->buffer == NULL) {
-        log_to_serial("addWindow: Error al crear el buffer de video");
+//         log_to_serial("addWindow: Error al crear el buffer de video");
         free(newWindow); // Liberar memoria si no se pudo crear el buffer
         return NULL; // No se pudo allocar memoria para el buffer
     }
@@ -76,7 +76,7 @@ uint8_t * addWindow(Pid pid){
 
 int removeWindow(Pid pid){
     if (focusedWindow == NULL) {
-        log_to_serial("removeWindow: No hay ventanas para eliminar");
+//         log_to_serial("removeWindow: No hay ventanas para eliminar");
         return; 
     }
 
@@ -97,7 +97,7 @@ int removeWindow(Pid pid){
         prev = current;
         current = current->next;
     }
-    log_to_serial("removeWindow: No se encontro la ventana con el PID especificado");
+//     log_to_serial("removeWindow: No se encontro la ventana con el PID especificado");
     return -1; // No se encontró la ventana con el PID especificado
 }
 
@@ -105,7 +105,7 @@ int removeWindow(Pid pid){
 // Alt tab (le indicás el pid al cual cambiar)
 int switchToWindow(Pid pid) {
     if (focusedWindow == NULL) {
-        log_to_serial("switchWindow: No hay ventanas para cambiar");
+//         log_to_serial("switchWindow: No hay ventanas para cambiar");
         return -1; // No hay ventanas para cambiar
     }
 
@@ -131,7 +131,7 @@ int switchToWindow(Pid pid) {
         current = current->next;
     }
 
-    log_to_serial("switchWindow: No se encontro la ventana con el PID especificado");
+//     log_to_serial("switchWindow: No se encontro la ventana con el PID especificado");
     return -1; // No se encontró la ventana con el PID especificado
 }
 
@@ -153,7 +153,7 @@ Pid * getWindows(){
 
     Pid *pids = (Pid *)malloc(sizeof(Pid) * count);
     if (pids == NULL) {
-        log_to_serial("getWindows: Error al allocar memoria para el arreglo de PIDs");
+//         log_to_serial("getWindows: Error al allocar memoria para el arreglo de PIDs");
         return NULL;
     }
 
