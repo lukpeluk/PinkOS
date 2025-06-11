@@ -288,16 +288,13 @@ void testAudio(){
     // sleep(5000);
 }
 
-// void testSerial(){
-
-// }
 
 void shell_main(char * args)
 {
 
-//     log_to_serial("schedulerTest: -------------------- PinkOS Shell started");
-//     log_to_serial("schedulerTest: args: ");
-//     log_to_serial(args);
+    // log_to_serial("schedulerTest: -------------------- PinkOS Shell started");
+    // log_to_serial("schedulerTest: args: ");
+    // log_to_serial(args);
 
     // Aquí iría el código del shell, por ahora solo un bucle infinito
     while (1)
@@ -310,7 +307,7 @@ void shell_main(char * args)
 
 void testScheduler(){
 
-//     log_to_serial("schedulerTest: -------------------- Testing scheduler");
+    // log_to_serial("schedulerTest: -------------------- Testing scheduler");
 
     static Program shell = {
 		.command = "shell",
@@ -329,11 +326,11 @@ void testScheduler(){
         Pid parent_pid = getParent(getCurrentProcessPID()).pid;
 
         if (pid == 0) {
-//             log_to_serial("schedulerTest: Failed to create process");
+            // log_to_serial("schedulerTest: Failed to create process");
         } else {
-//             log_to_serial("schedulerTest: Process created successfully");
-//             log_decimal("schedulerTest: Process PID: ", pid);
-//             log_decimal("schedulerTest: Process Parent: ", parent_pid);
+            // log_to_serial("schedulerTest: Process created successfully");
+            // log_decimal("schedulerTest: Process PID: ", pid);
+            // log_decimal("schedulerTest: Process Parent: ", parent_pid);
         }
     }
 }
@@ -352,7 +349,7 @@ int main()
     log_to_serial("I: PinkOS Kernel started");
 
     ncPrint((const char *)"se llego al main\n");
-//     log_to_serial("En el main de kernel\n");
+    // log_to_serial("En el main de kernel\n");
     
 	initProcessState();
     initScheduler();

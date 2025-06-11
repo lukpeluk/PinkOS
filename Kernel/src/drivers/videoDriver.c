@@ -53,7 +53,7 @@ static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
 
-#define FRAME_RATE 60 // 24 frames per second
+#define FRAME_RATE 20 // frames per second
 
 static int last_frame_time = 0; // last time the video buffer was updated, in milliseconds
 

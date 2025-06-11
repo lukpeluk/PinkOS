@@ -48,7 +48,7 @@ static uint32_t ticksSinceLastSwitch = 0; // Contador de ticks desde el último 
 
 
 void initScheduler() {
-//     log_to_serial("initScheduler: Iniciando el scheduler");
+    // log_to_serial("initScheduler: Iniciando el scheduler");
     processList = NULL;
     currentProcessBlock = NULL;
     firstSemaphore = NULL; 
@@ -59,11 +59,11 @@ uint32_t getQuantumByPriority(Priority priority) {
     // Asignar quantum según la prioridad del proceso
     switch (priority) {
         case PRIORITY_LOW:
-            return 2; 
+            return 8; 
         case PRIORITY_NORMAL:
-            return 5; 
+            return 16; 
         case PRIORITY_HIGH:
-            return 10; 
+            return 24; 
         default:
             return 5; 
     }
@@ -119,11 +119,32 @@ Process getParent(Pid pid){
     return process->parent->process; // Devuelve el proceso padre
 }
 
+// Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
+Process * getAllProcesses(){
+    if(processList == NULL) return NULL; // No hay procesos
+
+    Process * processes = (Process *)malloc(sizeof(Process) * 256); // Allocar memoria para 256 procesos
+    if(processes == NULL) return NULL; // Error al alocar memoria
+
+    ProcessControlBlock * current = processList;
+    uint32_t index = 0;
+
+    do {
+        processes[index++] = current->process; // Copiar el proceso actual a la lista
+        current = current->next;
+    } while (current != processList && index < 256);
+
+    processes[index].pid = 0; // Marcar el final de la lista con un proceso inválido
+    return processes;
+
+}
+
+
 ProcessControlBlock *allocateProcessMemory(size_t size) {
     return (ProcessControlBlock *)malloc(sizeof(ProcessControlBlock));
 }
 
-uint64_t allocateStack(uint32_t processIndex) {
+uint64_t allocateStack() {
     // Allocar STACK_SIZE bytes usando malloc
     void* stackMemory = malloc(STACK_SIZE);
     if (stackMemory == NULL) {
@@ -137,7 +158,7 @@ uint64_t allocateStack(uint32_t processIndex) {
 
 
 void quitWrapper(){
-//     log_to_serial("quitWrapper: Programa saliendo naturalmente");
+    // log_to_serial("quitWrapper: Programa saliendo naturalmente");
     terminateProcess(getCurrentProcessPID()); // Terminar el proceso actual
 }
 
@@ -145,17 +166,17 @@ void quitWrapper(){
 // Le asigna un PID, inicializa el stack y los registros, y lo agrega a la lista de procesos
 ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry, char *arguments, ProcessType type, Priority priority, ProcessControlBlock *parent) {
 
-//     log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
+    // log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
 
     static uint32_t processCount = 0; // Contador de procesos creados
     if (program.entry == NULL, entry == NULL) {
-//         log_to_serial("addProcessToScheduler: Error, invalid input");
+        // log_to_serial("addProcessToScheduler: Error, invalid input");
         return NULL;
     }
-//     log_to_serial("addProcessToScheduler: Agregando proceso");
+    // log_to_serial("addProcessToScheduler: Agregando proceso");
 
     if( parent == NULL && processList != NULL) {
-//         log_to_serial("addProcessToScheduler: Init ya existe, error!");
+        // log_to_serial("addProcessToScheduler: Init ya existe, error!");
         return NULL; // No se puede crear un proceso sin padre si ya hay un init
     }
         
@@ -166,14 +187,14 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     ProcessControlBlock *newProcessBlock = (ProcessControlBlock *)allocateProcessMemory(sizeof(ProcessControlBlock));
 
     if (newProcessBlock == NULL) {
-//         log_to_serial("addProcessToScheduler: Error al alocar memoria para el PCB");
+        // log_to_serial("addProcessToScheduler: Error al alocar memoria para el PCB");
         return NULL; // Error al alocar memoria
     }
     
     newProcessBlock->process.program = program; // Nombre del programa
     newProcessBlock->process.pid = nextPID++;
-//     log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
-//     log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
+    // log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
+    // log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
 
     newProcessBlock->process.type = type;                       // Tipo de proceso (normal, gráfico, etc.)
     newProcessBlock->process.state = PROCESS_STATE_NEW;         // Estado inicial del proceso
@@ -188,7 +209,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
 
     if (newProcessBlock->stackBase == NULL) {
-//         log_to_serial("addProcessToScheduler: Error al alocar memoria para el stack del proceso");
+        // log_to_serial("addProcessToScheduler: Error al alocar memoria para el stack del proceso");
         free(newProcessBlock); // Liberar el PCB si no se pudo alocar el stack
         return NULL; // Error al alocar memoria para el stack
     }
@@ -202,15 +223,15 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     cri.rip = (uint64_t) entry; // Entry point del programa
     cri.rsp = newProcessBlock->registers.rsp; // Usar el stack pointer del proceso
 
-//     log_hex("addProcessToScheduler: process stack base: ", newProcessBlock->stackBase);
-//     log_hex("addProcessToScheduler: process initial rsp: ", newProcessBlock->registers.rsp);
-//     log_hex("addProcessToScheduler: process rip: ", cri.rip);
-//     log_decimal("addProcessToScheduler: process pid: ", newProcessBlock->process.pid);
+    // log_hex("addProcessToScheduler: process stack base: ", newProcessBlock->stackBase);
+    // log_hex("addProcessToScheduler: process initial rsp: ", newProcessBlock->registers.rsp);
+    // log_hex("addProcessToScheduler: process rip: ", cri.rip);
+    // log_decimal("addProcessToScheduler: process pid: ", newProcessBlock->process.pid);
 
     // cargar en el stack del proceso el cri generado, y actualizar el stack pointer para que apunte al interrupt stack frame
     newProcessBlock->registers.rsp = load_interrupt_frame(&cri, newProcessBlock->registers.rsp);
 
-//     log_hex("addProcessToScheduler: process rsp after loading cri: ", newProcessBlock->registers.rsp);
+    // log_hex("addProcessToScheduler: process rsp after loading cri: ", newProcessBlock->registers.rsp);
 
     // Los procesos son listas circulares, round robin básico
     // Si es el primer proceso, inicializar la lista (solo pasaría con el init)
@@ -231,19 +252,19 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_pid) {
     // para debug
     if(parent_pid == 0) {
-//         log_to_serial("newProcess: Creando nuevo proceso sin padre, Init");
+        // log_to_serial("newProcess: Creando nuevo proceso sin padre, Init");
     } else {
-//         log_to_serial("newProcess: Creando nuevo proceso con padre");
+        // log_to_serial("newProcess: Creando nuevo proceso con padre");
     }
 
     if(parent_pid == 0 && processList != NULL) {
-//         log_to_serial("newProcess: Init ya existe, error!");
+        // log_to_serial("newProcess: Init ya existe, error!");
         return 0; // No se puede crear un proceso sin padre si ya hay un init
     }
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL  && processList != NULL){
-//         log_to_serial("invalid parent process");
+        // log_to_serial("invalid parent process");
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
@@ -255,13 +276,13 @@ Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_p
     if (IS_GRAPHIC(newProcessBlock)) {
         uint8_t *buffer = addWindow(newProcessBlock->process.pid);
         if (buffer == NULL) {
-//             log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
+            // log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
             return 0;
         }
     }
 
-//     log_to_serial("newMainProcess: Agregando nuevo proceso al scheduler");
-//     log_decimal("newMain with PID: ", newProcessBlock->process.pid);
+    // log_to_serial("newMainProcess: Agregando nuevo proceso al scheduler");
+    // log_decimal("newMain with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }
 
@@ -270,7 +291,7 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL){
-//         log_to_serial("invalid parent process");
+        // log_to_serial("invalid parent process");
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
@@ -294,7 +315,7 @@ int terminateSingleProcess(uint32_t pid) {
 
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
-//         log_to_serial("invalid parent process");
+        // log_to_serial("invalid parent process");
         return -1;
     }
     if(to_remove->process.pid == 1 || to_remove->next == to_remove){
@@ -305,7 +326,7 @@ int terminateSingleProcess(uint32_t pid) {
     // Si el proceso es gráfico, eliminar la ventana asociada
     uint64_t was_graphic = IS_GRAPHIC(to_remove);
     if(was_graphic) {
-//         log_to_serial("terminateCurrentProcess: El proceso actual es grafico, eliminando ventana asociada");
+        // log_to_serial("terminateCurrentProcess: El proceso actual es grafico, eliminando ventana asociada");
         removeWindow(pid); 
     }
 
@@ -324,7 +345,7 @@ int terminateProcess(Pid pid) {
 
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
-//         log_to_serial("invalid parent process");
+        // log_to_serial("invalid parent process");
         return -1;
     }
     if(to_remove->process.pid == 1 || to_remove->next == to_remove){
@@ -450,7 +471,7 @@ void backupCurrentProcessRegisters() {
 // No corre en el parent, solo en los descendientes
 void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
     if (processList == NULL || callback == NULL) {
-//         log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
+        // log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
         return;
     }
 
@@ -538,7 +559,7 @@ Semaphore * getSemaphore(uint64_t id) {
 }
 
 
-void sem_init(uint64_t id, int initial_value) {
+void sem_init(int initial_value) {
     Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
 
     sem->id = nextSemaphoreId++; 
@@ -548,10 +569,10 @@ void sem_init(uint64_t id, int initial_value) {
 }
 
 
-void sem_destroy(uint64_t id) {
+int sem_destroy(uint64_t id) {
     Semaphore *sem = getSemaphore(id);
     if (sem == NULL) {
-        return; // No se encontró el semáforo, no hay nada que destruir
+        return 1; // No se encontró el semáforo, no hay nada que destruir
     }
 
     // validar que nadie esté esperando este semáforo
@@ -559,7 +580,7 @@ void sem_destroy(uint64_t id) {
     do {
         if (current->waiting_for == sem) {
             // Hay un proceso esperando este semáforo, no se puede destruir
-            return; 
+            return -1; 
         }
         current = current->next;
     } while (current != processList);
@@ -569,15 +590,13 @@ void sem_destroy(uint64_t id) {
     Semaphore *prev = NULL;
     while (currentSem != NULL) {
         if (currentSem->id == id) {
-            // Encontré el semáforo a destruir
             if (prev == NULL) {
-                // Es el primer semáforo
-                firstSemaphore = currentSem->next; // Actualizar la cabeza de la lista
+                firstSemaphore = currentSem->next; // Actualizar la cabeza de la lista si es el primero
             } else {
                 prev->next = currentSem->next; // Eliminar el semáforo de la lista
             }
             free(currentSem); // Liberar la memoria del semáforo
-            return; // Salir después de destruir el semáforo
+            return 0; 
         }
         prev = currentSem;
         currentSem = currentSem->next;

@@ -7,7 +7,7 @@
 int rootMode = 1; // Kernel starts in root mode by default
 
 void initProcessState() {
-//     log_to_serial("initProcessState: Iniciando el estado del proceso");
+    // log_to_serial("initProcessState: Iniciando el estado del proceso");
 }
 
 // Devuelve un interrupt stack frame "modelo" 

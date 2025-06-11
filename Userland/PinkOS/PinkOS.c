@@ -944,7 +944,7 @@ int shell_main()
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
 	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)key_handler, 0, 0, 0);
-	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
+	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	current_text_color = ColorSchema->text;
@@ -967,7 +967,9 @@ int init_main()
 		.description = "Starts the PinkOS shell",
 	};
 	// Inicializa el shell
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"1", 0, 0, 0);
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"1", 0, 0, 0);
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"1", 0, 0, 0);
+	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("pietra"), (uint64_t)"1", 0, 0, 0);
 	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&shell, (uint64_t)"", 0, 0, 0);
 
 	// Si no se pudo inicializar el shell, se queda en un bucle infinito

@@ -38,44 +38,44 @@ typedef struct EventManager {
 static EventManager eventManager;
 
 void initEventManager() {
-//     log_to_serial("Event Manager initialized");
+    // log_to_serial("Event Manager initialized");
     eventManager.events[KEY_EVENT].id = KEY_EVENT;
     eventManager.events[KEY_EVENT].size = sizeof(KeyboardEvent);
     eventManager.events[KEY_EVENT].listeners = NULL;
-//     log_to_serial("Event Manager initialized: KEY_EVENT");
-//     log_decimal("Event size: ", eventManager.events[KEY_EVENT].size);
+    // log_to_serial("Event Manager initialized: KEY_EVENT");
+    // log_decimal("Event size: ", eventManager.events[KEY_EVENT].size);
 
 
 
     eventManager.events[SLEEP_EVENT].id = SLEEP_EVENT;
     eventManager.events[SLEEP_EVENT].size = sizeof(uint64_t);
     eventManager.events[SLEEP_EVENT].listeners = NULL;
-//     log_to_serial("Event Manager initialized: SLEEP_EVENT");
-//     log_decimal("Event size: ", eventManager.events[SLEEP_EVENT].size);
+    // log_to_serial("Event Manager initialized: SLEEP_EVENT");
+    // log_decimal("Event size: ", eventManager.events[SLEEP_EVENT].size);
 
     eventManager.events[RTC_EVENT].id = RTC_EVENT;
     eventManager.events[RTC_EVENT].size = sizeof(RTC_Time);
     eventManager.events[RTC_EVENT].listeners = NULL;
-//     log_to_serial("Event Manager initialized: RTC_EVENT");
-//     log_decimal("Event size: ", eventManager.events[RTC_EVENT].size);
+    // log_to_serial("Event Manager initialized: RTC_EVENT");
+    // log_decimal("Event size: ", eventManager.events[RTC_EVENT].size);
 
     eventManager.events[PROCESS_DEATH_EVENT].id = PROCESS_DEATH_EVENT;
     eventManager.events[PROCESS_DEATH_EVENT].size = sizeof(Pid);
     eventManager.events[PROCESS_DEATH_EVENT].listeners = NULL;
-//     log_to_serial("Event Manager initialized: PROCESS_DEATH_EVENT");
-//     log_decimal("Event size: ", eventManager.events[PROCESS_DEATH_EVENT].size);
+    // log_to_serial("Event Manager initialized: PROCESS_DEATH_EVENT");
+    // log_decimal("Event size: ", eventManager.events[PROCESS_DEATH_EVENT].size);
 
     eventManager.events[EXCEPTION_EVENT].id = EXCEPTION_EVENT;
     eventManager.events[EXCEPTION_EVENT].size = sizeof(Exception);
     eventManager.events[EXCEPTION_EVENT].listeners = NULL;
-//     log_to_serial("Event Manager initialized: EXCEPTION_EVENT");
-//     log_decimal("Event size: ", eventManager.events[EXCEPTION_EVENT].size);
+    // log_to_serial("Event Manager initialized: EXCEPTION_EVENT");
+    // log_decimal("Event size: ", eventManager.events[EXCEPTION_EVENT].size);
 
     eventManager.events[BROADCAST_EVENT].id = BROADCAST_EVENT;
     eventManager.events[BROADCAST_EVENT].size = 0; // Broadcast events don't have a specific size
     eventManager.events[BROADCAST_EVENT].listeners = NULL;
-//     log_to_serial("Event Manager initialized: BROADCAST_EVENT");
-//     log_decimal("Event size: ", eventManager.events[BROADCAST_EVENT].size);
+    // log_to_serial("Event Manager initialized: BROADCAST_EVENT");
+    // log_decimal("Event size: ", eventManager.events[BROADCAST_EVENT].size);
     
 }
 

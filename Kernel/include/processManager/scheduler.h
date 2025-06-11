@@ -25,6 +25,10 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 // Retorna si fue exitoso o no
 int terminateProcess(Pid pid);  
 
+// Pasa al siguiente proceso de la lista del scheduler
+void scheduleNextProcess(); // es un yeld básicamente
+
+
 // Es necesario para saber cosas como en qué buffer de video escribir o darte cuenta de no matar el proceso actual
 Pid getCurrentProcessPID();
 
@@ -35,18 +39,24 @@ Process getProcess(Pid pid); // Devuelve el proceso del pid especificado
 // Devuelve el proceso padre del proceso especificado, si devuelve un proceso con pid 0, significa que no hay padre (es el init o no existe el proceso)
 Process getParent(Pid pid);
 
-int setWaiting(Pid pid); // Deja el proceso en espera 
+
+// --- Semáforos y esperas ---
+
+int setWaiting(Pid pid); // Deja el proceso en espera, si es el actual no se vuelve de esta función ya que se pasa al siguiente proceso
 int wakeProcess(Pid pid); // Despierta un proceso que estaba en espera
+
+void sem_init(int initial_value); // inicializa un semáforo con el valor especificado, devuelve el id del semáforo creado
+int sem_destroy(uint64_t id);     // destruye el semáforo con el id especificado, no se puede destruir si hay procesos esperándolo
+void sem_wait(uint64_t id);       // decrementa el semáforo de id especificado, si el valor es menor a cero bloquea el proceso
+void sem_post(uint64_t id);       // incrementa el semáforo de id especificado, si el valor es mayor o igual a cero despierta un proceso que estuviera esperando
 
 // TODO --- acá para abajo ---
 
-Pid * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), pids null terminated
+Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
 
 int changePriority(Pid pid, Priority newPriority); // Cambia la prioridad de un proceso, devuelve 0 si no se pudo cambiar, 1 si se cambió correctamente
 Priority getPriority(Pid pid); // Obtiene la prioridad de un proceso, devuelve LOW, NORMAL o HIGH
 
-// Pasa al siguiente proceso de la lista del scheduler
-void scheduleNextProcess(); // es un yeld básicamente
 
 // Guarda los registros del proceso actual en el backup de registros
 // Importante ya que no solo se debe guardar el contexto en cada timertick, sino que debe guardarse en cada interrupción ya que puede no volver por donde vino
