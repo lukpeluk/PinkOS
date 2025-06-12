@@ -6,7 +6,9 @@
 #include <drivers/serialDriver.h>
 
 // 18.2 Hz
-#define MILLISECONDS_PER_TICK 54.9450549451
+// #define MILLISECONDS_PER_TICK 54.9450549451
+// 50 Hz
+#define MILLISECONDS_PER_TICK 20 // 20 milliseconds per tick, 50 ticks per second 
 
 // 1 000 Hz
 // #define MILLISECONDS_PER_TICK 1 // 1 millisecond per tick, 1000 ticks per second

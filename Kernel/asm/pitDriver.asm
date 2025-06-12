@@ -9,14 +9,16 @@ init_pit:
     pushfq
 
     ; 1) Seleccionar canal 0, modo 3, lobyte/hibyte
-    mov     al, 0x36             ; 00 11 011 0b → canal 0, lobyte/hibyte, modo 3, binario
-    out     0x43, al             ; Comando PIT
+    mov     al, [PIT_CMD]
+    out     0x43, al            ; Enviar comando al PIT
 
-    ; 2) Cargar divisor = 0 → 65 536 (frecuencia ≈ 1 193 182 / 65 536 ≈ 18.206 Hz)
-    mov     al, 0x00             ; byte bajo
-    out     0x40, al             ; enviar al puerto 0x40
-    mov     al, 0x00             ; byte alto
-    out     0x40, al             ; enviar al puerto 0x40
+    ; 2) Cargar divisor = 23863 → 0x5D47
+    mov     ax, 23863           ; AX = 0x5D47
+    mov     dx, 0x40            ; Puerto de datos del canal 0
+
+    out     dx, al              ; Enviar byte bajo (0x47)
+    mov     al, ah
+    out     dx, al              ; Enviar byte alto (0x5D)
 
     ; Restaurar flags y RAX
     popfq
