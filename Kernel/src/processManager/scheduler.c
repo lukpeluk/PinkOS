@@ -7,7 +7,7 @@
 #include <windowManager/windowManager.h>
 
 #define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
-#define TICKS_TILL_SWITCH 50     // Cantidad de ticks hasta cambiar de proceso
+#define TICKS_TILL_SWITCH 1     // Cantidad de ticks hasta cambiar de proceso
 
 #define NULL 0
 
@@ -60,13 +60,13 @@ uint32_t getQuantumByPriority(Priority priority) {
     // Asignar quantum según la prioridad del proceso
     switch (priority) {
         case PRIORITY_LOW:
-            return 8; 
+            return TICKS_TILL_SWITCH; 
         case PRIORITY_NORMAL:
-            return 16; 
+            return TICKS_TILL_SWITCH * 2;
         case PRIORITY_HIGH:
-            return 24; 
+            return TICKS_TILL_SWITCH * 3;
         default:
-            return 5; 
+            return TICKS_TILL_SWITCH; // Por defecto, usar el quantum normal
     }
 }
 
@@ -481,6 +481,7 @@ void scheduleNextProcess() {
     // log_hex("scheduleNextProcess: RSP del proceso actual: ", currentProcessBlock->registers.rsp);
 
     // log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
+    ticksSinceLastSwitch = 0; // Reiniciar el contador de ticks desde el último cambio de proceso
     magic_recover(&currentProcessBlock->registers);
 }
 
@@ -495,7 +496,7 @@ void schedulerLoop() {
 
     // Solo schedulea si hay procesos y pasó el quantum del proceso
     ticksSinceLastSwitch++;
-    if (processList == NULL || ticksSinceLastSwitch % TICKS_TILL_SWITCH != 0)
+    if (processList == NULL || (currentProcessBlock != NULL && ticksSinceLastSwitch < currentProcessBlock->quantum))
         return;
 
     if(currentProcessBlock == NULL){

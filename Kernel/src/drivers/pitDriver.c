@@ -6,12 +6,12 @@
 #include <drivers/serialDriver.h>
 
 // 18.2 Hz
-// #define MILLISECONDS_PER_TICK 54.9450549451
+#define MILLISECONDS_PER_TICK 54.9450549451
 
 // 1 000 Hz
 // #define MILLISECONDS_PER_TICK 1 // 1 millisecond per tick, 1000 ticks per second
 // 5 000 Hz
-#define MILLISECONDS_PER_TICK 0.23 // 0.2 milliseconds per tick, 5000 ticks per second
+// #define MILLISECONDS_PER_TICK 1.1 // 0.2 milliseconds per tick, 5000 ticks per second
 
 extern void _hlt();
 
