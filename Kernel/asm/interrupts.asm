@@ -13,6 +13,7 @@ GLOBAL _irq03Handler
 GLOBAL _irq04Handler
 GLOBAL _irq05Handler
 GLOBAL _irq08Handler
+GLOBAL _irq0CHandler
 
 GLOBAL _irq80Handler
 
@@ -149,6 +150,26 @@ SECTION .text
 	iretq
 %endmacro
 
+
+%macro irqHandlerSlave 1
+	makeBackup
+	pushState
+	call saveRegisters
+	call backupCurrentProcessRegisters
+
+	mov rdi, %1
+	call irqDispatcher
+
+	; EOI para esclavo y luego maestro
+	mov al, 0x20
+	out 0xA0, al       ; PIC esclavo
+	out 0x20, al       ; PIC maestro
+
+	popState
+	iretq
+%endmacro
+
+
 %macro makeBackup 0
 	mov [rax_backup], rax
 	mov [rbx_backup], rbx
@@ -249,6 +270,11 @@ _irq05Handler:
 ;RTC
 _irq08Handler:
 	irqHandlerMaster 8
+
+; Mouse
+_irq0CHandler:
+	irqHandlerSlave 12
+
 
 ;Syscall
 _irq80Handler:

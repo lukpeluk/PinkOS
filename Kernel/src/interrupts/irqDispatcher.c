@@ -4,6 +4,7 @@
 #include <interrupts/keyboardInterrupt.h>
 #include <interrupts/serialInterrupt.h>
 #include <interrupts/rtcInterrupt.h>
+#include <drivers/mouseDriver.h>
 
 #include <drivers/videoDriver.h> // maybe for debugging
 
@@ -26,6 +27,11 @@ void irqDispatcher(uint64_t irq) {
             break;
         case 3:
             int_23();
+            break;
+
+        case 12:
+            log_to_serial("IRQ 12 (mouse) received - calling mouse_handler()");
+            mouse_handler();
             break;
 
         case 80:

@@ -50,11 +50,9 @@ int sem_destroy(uint64_t id);     // destruye el semáforo con el id especificad
 void sem_wait(uint64_t id);       // decrementa el semáforo de id especificado, si el valor es menor a cero bloquea el proceso
 void sem_post(uint64_t id);       // incrementa el semáforo de id especificado, si el valor es mayor o igual a cero despierta un proceso que estuviera esperando
 
-// TODO --- acá para abajo ---
-
 Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
 
-int changePriority(Pid pid, Priority newPriority); // Cambia la prioridad de un proceso, devuelve 0 si no se pudo cambiar, 1 si se cambió correctamente
+int changePriority(Pid pid, Priority newPriority); // Cambia la prioridad de un proceso, devuelve -1 si no se pudo cambiar, 0 si se cambió correctamente
 Priority getPriority(Pid pid); // Obtiene la prioridad de un proceso, devuelve LOW, NORMAL o HIGH
 
 

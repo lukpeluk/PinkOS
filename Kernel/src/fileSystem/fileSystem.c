@@ -33,11 +33,7 @@ static FifoFileControlBlock* findFifoFile(uint64_t fileId);
 static RawFileControlBlock* findRawFile(uint64_t fileId);
 static int checkPermissions(FilePermissions permissions, Pid pid, FileAction action);
 
-void initFileSystem() {
-    fifoFileList = NULL;
-    rawFileList = NULL;
-    nextFileId = 1;
-}
+void initFileSystem() {}
 
 uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissions permissions) {
     if (path == NULL || strlen_impl(path) >= 256) {
@@ -68,7 +64,7 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
 
         newFile->next = fifoFileList;
         fifoFileList = newFile;
-    } else {
+    } else if (type == FILE_TYPE_RAW_DATA) {
         RawFileControlBlock *newFile = (RawFileControlBlock*)malloc(sizeof(RawFileControlBlock));
         if (newFile == NULL) {
             return 0; // Error: no hay memoria
@@ -93,6 +89,8 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
 
         newFile->next = rawFileList;
         rawFileList = newFile;
+    } else {
+        return 0; // Error: tipo de archivo no soportado
     }
 
     return fileId;

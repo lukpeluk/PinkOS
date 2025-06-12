@@ -14,6 +14,7 @@ typedef struct KeyboardEvent{
 
 // processes the key press event, saving the key in the buffer and returning the event
 KeyboardEvent processKeyPress();
+KeyboardEvent processScancode(char c); // processes a scancode as if it happened, returns the event
 
 int isKeyPressed(char scan_code, char is_special);    // checks if a specific key is currently being pressed, and for how many times it was held
 

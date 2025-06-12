@@ -8,7 +8,7 @@ void initFileSystem();
 
 // Crea un archivo nuevo, devuelve su ID o 0 si no se pudo crear
 uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissions permissions);
-// 0 en caso de éxito, -1 si no se pudo crear el archivo
+// 0 en caso de éxito, -1 si no se pudo borrar el archivo
 int removeFile(const uint64_t fileId, Pid pid);
 
 // "Abre" un archivo (devuelve su ID, 0 si no se pudo abrir)

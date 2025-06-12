@@ -38,7 +38,8 @@ extern void push_to_custom_stack_pointer(uint64_t stack_pointer, uint64_t value_
 static ProcessControlBlock *currentProcessBlock = NULL;  // Proceso actualmente en ejecución
 static ProcessControlBlock *processList = NULL;     // Lista circular de procesos
 static ProcessControlBlock *processListTail = NULL; 
-static Pid nextPID = 1;       // Contador para asignar PIDs únicos
+static Pid nextPID = 1;             // Contador para asignar PIDs únicos
+static uint64_t processCount = 0;   // Contador de procesos activos
 
 static Semaphore *firstSemaphore = NULL;
 static uint64_t nextSemaphoreId = 1; // Contador para asignar IDs únicos a los semáforos
@@ -96,7 +97,7 @@ Process getProcess(Pid pid) {
     
 }
 
-
+// interna
 ProcessControlBlock * getProcessControlBlock(Pid pid){
     if(processList == NULL) return NULL;
 
@@ -119,25 +120,61 @@ Process getParent(Pid pid){
     return process->parent->process; // Devuelve el proceso padre
 }
 
-// Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
-Process * getAllProcesses(){
-    if(processList == NULL) return NULL; // No hay procesos
 
-    Process * processes = (Process *)malloc(sizeof(Process) * 256); // Allocar memoria para 256 procesos
+// Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
+// Deja en count la cantidad de procesos encontrados
+Process * getAllProcesses(int *count) {
+    if(count == NULL) return NULL;
+    if(processList == NULL){
+        *count = 0;
+        return NULL;
+    } 
+    *count = processCount; 
+
+    Process * processes = (Process *)malloc(sizeof(Process) * processCount); // Allocar memoria para 256 procesos
     if(processes == NULL) return NULL; // Error al alocar memoria
 
     ProcessControlBlock * current = processList;
     uint32_t index = 0;
 
     do {
-        processes[index++] = current->process; // Copiar el proceso actual a la lista
+        processes[index++] = current->process;
         current = current->next;
-    } while (current != processList && index < 256);
+    } while (current != processList);
 
     processes[index].pid = 0; // Marcar el final de la lista con un proceso inválido
     return processes;
-
 }
+
+
+int changePriority(Pid pid, Priority newPriority){ 
+    ProcessControlBlock *current = getProcessControlBlock(pid);
+    if (current == NULL) {
+        return -1; // Error: proceso no encontrado
+    }
+    if (newPriority < PRIORITY_LOW || newPriority > PRIORITY_HIGH) {
+        return -1; // Prioridad inválida
+    }
+
+    // log_to_serial("changePriority: Cambiando prioridad del proceso");
+    current->process.priority = newPriority;
+    current->quantum = getQuantumByPriority(newPriority); // Actualizar el quantum del proceso según la nueva prioridad
+
+    // log_to_serial("changePriority: Prioridad cambiada con éxito");
+    // log_decimal("changePriority: Proceso con PID ", current->process.pid);
+    return 0;
+}
+
+
+Priority getPriority(Pid pid) {
+    ProcessControlBlock *current = getProcessControlBlock(pid);
+    if (current == NULL) {
+        return -1; 
+    }
+    return current->process.priority;
+}
+
+
 
 
 ProcessControlBlock *allocateProcessMemory(size_t size) {
@@ -168,7 +205,6 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
     // log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
 
-    static uint32_t processCount = 0; // Contador de procesos creados
     if (program.entry == NULL, entry == NULL) {
         // log_to_serial("addProcessToScheduler: Error, invalid input");
         return NULL;
@@ -203,7 +239,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     newProcessBlock->quantum = getQuantumByPriority(priority);  // Cantidad de ticks que el proceso puede ejecutar antes de ser interrumpido
     newProcessBlock->waiting_for = NULL;                        // Inicializar el semáforo de espera como NULL
     
-    newProcessBlock->stackBase = allocateStack(processCount);           // Asignar stack predefinido
+    newProcessBlock->stackBase = allocateStack();
     newProcessBlock->registers.rsp = newProcessBlock->stackBase - 8;    // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
     newProcessBlock->registers.rdi = (uint64_t)arguments;               // Guardar el argumento en los registros del proceso, el resto de los registros son basura
 
@@ -332,6 +368,7 @@ int terminateSingleProcess(uint32_t pid) {
 
     // Marcarlo como terminado para que el scheduler lo elimine
     to_remove->process.state = PROCESS_STATE_TERMINATED;
+    processCount++;
 
     handleProcessDeath(to_remove->process.pid); // Enviar evento de muerte
 
@@ -439,6 +476,10 @@ void scheduleNextProcess() {
 }
 
 
+
+
+
+
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
 void schedulerLoop() {
@@ -488,6 +529,10 @@ void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
         current = current->next;
     } while (current != processList);
 }
+
+
+
+
 
 
 

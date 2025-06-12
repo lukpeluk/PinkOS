@@ -99,6 +99,7 @@ typedef enum {
     PROCESS_TYPE_THREAD,  // Thread que comparte el mismo espacio de memoria que su padre
 } ProcessType;
 
+// TODO: agregar parent
 typedef struct Process {
     Pid pid;
     ProcessType type;

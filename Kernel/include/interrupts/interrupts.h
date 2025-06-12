@@ -17,6 +17,7 @@ void _irq03Handler(void);
 void _irq04Handler(void);
 void _irq05Handler(void);
 void _irq08Handler(void);
+void _irq0CHandler(void);
 
 void _irq80Handler(void);
 

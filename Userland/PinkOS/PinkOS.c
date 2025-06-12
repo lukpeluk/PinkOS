@@ -555,9 +555,39 @@ void key_handler(KeyboardEvent * event)
 	}
 	
 	int is_ctrl_pressed, is_shift_pressed = 0;
+	int is_a_pressed = 0;
+
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, (uint64_t)&is_ctrl_pressed, 0, 0);
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, (uint64_t)&is_shift_pressed, 0, 0);
+	syscall(IS_KEY_PRESSED_SYSCALL, 0x1E, 0, (uint64_t)&is_a_pressed, 0, 0);
 
+	// si toco a y b hago clear (pintó para demostrar que es super genérico nuestro manejo de teclas/eventos, control o shift no son especiales)
+	if (is_a_pressed && ascii == 'b')
+	{
+		scroll = current_string;
+		redraw();
+		return;
+	}
+
+	// --- SCROLL WITH PAGE UP AND PAGE DOWN ---
+	if(!graphics_mode && (scan_code == 0x49 || scan_code == 0x51)) // page up or page down
+	{
+		if((scan_code == 0x49 && event_type == 3))
+		{
+			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
+			if(is_shift_pressed) scroll = oldest_string;	// with shift + ctrl + up, scroll to the top
+			else DECREASE_INDEX(scroll, BUFFER_SIZE);
+		}
+		else if(scan_code == 0x51 && event_type == 3)
+		{
+			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
+			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
+			else ADVANCE_INDEX(scroll, BUFFER_SIZE);
+		}
+
+		redraw();
+		return;
+	}
 
 	// --- HANDLE SHELL KEYBOARD SHORTCUTS ---
 	if(is_ctrl_pressed && !graphics_mode)
@@ -967,9 +997,9 @@ int init_main()
 		.description = "Starts the PinkOS shell",
 	};
 	// Inicializa el shell
-	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"1", 0, 0, 0);
-	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"1", 0, 0, 0);
-	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("pietra"), (uint64_t)"1", 0, 0, 0);
+	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"1", 0, 0, 0);
+	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"1", 0, 0, 0);
+	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("pietra"), (uint64_t)"1", 0, 0, 0);
 	syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&shell, (uint64_t)"", 0, 0, 0);
 
 	// Si no se pudo inicializar el shell, se queda en un bucle infinito

@@ -29,9 +29,9 @@ void addKeyboardEvent(char event_type, int hold_times, char ascii, char scan_cod
 int set_key(char scan_code, char is_special);
 void release_key(char scan_code, char is_special);
 
-// intended to be called by int_21, assumes scancode set 1
-KeyboardEvent processKeyPress() {
-	char c = getKeyCode();
+
+KeyboardEvent processScancode(char scancode) {
+    char c = scancode;
     int hold_times = 0;
     char ascii = 0;
     char event_type = 0;
@@ -63,6 +63,13 @@ KeyboardEvent processKeyPress() {
     addKeyboardEvent(event_type, hold_times, ascii, c);       // adds the event to the buffer
     return event;
 }
+
+// intended to be called by int_21, assumes scancode set 1
+KeyboardEvent processKeyPress() {
+	char c = getKeyCode();
+    return processScancode(c);
+}
+
 
 // If the key is being pressed, returns for how many times it's been pressed, 0 if it's not pressed
 int isKeyPressed(char scan_code, char is_special) {

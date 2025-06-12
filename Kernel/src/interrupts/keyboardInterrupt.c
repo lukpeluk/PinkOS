@@ -18,12 +18,12 @@
 #define CONTROL_KEY 0x1D // Control key
 #define ALT_KEY 0x38 // Alt key
 
-// #define CONTROL_KEY 0x5B 
+#define SPECIAL_KEY ALT_KEY  // Acá defino qué tecla se usa para el alt-tab
 
 extern char getKeyCode();
 
 static int index = 0;
-static ctrl_pressed = 0; // Variable to track if ctrl is pressed
+static special_key_pressed = 0; // Variable to track if ctrl is pressed
 
 // assumes scan code set is 1
 void int_21() {
@@ -34,18 +34,19 @@ void int_21() {
 	// callKeyHandler(event.event_type, event.hold_times, event.ascii, event.scan_code);
 
 
-	if (event.scan_code == TAB && ctrl_pressed && event.event_type == 1) {
+	// Este código es para manejar el alt tab para cambiar de ventana, no debería estar en kernel pero bueno, para probarlo sirve
+	if (event.scan_code == TAB && special_key_pressed && event.event_type == 1) {
 		// callRegistersHandler(getBackupRegisters());
 		index++;
 	}	
 
-	if(event.scan_code == ALT_KEY && event.event_type == 1) {
-		ctrl_pressed = 1; // Set ctrl pressed state on key press
+	if(event.scan_code == SPECIAL_KEY && event.event_type == 1) {
+		special_key_pressed = 1; // Set ctrl pressed state on key press
 		index = 0; // Reset index when ctrl is pressed
 	}
 
-	if(event.scan_code == ALT_KEY && event.event_type == 2) {
-		ctrl_pressed = 0; // Reset ctrl pressed state on key release
+	if(event.scan_code == SPECIAL_KEY && event.event_type == 2) {
+		special_key_pressed = 0; // Reset ctrl pressed state on key release
 
 		Pid * windows = getWindows();
 		int length = 0;
@@ -59,6 +60,8 @@ void int_21() {
 		switchToWindow(windows[index]); // Switch to the other window (assuming PIDs 1 and 2 are the two windows)
 		index = 0; // Reset index on key release
 	}
+
+
 
 	if(event.event_type != 0) {
 		handleKeyEvent(event);

@@ -18,6 +18,8 @@
 #include <eventManager/eventManager.h>
 #include <processManager/scheduler.h>
 
+#include <tests/tests.h>
+
 extern uint8_t text;
 extern uint8_t rodata;
 extern uint8_t data;
@@ -34,6 +36,7 @@ extern void play_sound(uint32_t nFrequence);
 extern void stop_sound();
 
 typedef int (*EntryPoint)();
+
 
 
 void clearBSS(void * bssAddress, uint64_t bssSize)
@@ -341,6 +344,9 @@ int main()
 	load_idt();
     init_pit();
     init_serial();
+
+    sleep(1000);
+
     log_to_serial("I: Usa ':I' adelante de los mensajes para que el sea informativo");
     log_to_serial("W: Usa ':W' adelante de los mensajes para que el sea de advertencia");
     log_to_serial("E: Usa ':E' adelante de los mensajes para que el sea un error");
@@ -349,7 +355,7 @@ int main()
     log_to_serial("I: PinkOS Kernel started");
 
     ncPrint((const char *)"se llego al main\n");
-    // log_to_serial("En el main de kernel\n");
+    log_to_serial("En el main de kernel\n");
     
 	initProcessState();
     initScheduler();
@@ -358,9 +364,17 @@ int main()
     initEventManager();
 	init_rtc();
 	set_timezone(-3);
+    init_mouse();
 
     // test_serial();
-    // testScheduler();
+
+    log_to_serial("I: Kernel binary initialized, clearing BSS");
+    // schedulingTest("Scheduler Test");
+
+    // while (1)
+    // {
+    //     /* code */
+    // }
 
 	// testScreen();
 
