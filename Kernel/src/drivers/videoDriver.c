@@ -52,8 +52,7 @@ static Font font = ibm_bios_font;
 static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
-
-#define FRAME_RATE 20 // frames per second
+#define FRAME_RATE 15 // frames per second
 
 static int last_frame_time = 0; // last time the video buffer was updated, in milliseconds
 
@@ -65,15 +64,15 @@ void initVideoDriver() {
 void videoLoop() {
 	// This function is intended to be called every timer tick to update the video buffer.
 	// Currently, it does nothing as the video buffer is updated directly when drawing.
+	if (milliseconds_elapsed() - last_frame_time < (1000 / FRAME_RATE)) {
+		return; // Not enough time has passed since the last frame, skip this update
+	}
 	void * focusedBuffer = getFocusedBuffer();
 	if(focusedBuffer == NULL)
 		return; // No focused window, nothing to do
 	
-	if (milliseconds_elapsed() - last_frame_time < (1000 / FRAME_RATE)) {
-		return; // Not enough time has passed since the last frame, skip this update
-	}
 	last_frame_time = milliseconds_elapsed();
-	memcpy((void *)(uintptr_t)VBE_mode_info->framebuffer, focusedBuffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	lightspeed_memcpy((void *)(uintptr_t)VBE_mode_info->framebuffer, focusedBuffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 
 }
 

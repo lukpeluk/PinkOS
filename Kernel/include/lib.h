@@ -7,6 +7,15 @@
 void * memset(void * destination, int32_t character, uint64_t length);
 void * memcpy(void * destination, const void * source, uint64_t length);
 
+/**
+ * @brief Copies memory from source to destination, optimized for speed.
+ * @param dest Pointer to the destination memory.
+ * @param src Pointer to the source memory.
+ * @param len Number of bytes to copy.
+ * @return Pointer to the destination memory.
+ */
+void *lightspeed_memcpy(void *dest, const void *src, uint64_t len);
+
 void itoa(int value, char *str, int base);
 
 char *cpuVendor(char *result);

@@ -38,7 +38,7 @@ static void mouse_wait_input(void) {
         if ((inb(MOUSE_CMD_PORT) & 2) == 0)
             return;
     }
-    log_to_serial("E: Timeout esperando input");
+    // log_to_serial("E: Timeout esperando input");
 }
 
 static void mouse_wait_output(void) {
@@ -46,7 +46,7 @@ static void mouse_wait_output(void) {
         if (inb(MOUSE_CMD_PORT) & 1)
             return;
     }
-    log_to_serial("E: Timeout esperando output");
+    // log_to_serial("E: Timeout esperando output");
 }
 
 static void mouse_write(uint8_t data) {
@@ -63,7 +63,7 @@ static uint8_t mouse_read(void) {
 
 
 void init_mouse() {
-	log_to_serial("I: Inicializando mouse");
+	// log_to_serial("I: Inicializando mouse");
 
 	// Habilitar segundo puerto (mouse)
 	outb(MOUSE_CMD_PORT, 0xA8);
@@ -80,7 +80,7 @@ void init_mouse() {
 	mouse_write(0xF4); mouse_read(); // Enable data reporting
 
 	// Activar modo IntelliMouse para soporte de scroll
-	log_to_serial("Activating IntelliMouse mode...");
+	// log_to_serial("Activating IntelliMouse mode...");
 	mouse_write(0xF3); mouse_read(); mouse_write(200); mouse_read();
 	mouse_write(0xF3); mouse_read(); mouse_write(100); mouse_read();
 	mouse_write(0xF3); mouse_read(); mouse_write(80);  mouse_read();
@@ -88,17 +88,17 @@ void init_mouse() {
 	// Verificar si se activó correctamente
 	mouse_write(0xF2); // Get device ID
 	uint8_t id = mouse_read(); // Debería devolver 0x03 para IntelliMouse
-	log_hex("Mouse ID: ", id);
+	// log_hex("Mouse ID: ", id);
 	
 	if (id == 0x03) {
-		log_to_serial("IntelliMouse mode activated successfully (ID=0x03)");
+		// log_to_serial("IntelliMouse mode activated successfully (ID=0x03)");
 	} else if (id == 0x00) {
-		log_to_serial("WARNING: Standard mouse mode (ID=0x00), no scroll wheel");
+		// log_to_serial("WARNING: Standard mouse mode (ID=0x00), no scroll wheel");
 	} else {
-		log_hex("WARNING: Unknown mouse ID: ", id);
+		// log_hex("WARNING: Unknown mouse ID: ", id);
 	}
 
-	log_to_serial("I: Mouse initialized successfully");
+	// log_to_serial("I: Mouse initialized successfully");
 }
 
 
@@ -115,13 +115,13 @@ void mouse_handler() {
 	static int interrupt_count = 0;
 	interrupt_count++;
 	
-	log_decimal("Mouse interrupt #", interrupt_count);
+	// log_decimal("Mouse interrupt #", interrupt_count);
 	
 	uint8_t byte = inb(MOUSE_DATA_PORT);
 	mouse_bytes[mouse_cycle] = byte;
 	
-	log_hex("Received byte", mouse_cycle);
-	log_hex(": ", byte);
+	// log_hex("Received byte", mouse_cycle);
+	// log_hex(": ", byte);
 	
 	mouse_cycle++;
 
@@ -131,10 +131,10 @@ void mouse_handler() {
 	mouse_cycle = 0;
 
 	// Debug: imprimir todos los bytes del paquete
-	log_to_serial("Mouse packet complete:");
+	// log_to_serial("Mouse packet complete:");
 	for (int i = 0; i < MOUSE_PACKET_SIZE; i++) {
-		log_hex("  Byte", i);
-		log_hex(": ", mouse_bytes[i]);
+		// log_hex("  Byte", i);
+		// log_hex(": ", mouse_bytes[i]);
 	}
 
 	// En modo estándar (3 bytes), el scroll se detecta por cambios en Y
@@ -142,21 +142,21 @@ void mouse_handler() {
 	char x_movement = mouse_bytes[1];
 	char y_movement = mouse_bytes[2];
 	
-	log_hex("X movement: ", x_movement);
-	log_hex("Y movement: ", y_movement);
+	// log_hex("X movement: ", x_movement);
+	// log_hex("Y movement: ", y_movement);
 
 
 	// Detectar scroll basado en patrones observados:
 	// Scroll hacia arriba: X=0x01, Y=0x08
 	// Scroll hacia abajo: X=0xFF, Y=0x08
 	if (x_movement == 0x01 && y_movement == 0x08) {
-		log_to_serial("SCROLL UP detected");
+		// log_to_serial("SCROLL UP detected");
 		simulateKeyPress(0xE0);
 		simulateKeyPress(0x49);  // Page Up press
 		simulateKeyPress(0xE0);
 		simulateKeyPress(0xC9);  // Page Up release
 	} else if (x_movement == 0xFF && y_movement == 0x08) {
-		log_to_serial("SCROLL DOWN detected");
+		// log_to_serial("SCROLL DOWN detected");
 		simulateKeyPress(0xE0);
 		simulateKeyPress(0x51);  // Page Down press
 		simulateKeyPress(0xE0);

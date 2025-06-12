@@ -488,7 +488,7 @@ void execute_program(int input_line)
 		if (program->permissions & DRAWING_PERMISSION)
 		{
 			graphics_mode = 1;
-			syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
+			// syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
 		}
 		if ((program->permissions & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
 		{
@@ -504,6 +504,8 @@ void execute_program(int input_line)
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 
 		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
+
+		restoreContext(0); // restore the context to the shell
 	}
 }
 
@@ -966,7 +968,9 @@ int shell_main()
 	// syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
-	// home_screen();
+	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"1", 0, 0, 0);
+
+	home_screen();
 	redraw();
 
 
@@ -974,7 +978,7 @@ int shell_main()
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
 	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)key_handler, 0, 0, 0);
-	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
+	syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	current_text_color = ColorSchema->text;

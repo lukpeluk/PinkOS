@@ -10,14 +10,14 @@ init_pit:
 
     ; 1) Seleccionar canal 0, modo 3, lobyte/hibyte
     mov     al, 0x36           ; 0011 0110b → canal 0, lobyte/hibyte, modo 3, binario
-    out     0x43, al           ; Comando PIT
+    out     0x43, al           ; Comando al PIT
 
-    ; 2) Cargar divisor = 1193 para ~1 000 Hz
-    mov     ax, 1193           ; AX = 0x04A9
+    ; 2) Cargar divisor = 239 para ≈5 000 Hz
+    mov     ax, 239            ; AX = 0x00EF
     mov     dx, 0x40           ; Puerto de datos canal 0
-    out     dx, al             ; Enviar byte bajo (0xA9)
-    mov     al, ah
-    out     dx, al             ; Enviar byte alto (0x04)
+    out     dx, al             ; Enviar byte bajo (0xEF)
+    mov     al, ah             ; AH = 0x00
+    out     dx, al             ; Enviar byte alto (0x00)
 
     ; Restaurar flags y RAX
     popfq

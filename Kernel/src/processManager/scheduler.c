@@ -206,13 +206,13 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     // log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
 
     if (program.entry == NULL, entry == NULL) {
-        // log_to_serial("addProcessToScheduler: Error, invalid input");
+        log_to_serial("E: addProcessToScheduler: Error, invalid input");
         return NULL;
     }
     // log_to_serial("addProcessToScheduler: Agregando proceso");
 
     if( parent == NULL && processList != NULL) {
-        // log_to_serial("addProcessToScheduler: Init ya existe, error!");
+        log_to_serial("E: addProcessToScheduler: Init ya existe, error!");
         return NULL; // No se puede crear un proceso sin padre si ya hay un init
     }
         
@@ -223,11 +223,11 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     ProcessControlBlock *newProcessBlock = (ProcessControlBlock *)allocateProcessMemory(sizeof(ProcessControlBlock));
 
     if (newProcessBlock == NULL) {
-        // log_to_serial("addProcessToScheduler: Error al alocar memoria para el PCB");
+        log_to_serial("E: addProcessToScheduler: Error al alocar memoria para el PCB");
         return NULL; // Error al alocar memoria
     }
-    
-    newProcessBlock->process.program = program; // Nombre del programa
+
+    newProcessBlock->process.program = program; // Guardar los datos del programa
     newProcessBlock->process.pid = nextPID++;
     // log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
     // log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
@@ -245,7 +245,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
 
     if (newProcessBlock->stackBase == NULL) {
-        // log_to_serial("addProcessToScheduler: Error al alocar memoria para el stack del proceso");
+        log_to_serial("E: addProcessToScheduler: Error al alocar memoria para el stack del proceso");
         free(newProcessBlock); // Liberar el PCB si no se pudo alocar el stack
         return NULL; // Error al alocar memoria para el stack
     }
@@ -300,16 +300,25 @@ Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_p
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL  && processList != NULL){
-        // log_to_serial("invalid parent process");
+        log_to_serial("E: invalid parent process");
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
-        parent = getProcessControlBlock(parent->parent);
+        parent = parent->parent; // Si el padre no es un proceso main, buscar al padre main (basicamente, si es un thread, buscar al main del thread)
+        if(parent == NULL) {
+            log_to_serial("E: newProcess: invalid parent process, no main parent found");
+            return 0; // No se encontró un padre main válido
+        }
     }
 
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(program, program.entry, arguments, PROCESS_TYPE_MAIN, priority, parent);
+    if (newProcessBlock == NULL) {
+        log_to_serial("E: addProcessToScheduler: Error al agregar el proceso al scheduler");
+        return 0; // Error al agregar el proceso al scheduler
+    }
 
-    if (IS_GRAPHIC(newProcessBlock)) {
+    if (newProcessBlock->process.program.permissions & DRAWING_PERMISSION) {
+        log_to_serial("newProcess: El proceso es grafico, creando ventana asociada");
         uint8_t *buffer = addWindow(newProcessBlock->process.pid);
         if (buffer == NULL) {
             // log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
@@ -339,8 +348,8 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     // threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(threadProgram, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
     
-    log_to_serial("W: newThread: Agregando nuevo thread al scheduler:");
-    log_decimal("I: newThread with PID: ", newProcessBlock->process.pid);
+    // log_to_serial("W: newThread: Agregando nuevo thread al scheduler:");
+    // log_decimal("I: newThread with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
 }
 
@@ -465,7 +474,7 @@ void scheduleNextProcess() {
     // LOGS    
     // log_to_serial("I: scheduleNextProcess: Proceso actual:");
     // log_to_serial(currentProcessBlock->process.program.name);
-    log_decimal("I: scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
+    // log_decimal("I: scheduleNextProcess: PID: ", currentProcessBlock->process.pid);
     // log_to_serial("scheduleNextProcess: Restaurando registros del proceso actual con magic_recover");
 
     // log_hex("scheduleNextProcess: Stack base del proceso actual: ", currentProcessBlock->stackBase);

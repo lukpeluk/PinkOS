@@ -4,7 +4,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   # Para Linux
   qemu-system-x86_64 \
     -hda Image/x64BareBonesImage.qcow2 \
-    -m 512 \
+    -m 2G \
     -audiodev pa,id=speaker \
     -machine pcspk-audiodev=speaker \
     -serial tcp::4444,server,nowait

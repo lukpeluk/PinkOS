@@ -30,7 +30,6 @@ void irqDispatcher(uint64_t irq) {
             break;
 
         case 12:
-            log_to_serial("IRQ 12 (mouse) received - calling mouse_handler()");
             mouse_handler();
             break;
 

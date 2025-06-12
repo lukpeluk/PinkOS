@@ -1,5 +1,5 @@
 GLOBAL cpuVendor
-GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, magic_recover_old, load_interrupt_frame, load_stack_int, push_to_custom_stack_pointer, get_stack_pointer
+GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, magic_recover_old, load_interrupt_frame, load_stack_int, push_to_custom_stack_pointer, get_stack_pointer, lightspeed_memcpy
 
 ; TODO: 
 ; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
@@ -210,3 +210,35 @@ inportb:
     mov dx, di             ; Mover el puerto desde DI a DX
     in al, dx              ; Leer el byte desde el puerto
     ret                    ; Retornar
+
+
+; -----------------------------------------------------------------------------
+; void *lightspeed_memcpy(void *dest, const void *src, uint64_t len)
+;   RDI = dest
+;   RSI = src
+;   RDX = len
+; returns RAX = dest
+; -----------------------------------------------------------------------------
+lightspeed_memcpy:
+    ; Guardar destino en RAX para retorno
+    mov     rax, rdi
+
+    ; Preparar conteos
+    mov     rcx, rdx         ; RCX = total bytes
+    shr     rcx, 3           ; RCX = cuantos qwords (len / 8)
+    jz      .tail_bytes      ; si era <8 bytes, saltar
+
+    ; Copiar bloques de 8 bytes (qwords)
+    rep movsq                ; [RDI] ← [RSI], RDI+=8, RSI+=8, RCX--
+
+    ; RDX_mod = len % 8
+    mov     rcx, rdx         ; RCX = total bytes
+    and     rcx, 7           ; RCX = resto (len & 7)
+    jz      .done            ; si 0 bytes sobrantes, fin
+
+.tail_bytes:
+    ; Copiar los bytes restantes uno a uno
+    rep movsb                ; [RDI] ← [RSI], RDI++, RSI++, RCX--
+
+.done:
+    ret
