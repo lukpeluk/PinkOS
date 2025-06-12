@@ -294,6 +294,7 @@ uint32_t writeRaw(uint64_t fileId, void *buffer, uint32_t size, uint32_t offset)
     return bytesToWrite;
 }
 
+
 uint64_t * listFiles(char * path) {
     // Contar archivos que coincidan con el path
     int count = 0;

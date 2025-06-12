@@ -25,6 +25,7 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 // Retorna si fue exitoso o no
 int terminateProcess(Pid pid);  
 
+
 // Pasa al siguiente proceso de la lista del scheduler
 void scheduleNextProcess(); // es un yeld básicamente
 
@@ -40,6 +41,21 @@ Process getProcess(Pid pid); // Devuelve el proceso del pid especificado
 Process getParent(Pid pid);
 
 
+// Retorna 1 si ambos procesos pertenecen al mismo grupo, 0 si no
+// Un grupo de procesos es el proceso main y sus threads, ya que para muchas cosas se los considera como un solo proceso
+// Por ejemplo, un grupo de procesos comparte stdin/stdout, la ventana gráfica, permisos sobre un archivo, etc.
+int isSameProcessGroup(Pid pid1, Pid pid2);
+
+// Devuelve el PID del proceso main del grupo al que pertenece el proceso especificado
+Pid getProcessGroupMain(Pid pid);
+
+
+Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
+
+int changePriority(Pid pid, Priority newPriority); // Cambia la prioridad de un proceso, devuelve -1 si no se pudo cambiar, 0 si se cambió correctamente
+Priority getPriority(Pid pid); // Obtiene la prioridad de un proceso, devuelve LOW, NORMAL o HIGH
+
+
 // --- Semáforos y esperas ---
 
 int setWaiting(Pid pid); // Deja el proceso en espera, si es el actual no se vuelve de esta función ya que se pasa al siguiente proceso
@@ -49,12 +65,6 @@ void sem_init(int initial_value); // inicializa un semáforo con el valor especi
 int sem_destroy(uint64_t id);     // destruye el semáforo con el id especificado, no se puede destruir si hay procesos esperándolo
 void sem_wait(uint64_t id);       // decrementa el semáforo de id especificado, si el valor es menor a cero bloquea el proceso
 void sem_post(uint64_t id);       // incrementa el semáforo de id especificado, si el valor es mayor o igual a cero despierta un proceso que estuviera esperando
-
-Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
-
-int changePriority(Pid pid, Priority newPriority); // Cambia la prioridad de un proceso, devuelve -1 si no se pudo cambiar, 0 si se cambió correctamente
-Priority getPriority(Pid pid); // Obtiene la prioridad de un proceso, devuelve LOW, NORMAL o HIGH
-
 
 // Guarda los registros del proceso actual en el backup de registros
 // Importante ya que no solo se debe guardar el contexto en cada timertick, sino que debe guardarse en cada interrupción ya que puede no volver por donde vino

@@ -55,6 +55,12 @@ void initScheduler() {
     firstSemaphore = NULL; 
 }
 
+
+
+
+/// ----- GETTERS GENERALES ----- ///
+/// ----------------------------- ///
+
 // Mayor quantum significa que el proceso tiene más tiempo para ejecutarse
 uint32_t getQuantumByPriority(Priority priority) {
     // Asignar quantum según la prioridad del proceso
@@ -70,6 +76,20 @@ uint32_t getQuantumByPriority(Priority priority) {
     }
 }
 
+//! internal
+ProcessControlBlock * getProcessControlBlock(Pid pid){
+    if(processList == NULL) return NULL;
+
+    ProcessControlBlock * current = processList;
+    do {
+        if(current->process.pid == pid){
+            return current; // Devuelve el proceso actual, NULL si no hay ninguno
+        }
+        current = current->next;
+    } while (current != processList);
+
+    return NULL; 
+}
 
 Pid getCurrentProcessPID() {
     if (currentProcessBlock == NULL) {
@@ -97,21 +117,6 @@ Process getProcess(Pid pid) {
     
 }
 
-// interna
-ProcessControlBlock * getProcessControlBlock(Pid pid){
-    if(processList == NULL) return NULL;
-
-    ProcessControlBlock * current = processList;
-    do {
-        if(current->process.pid == pid){
-            return current; // Devuelve el proceso actual, NULL si no hay ninguno
-        }
-        current = current->next;
-    } while (current != processList);
-
-    return NULL; 
-}
-
 Process getParent(Pid pid){
     ProcessControlBlock * process = getProcessControlBlock(pid);
     if(process == NULL || process->parent == NULL) {
@@ -119,7 +124,6 @@ Process getParent(Pid pid){
     }
     return process->parent->process; // Devuelve el proceso padre
 }
-
 
 // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
 // Deja en count la cantidad de procesos encontrados
@@ -165,7 +169,6 @@ int changePriority(Pid pid, Priority newPriority){
     return 0;
 }
 
-
 Priority getPriority(Pid pid) {
     ProcessControlBlock *current = getProcessControlBlock(pid);
     if (current == NULL) {
@@ -175,6 +178,38 @@ Priority getPriority(Pid pid) {
 }
 
 
+// Retorna 1 si ambos procesos pertenecen al mismo grupo, 0 si no
+// Un grupo de procesos es el proceso main y sus threads, ya que para muchas cosas se los considera como un solo proceso
+// Por ejemplo, un grupo de procesos comparte stdin/stdout, la ventana gráfica, permisos sobre un archivo, etc.
+int isSameProcessGroup(Pid pid1, Pid pid2){
+    ProcessControlBlock *pcb1 = getProcessControlBlock(pid1);
+    ProcessControlBlock *pcb2 = getProcessControlBlock(pid2);
+
+    if (pcb1 == NULL || pcb2 == NULL) {
+        return 0; // Uno de los procesos no existe
+    }
+
+    // Si alguno de los procesos es un thread, buscar su proceso main, luego simplemente comparar que sean del mismo PID
+    pcb1 = pcb1->process.type == PROCESS_TYPE_THREAD ? pcb1->parent : pcb1; 
+    pcb2 = pcb2->process.type == PROCESS_TYPE_THREAD ? pcb2->parent : pcb2; 
+
+    return pcb1->process.pid == pcb2->process.pid; // Comparar los PIDs de los procesos main
+}
+
+// Devuelve el PID del proceso main del grupo al que pertenece el proceso especificado
+Pid getProcessGroupMain(Pid pid) {
+    ProcessControlBlock *pcb = getProcessControlBlock(pid);
+    if (pcb == NULL) {
+        return 0; // Proceso no encontrado
+    }
+
+    return pcb->process.type == PROCESS_TYPE_THREAD ? pcb->parent->process.pid : pcb->process.pid; // Si es un thread, devolver el PID del proceso main, si no, devolver el PID del mismo proceso
+}
+
+
+
+/// ----- FUNCIONES DE ALLOCACIÓN DE MEMORIA ----- ///
+/// ---------------------------------------------- ///
 
 
 ProcessControlBlock *allocateProcessMemory(size_t size) {
@@ -193,11 +228,45 @@ uint64_t allocateStack() {
 }
 
 
+/// ----- HELPERS ------ ///
+/// -------------------- ///
 
+// Ejecuta un callback recursivamente en todos los descendientes del proceso especificado
+// No corre en el parent, solo en los descendientes
+void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
+    if (processList == NULL || callback == NULL) {
+        // log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
+        return;
+    }
+
+    // Buscar todos los hijos directos del parent_pid
+    ProcessControlBlock *current = processList;
+    do {
+        if (current->parent != NULL && current->parent->process.pid == parent_pid) {
+            // Encontramos un hijo, recursivamente procesar sus hijos primero
+            runOnChilds(callback, current->process.pid);
+            
+            // Después de procesar todos los descendientes, ejecutar callback en este proceso
+            callback(current);
+        }
+        current = current->next;
+    } while (current != processList);
+}
+
+
+// Esta función se llama cuando un proceso termina su ejecución normalmente
+// La idea era inyectar una syscall que haga eso en la última línea de cada programa, pero por ahora no soportamos ELF, así que por ahora se le pone como ret (es una medida temporal)
 void quitWrapper(){
     // log_to_serial("quitWrapper: Programa saliendo naturalmente");
     terminateProcess(getCurrentProcessPID()); // Terminar el proceso actual
 }
+
+
+
+/// ----- GENERAL DE SHCEDULING (LOOP, SWITCH, CREAR Y DESTRUIR PROCESOS, ETC) ----- ///
+/// -------------------------------------------------------------------------------- ///
+
+// -- Crear procesos -- //
 
 // Agrega un nuevo proceso al planificador, no lo ejecuta inmediatamente
 // Le asigna un PID, inicializa el stack y los registros, y lo agrega a la lista de procesos
@@ -331,6 +400,7 @@ Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_p
     return newProcessBlock->process.pid;
 }
 
+// Si se crea un thread desde un thread, se le asigna de padre el main del thread que lo creó
 Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid parent_pid) {
     // Tengo que validar que el parent sea un proceso main y no un thread sino tengo que crear el thread a nombre del main del thread
 
@@ -353,6 +423,8 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     return newProcessBlock->process.pid;
 }
 
+
+// -- Matar procesos -- //
 
 //! NO USAR DIRECTAMENTE, USAR terminateProcess QUE ES RECURSIVA, ESTO PODRÍA DEJAR PROCESOS HUÉRFANOS
 //! Cuando se llame, se da por sentado que el proceso existe y puede matarse, las validaciones deben hacerse antes de llamar a esta función
@@ -412,6 +484,7 @@ int terminateProcess(Pid pid) {
 }
 
 
+// -- Schedule next y scheduler loop -- //
 
 void scheduleNextProcess() {
     // log_to_serial("I: scheduleNextProcess: Programando el siguiente proceso");
@@ -486,10 +559,6 @@ void scheduleNextProcess() {
 }
 
 
-
-
-
-
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
 // Bucle del planificador, a ejecutar lo frecuentemente que se quiera, ej. cada timertick
 void schedulerLoop() {
@@ -518,35 +587,9 @@ void backupCurrentProcessRegisters() {
 
 
 
-// Ejecuta un callback recursivamente en todos los descendientes del proceso especificado
-// No corre en el parent, solo en los descendientes
-void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
-    if (processList == NULL || callback == NULL) {
-        // log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
-        return;
-    }
 
-    // Buscar todos los hijos directos del parent_pid
-    ProcessControlBlock *current = processList;
-    do {
-        if (current->parent != NULL && current->parent->process.pid == parent_pid) {
-            // Encontramos un hijo, recursivamente procesar sus hijos primero
-            runOnChilds(callback, current->process.pid);
-            
-            // Después de procesar todos los descendientes, ejecutar callback en este proceso
-            callback(current);
-        }
-        current = current->next;
-    } while (current != processList);
-}
-
-
-
-
-
-
-
-// ------ SEMÁFOROS Y ESPERAS ------
+/// ------ WAIT Y AWAKE ------ ///
+/// -------------------------- ///
 
 
 // Deja el proceso en espera
@@ -600,6 +643,9 @@ int wakeProcess(Pid pid) {
 
 
 
+/// ----- SEMÁFOROS ----- ///
+
+
 // Función interna
 // null si no lo encuentra
 Semaphore * getSemaphore(uint64_t id) {
@@ -614,6 +660,8 @@ Semaphore * getSemaphore(uint64_t id) {
 }
 
 
+// TODO: que los semáforos tengan permisos, al igual que los archivos, syscalls, etc. 
+//     -> (Básicamente quién puede modificarlo/esperarlo, si el proceso actual y sus threads, el actual e hijos, todas las instancias del programa, o todos.)
 void sem_init(int initial_value) {
     Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
 

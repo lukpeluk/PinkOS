@@ -28,7 +28,11 @@ typedef enum {
 // Quién puede leer y escribir en un archivo, no necesariamente quien puede leer es quien puede escribir
 // (especialmente en el caso de FIFO (pipes), donde al ser consumible no quiero que quien escribe pueda leer)
 // Las condiciones de lectura/escritura son:
-// '*' para todos, '-' para nadie, '.' para el proceso owner, '+' para el proceso owner y sus hijos/threads y 'p' para todos los procesos del mismo programa que el owner
+// '*' para todos, '-' para nadie, '.' para el grupo del proceso owner, '+' para el grupo del proceso actual y sus descendientes y 'p' para todos los procesos del mismo programa que el owner
+//      -> El grupo de un proceso son todos los procesos que comparten el mismo proceso main (es decir, un proceso y sus threads)
+//      -> Los descendientes son todos los procesos que en el arbol de procesos están por debajo del proceso main del proceso actual
+//      -> El permiso "nadie" es útil por ejemplo para crear archivos solo lectura o archivos que solo puede usar el kernel
+//      -> Tanto un programa con permisos root y el kernel mismo pueden leer y escribir en cualquier archivo, sin importar las condiciones
 typedef struct FilePermissions{
     Pid writing_owner;
     char writing_conditions;
