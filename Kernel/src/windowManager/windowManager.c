@@ -38,17 +38,23 @@ uint8_t * getFocusedBuffer(){
 // }
 
 uint8_t * getBufferByPID(Pid pid){
-    WindowControlBlock *current = focusedWindow;
+    WindowControlBlock *currentWindow = focusedWindow;
     Process parent;
+    Process currentProcess = getProcess(pid);
+    if (currentProcess.pid == 0) {
+        return NULL; // Proceso no encontrado
+    }
 
-    while (current != NULL) {
+
+
+    while (currentWindow != NULL) {
         parent = getParent(pid);
-        if (current->pid == pid) {
-            return current->buffer;
-        } else if (parent.pid != 0 && parent.pid == current->pid) {
-            return current->buffer;
+        if (currentWindow->pid == pid) {
+            return currentWindow->buffer;
+        } else if (currentProcess.type == PROCESS_TYPE_THREAD && parent.pid != 0 && parent.pid == currentWindow->pid) {  // Caso especial para que el thread use el buffer de su padre
+            return currentWindow->buffer;
         }
-        current = current->next;
+        currentWindow = currentWindow->next;
     }
     return NULL; // No se encontró la ventana con el PID especificado
 }
