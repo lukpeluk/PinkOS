@@ -90,7 +90,7 @@ void itoa(int value, char *str, int base) {
 // String functions (OJO: tienen que estar bien los strings, si no están null terminated o no tenés espacio suficiente podés hacer cagada fuerte)
 
 // Va a estar antes en el orden un string que sea más corto
-static int strcmp(const char *str1, const char *str2) {
+int strcmp(const char *str1, const char *str2) {
     while (*str1 && *str2 && *str1 == *str2) {
         str1++;
         str2++;
@@ -99,7 +99,7 @@ static int strcmp(const char *str1, const char *str2) {
 }
 
 // Supone que hay espacio suficiente en dest
-static void strcpy(char *dest, const char *src) {
+void strcpy(char *dest, const char *src) {
     while (*src) {
         *dest = *src;
         dest++;
@@ -108,7 +108,7 @@ static void strcpy(char *dest, const char *src) {
     *dest = '\0';
 }
 
-static int strlen(const char *str) {
+int strlen(const char *str) {
     int len = 0;
     while (*str) {
         len++;

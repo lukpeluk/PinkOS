@@ -2,6 +2,7 @@
 #define FILE_SYSTEM_H
 
 #include <stdint.h>
+#include <lib.h>
 #include <types.h>
 
 void initFileSystem();

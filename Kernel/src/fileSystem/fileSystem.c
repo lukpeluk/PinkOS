@@ -3,6 +3,7 @@
 #include <fileSystem/fileSystem.h>
 #include <memoryManager/memoryManager.h>
 #include <processManager/scheduler.h>
+#include <drivers/serialDriver.h>   
 #include <lib.h>
 
 typedef struct InternalFilePermissions{
