@@ -18,6 +18,10 @@ void *lightspeed_memcpy(void *dest, const void *src, uint64_t len);
 
 void itoa(int value, char *str, int base);
 
+int strcmp(const char *str1, const char *str2);
+void strcpy(char *dest, const char *src);
+int strlen(const char *str);
+
 char *cpuVendor(char *result);
 
 #endif

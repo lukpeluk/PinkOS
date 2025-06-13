@@ -206,6 +206,25 @@ Pid getProcessGroupMain(Pid pid) {
     return pcb->process.type == PROCESS_TYPE_THREAD ? pcb->parent->process.pid : pcb->process.pid; // Si es un thread, devolver el PID del proceso main, si no, devolver el PID del mismo proceso
 }
 
+// Devuelve si un proceso dado es descendiente de otro proceso (o sea, si es hijo, hijo de un hijo, thread de un hijo, etc.)
+// Si el proceso es el mismo devuelve 1 (se toma como que un proceso siempre es descendiente de sí mismo)
+int isDescendantOf(Pid child_pid, Pid parent_pid) {
+    if(child_pid == 0 || parent_pid == 0)
+        return 0; // PID 0 es inválido, no puede ser padre ni hijo
+
+    if (child_pid == parent_pid)
+        return 1; // Un proceso es descendiente de sí mismo
+
+    ProcessControlBlock *current = getProcessControlBlock(child_pid);
+    while (current != NULL && current->parent != NULL) {
+        if (current->parent->process.pid == parent_pid) {
+            return 1; // Encontramos el padre
+        }
+        current = current->parent; // Subir en la jerarquía de procesos
+    }
+    return 0; // No es descendiente
+}
+
 
 
 /// ----- FUNCIONES DE ALLOCACIÓN DE MEMORIA ----- ///

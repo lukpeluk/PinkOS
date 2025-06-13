@@ -11,6 +11,7 @@ void * memset(void * destination, int32_t c, uint64_t length)
 	return destination;
 }
 
+//* Nota: tenemos una implementación más rapida en assembler en libasm.asm, lightspeed_memcpy
 void * memcpy(void * destination, const void * source, uint64_t length)
 {
 	/*
@@ -49,7 +50,7 @@ void * memcpy(void * destination, const void * source, uint64_t length)
 	return destination;
 }
 
-
+// Int to ascii
 void itoa(int value, char *str, int base) {
     char *p = str;
     int num = value;
@@ -82,5 +83,37 @@ void itoa(int value, char *str, int base) {
         *p++ = buf[i];
 
     *p = '\0';
+}
+
+
+
+// String functions (OJO: tienen que estar bien los strings, si no están null terminated o no tenés espacio suficiente podés hacer cagada fuerte)
+
+// Va a estar antes en el orden un string que sea más corto
+static int strcmp(const char *str1, const char *str2) {
+    while (*str1 && *str2 && *str1 == *str2) {
+        str1++;
+        str2++;
+    }
+    return *str1 - *str2;
+}
+
+// Supone que hay espacio suficiente en dest
+static void strcpy(char *dest, const char *src) {
+    while (*src) {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+}
+
+static int strlen(const char *str) {
+    int len = 0;
+    while (*str) {
+        len++;
+        str++;
+    }
+    return len;
 }
 

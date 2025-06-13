@@ -2,42 +2,101 @@
 #include <stdlib.h>
 #include <fileSystem/fileSystem.h>
 #include <memoryManager/memoryManager.h>
+#include <processManager/scheduler.h>
 #include <lib.h>
 
-// A futuro podría guardar una lista de quién lo abrió para permitir cosas como no permitir escritura mientras alguien lo está leyendo
-// Por ahora igual los procesos pueden usar Mutexes para sincronizarse entre ellos así que no es prioritario
+typedef struct InternalFilePermissions{
+    Pid writing_owner;
+    Program writing_owner_program; // El programa del owner, para poder validar si es del mismo programa que el proceso que quiere acceder
+    char writing_conditions;
+
+    Pid reading_owner;
+    Program reading_owner_program;
+    char reading_conditions;
+} InternalFilePermissions;
+
+
+/*  
+    * A futuro se podría guardar una lista de quién abrió cada archivo para cosas como opcionalmente no permitir escritura mientras alguien tiene abierto el archivo
+      -> Por ahora igual los procesos pueden usar Mutexes para sincronizarse entre ellos así que no es prioritario
+
+    * Los archivos FIFO tienen un buffer circular, donde que no haya espacio significa que el puntero de escritura alcanzó al de lectura, y que se leyó todo la inversa
+    * Los file control blocks tienen información extra necesaria para operar con el archivo, como permisos, el puntero a la data, etc...
+    * Para recorrer los archivos, hay una linked list de los archivos de cada tipo, donde los nodos son los file control blocks
+        -> Para mejor eficiencia de búsqueda podría ser un árbol pero bueno, por ahora es suficiente
+*/
+
 typedef struct FifoFileControlBlock {
     File file;        // Información del archivo
     uint8_t *data;    // Puntero a los datos del archivo
-    uint64_t readPointer;  // Puntero de lectura FIFO
-    uint64_t writePointer; // Puntero de escritura FIFO
-    struct FifoFileControlBlock *next; // Linked list de archivos (para mejor eficiencia podría ser un árbol pero bueno, por ahora es suficiente)
+    InternalFilePermissions permissions;
+    uint64_t readPointer;  // Puntero de lectura
+    uint64_t writePointer; // Puntero de escritura
+    int closed_for_writing; // Indica si el archivo se cerró para escritura (nunca más va a haber datos nuevos, así que llegar al final da un EOF y borra el archivo)
+    struct FifoFileControlBlock *next;
 } FifoFileControlBlock;
 
 typedef struct RawFileControlBlock {
-    File file;        // Información del archivo
-    uint8_t *data;    // Puntero a los datos del archivo
-    struct RawFileControlBlock *next; // Linked list de archivos (para mejor eficiencia podría ser un árbol pero bueno, por ahora es suficiente)
+    File file;       // Información general (pública) del archivo
+    uint8_t *data;   // Puntero a los datos del archivo
+    InternalFilePermissions permissions;
+    struct RawFileControlBlock *next;
 } RawFileControlBlock;
 
+
 // Variables globales del filesystem
+// Se guardan las cantidades para que la búsqueda sea más rápida
 static FifoFileControlBlock *fifoFileList = NULL;
+static uint64_t fifo_files_count = 0;
 static RawFileControlBlock *rawFileList = NULL;
-static uint64_t nextFileId = 1;
+static uint64_t raw_files_count = 0;
+static uint64_t nextFileId = 1; // Empieza en 1 porque 0 se usa como "no encontrado" o "error" en varios casos
 
 // Funciones auxiliares
-static int strcmp_impl(const char *str1, const char *str2);
-static void strcpy_impl(char *dest, const char *src);
-static int strlen_impl(const char *str);
 static FifoFileControlBlock* findFifoFile(uint64_t fileId);
 static RawFileControlBlock* findRawFile(uint64_t fileId);
-static int checkPermissions(FilePermissions permissions, Pid pid, FileAction action);
+static int checkPermissions(InternalFilePermissions permissions, Pid pid, FileAction action);
 
 void initFileSystem() {}
 
+// Función auxiliar para convertir FilePermissions a InternalFilePermissions
+// Busca el main del proceso, valida que exista, trae el programa asociado, etc...
+// Devuelve 0 si se pudo convertir correctamente, -1 si hubo error
+// Deja el resultado en el puntero internalPermissions pasado por referencia
+int convertToInternalPermissions(FilePermissions permissions, InternalFilePermissions *internalPermissions) {
+    // me traigo los owners, si existen, traigo el proceso, que sé que es válido y va a incluir el programa
+    Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
+    Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
+    if(writing_owner_pid == 0 || reading_owner_pid == 0 || internalPermissions == NULL) {
+        log_to_serial("E: createFile: Error: owner inválido o referencia nula");
+        return -1;
+    }
+    Process writing_owner_process = getProcess(writing_owner_pid);
+    Process reading_owner_process = getProcess(reading_owner_pid);
+
+    // Asignar los valores a internalPermissions
+    internalPermissions->writing_owner = writing_owner_pid;
+    internalPermissions->writing_owner_program = writing_owner_process.program;
+    internalPermissions->writing_conditions = permissions.writing_conditions;
+
+    internalPermissions->reading_owner = reading_owner_pid;
+    internalPermissions->reading_owner_program = reading_owner_process.program;
+    internalPermissions->reading_conditions = permissions.reading_conditions;
+
+    return 0;
+}
+
+
 uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissions permissions) {
-    if (path == NULL || strlen_impl(path) >= 256) {
+    if (path == NULL || strlen(path) >= 256) {
+        log_to_serial("E: createFile: path inválido o demasiado largo");
         return 0; // Error: path inválido
+    }
+
+    InternalFilePermissions internalPermissions;
+    if (convertToInternalPermissions(permissions, &internalPermissions) != 0) {
+        log_to_serial("E: createFile: Error al convertir permisos a internos");
+        return 0; // Error: permisos inválidos
     }
 
     uint64_t fileId = nextFileId++;
@@ -49,12 +108,13 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
         }
 
         newFile->file.id = fileId;
-        strcpy_impl(newFile->file.path, path);
+        strcpy(newFile->file.path, path);
         newFile->file.type = type;
         newFile->file.size = size;
-        newFile->file.permissions = permissions;
         newFile->readPointer = 0;
         newFile->writePointer = 0;
+        newFile->closed_for_writing = 0;
+        newFile->permissions = internalPermissions;
         
         newFile->data = (uint8_t*)malloc(size);
         if (newFile->data == NULL) {
@@ -62,8 +122,11 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
             return 0; // Error: no hay memoria
         }
 
+        // Nuevo archivo va al comienzo de la lista
         newFile->next = fifoFileList;
         fifoFileList = newFile;
+        fifo_files_count++;
+
     } else if (type == FILE_TYPE_RAW_DATA) {
         RawFileControlBlock *newFile = (RawFileControlBlock*)malloc(sizeof(RawFileControlBlock));
         if (newFile == NULL) {
@@ -71,10 +134,10 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
         }
 
         newFile->file.id = fileId;
-        strcpy_impl(newFile->file.path, path);
+        strcpy(newFile->file.path, path);
         newFile->file.type = type;
         newFile->file.size = size;
-        newFile->file.permissions = permissions;
+        newFile->permissions = internalPermissions;
         
         newFile->data = (uint8_t*)malloc(size);
         if (newFile->data == NULL) {
@@ -82,13 +145,14 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
             return 0; // Error: no hay memoria
         }
 
-        // Inicializar datos en 0
+        // Inicializar datos en 0 por las dudas
         for (uint32_t i = 0; i < size; i++) {
             newFile->data[i] = 0;
         }
 
         newFile->next = rawFileList;
         rawFileList = newFile;
+        raw_files_count++;
     } else {
         return 0; // Error: tipo de archivo no soportado
     }
@@ -96,17 +160,16 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
     return fileId;
 }
 
-int removeFile(const uint64_t fileId, Pid pid) {
+// TODO: emitir el evento
+int removeFile(const uint64_t fileId) {
+    // Como no sabemos el tipo, buscamos en ambas listas
+
     // Buscar en archivos FIFO
     FifoFileControlBlock *prevFifo = NULL;
     FifoFileControlBlock *currentFifo = fifoFileList;
     
     while (currentFifo != NULL) {
         if (currentFifo->file.id == fileId) {
-            // Verificar permisos (solo el owner puede eliminar)
-            if (currentFifo->file.permissions.writing_owner != pid) {
-                return -1; // Error: sin permisos
-            }
             
             // Remover de la lista
             if (prevFifo == NULL) {
@@ -117,6 +180,10 @@ int removeFile(const uint64_t fileId, Pid pid) {
             
             free(currentFifo->data);
             free(currentFifo);
+            fifo_files_count--;
+
+            // TODO: emitir un evento de EOF para desbloquear a los procesos que estuvieran esperando en este FIFO
+
             return 0;
         }
         prevFifo = currentFifo;
@@ -129,11 +196,6 @@ int removeFile(const uint64_t fileId, Pid pid) {
     
     while (currentRaw != NULL) {
         if (currentRaw->file.id == fileId) {
-            // Verificar permisos (solo el owner puede eliminar)
-            if (currentRaw->file.permissions.writing_owner != pid) {
-                return -1; // Error: sin permisos
-            }
-            
             // Remover de la lista
             if (prevRaw == NULL) {
                 rawFileList = currentRaw->next;
@@ -143,6 +205,10 @@ int removeFile(const uint64_t fileId, Pid pid) {
             
             free(currentRaw->data);
             free(currentRaw);
+            raw_files_count--;
+
+            // TODO: emitir un evento de EOF para desbloquear a los procesos que estuvieran esperando en este FIFO
+
             return 0;
         }
         prevRaw = currentRaw;
@@ -152,197 +218,268 @@ int removeFile(const uint64_t fileId, Pid pid) {
     return -1; // Error: archivo no encontrado
 }
 
-uint64_t openFile(const char *path, Pid pid, FileAction action) {
-    // Buscar en archivos FIFO
-    FifoFileControlBlock *currentFifo = fifoFileList;
-    while (currentFifo != NULL) {
-        if (strcmp_impl(currentFifo->file.path, path) == 0) {
-            if (validateFileAccessPermissions(currentFifo->file.id, pid, action) == 0) {
+// El pid por ahora no se usa ya que no se lleva un registro de archivos abiertos por proceso
+// Pero se deja para que futuras implementaciones no rompan la API
+// Devuelve el ID del archivo si se encuentra, 0 si no se encuentra o no se puede abrir (ej. FIFO cerrado para escritura)
+// No valida permisos pero sí valida el tipo de archivo, útil ya que al abrir un archivo tenés que saber el tipo porque se leen/escriben de forma diferente
+uint64_t openFile(const char *path, Pid pid, FileAction action, FileType type) {
+    if(type == FILE_TYPE_FIFO){
+        // Archivos FIFO
+        FifoFileControlBlock *currentFifo = fifoFileList;
+        while (currentFifo != NULL) {
+            if (strcmp(currentFifo->file.path, path) == 0) {
+                if (action == FILE_WRITE && currentFifo->closed_for_writing) {
+                    log_to_serial("E: openFile: archivo FIFO cerrado para escritura");
+                    return 0; // Error: archivo cerrado para escritura
+                }
                 return currentFifo->file.id;
             }
-            return 0; // Error: sin permisos
+            currentFifo = currentFifo->next;
+        }
+    } else if(type == FILE_TYPE_RAW_DATA) {
+        // Archivos Raw
+        RawFileControlBlock *currentRaw = rawFileList;
+        while (currentRaw != NULL) {
+            if (strcmp(currentRaw->file.path, path) == 0) {
+                return currentRaw->file.id;
+            }
+            currentRaw = currentRaw->next;
+        }
+    }
+
+    return 0; // Error: archivo no encontrado (o tipo desconocido)
+}
+
+// La verdad está de onda esta función, porque como no se lleva un registro de archivos abiertos por proceso, no hace nada
+// O sea está meramente para mantener la API y que no se rompa nada después si lo implementamos 
+int closeFile(uint64_t fileId, Pid pid) {
+    return 0; 
+}
+
+
+// 0 en caso de éxito, -1 si no se pudo cometer la acción
+int closeFifoForWriting(uint64_t fileId){
+    FifoFileControlBlock *fifoFile = findFifoFile(fileId);
+    if (fifoFile == NULL) {
+        log_to_serial("E: closeFifoForWriting: archivo FIFO no encontrado");
+        return -1; // Error: archivo no encontrado
+    }
+
+    fifoFile->closed_for_writing = 1; // Marcar como cerrado para escritura
+
+    // Si el puntero de lectura alcanzó al de escritura, borrar el archivo
+    if (fifoFile->readPointer == fifoFile->writePointer) {
+        removeFile(fileId); // Esto libera la memoria y elimina el archivo de la lista emitiendo el evento EOF
+    }
+
+    return 0; // Éxito
+}
+
+void closeAllFifosOfProcess(Pid pid){
+    FifoFileControlBlock *currentFifo = fifoFileList;
+
+    while (currentFifo != NULL) {
+        // Solo cierro los fifos que son del proceso en cuestión y donde los permisos no sean '*' ni 'p'.
+        // Lo de '*' y 'p' es porque con esos permisos aunque el proceso owner muera otro proceso igual puede querer escribir. En este caso solo a mano se puede cerrar.
+        if (currentFifo->permissions.writing_owner == pid && currentFifo->permissions.writing_conditions != '*' && currentFifo->permissions.writing_conditions != 'p') {
+
+            currentFifo->closed_for_writing = 1; // Marcar como cerrado para escritura
+
+            // Si el puntero de lectura alcanzó al de escritura, borrar el archivo
+            if (currentFifo->readPointer == currentFifo->writePointer) {
+                removeFile(currentFifo->file.id); // Esto libera la memoria y elimina el archivo de la lista emitiendo el evento EOF
+            }
         }
         currentFifo = currentFifo->next;
     }
-
-    // Buscar en archivos Raw
-    RawFileControlBlock *currentRaw = rawFileList;
-    while (currentRaw != NULL) {
-        if (strcmp_impl(currentRaw->file.path, path) == 0) {
-            if (validateFileAccessPermissions(currentRaw->file.id, pid, action) == 0) {
-                return currentRaw->file.id;
-            }
-            return 0; // Error: sin permisos
-        }
-        currentRaw = currentRaw->next;
-    }
-
-    return 0; // Error: archivo no encontrado
 }
 
-int closeFile(uint64_t fileId, Pid pid) {
-    // Por ahora solo validamos que el archivo existe
-    FifoFileControlBlock *fifoFile = findFifoFile(fileId);
-    if (fifoFile != NULL) {
-        return 0;
-    }
 
-    RawFileControlBlock *rawFile = findRawFile(fileId);
-    if (rawFile != NULL) {
-        return 0;
-    }
-
-    return -1; // Error: archivo no encontrado
-}
-
+// Valida si el proceso tiene permisos para leer/escribir el archivo
+// Es booleana, retorna 1 si tiene permisos y 0 si no (si el archivo no existe también retorna 0)
+// No se considera si el programa del proceso es "sudo" (o sea tiene permisos globales de acceso a archivos), eso se hace con validatePermissions en el syscallDispatcher como el resto de los permisos globales
 int validateFileAccessPermissions(uint64_t fileId, Pid pid, FileAction action) {
-    // Buscar el archivo
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
     if (fifoFile != NULL) {
-        return checkPermissions(fifoFile->file.permissions, pid, action);
+        return checkPermissions(fifoFile->permissions, pid, action);
     }
 
     RawFileControlBlock *rawFile = findRawFile(fileId);
     if (rawFile != NULL) {
-        return checkPermissions(rawFile->file.permissions, pid, action);
+        return checkPermissions(rawFile->permissions, pid, action);
     }
 
-    return -1; // Error: archivo no encontrado
+    log_to_serial("E: validateFileAccessPermissions: archivo no encontrado");
+    return 0; // Error: archivo no encontrado (se toma como que no tuviera permisos)
 }
 
-uint32_t readFifo(uint64_t fileId, void *buffer, uint32_t size) {
-    FifoFileControlBlock *file = findFifoFile(fileId);
-    if (file == NULL) {
-        return 0; // Error: archivo no encontrado
+// Valida si el archivo es del tipo especificado (FIFO o raw_data)
+// Útil ya que para leer/escribir no es la misma función para ambos tipos de archivos
+int validateFileType(uint64_t fileId, FileType type){
+    FifoFileControlBlock *fifoFile = findFifoFile(fileId);
+    if (fifoFile != NULL) {
+        return fifoFile->file.type == type;
+    }
+
+    RawFileControlBlock *rawFile = findRawFile(fileId);
+    if (rawFile != NULL) {
+        return rawFile->file.type == type;
+    }
+
+    log_to_serial("E: validateFileType: archivo no encontrado");
+    return 0; // Error: archivo no encontrado
+} 
+
+
+// ---- Funciones de lectura y escritura ---- //
+
+// Devuelve la cantidad de bytes leídos, o -1 para EOF y -2 para archivo no encontrado 
+int64_t readFifo(uint64_t fileId, void *buffer, uint32_t size) {
+    FifoFileControlBlock *fileBlock = findFifoFile(fileId);
+    if (fileBlock == NULL) {
+        log_to_serial("E: readFifo: archivo no encontrado");
+        return -2; // Error: archivo no encontrado
     }
 
     uint32_t bytesRead = 0;
     uint8_t *buf = (uint8_t*)buffer;
 
-    while (bytesRead < size && file->readPointer != file->writePointer) {
-        buf[bytesRead] = file->data[file->readPointer];
-        file->readPointer = (file->readPointer + 1) % file->file.size;
+    // Leer hasta el tamaño solicitado o hasta que no haya más datos (el puntero de lectura alcance al de escritura, es circular)
+    while (bytesRead < size && fileBlock->readPointer != fileBlock->writePointer) {
+        buf[bytesRead] = fileBlock->data[fileBlock->readPointer];
+        fileBlock->readPointer = (fileBlock->readPointer + 1) % fileBlock->file.size; // Esto hace circular al buffer
         bytesRead++;
+    }
+
+    if (fileBlock->readPointer == fileBlock->writePointer && fileBlock->closed_for_writing) {
+        log_to_serial("E: readFifo: EOF alcanzado");
+        removeFile(fileId); // Borra el archivo si se llegó al EOF
+        return -1; // EOF alcanzado
     }
 
     return bytesRead;
 }
 
-uint32_t writeFifo(uint64_t fileId, void *buffer, uint32_t size) {
-    FifoFileControlBlock *file = findFifoFile(fileId);
-    if (file == NULL) {
-        return 0; // Error: archivo no encontrado
+// Devuelve la cantidad de bytes escritos, o -1 para archivo cerrado para escritura y -2 para archivo no encontrado
+int64_t writeFifo(uint64_t fileId, void *buffer, uint32_t size) {
+    FifoFileControlBlock *fileBlock = findFifoFile(fileId);
+    if (fileBlock == NULL) {
+        return -2; // Error: archivo no encontrado
+    }
+
+    if(fileBlock->closed_for_writing) {
+        log_to_serial("E: writeFifo: archivo FIFO cerrado para escritura");
+        return -1; // Error: archivo cerrado para escritura
     }
 
     uint32_t bytesWritten = 0;
     uint8_t *buf = (uint8_t*)buffer;
 
-    while (bytesWritten < size) {
-        uint64_t nextWritePointer = (file->writePointer + 1) % file->file.size;
-        if (nextWritePointer == file->readPointer) {
-            // FIFO lleno
-            break;
-        }
-
-        file->data[file->writePointer] = buf[bytesWritten];
-        file->writePointer = nextWritePointer;
+    while (bytesWritten < size && fileBlock->writePointer != fileBlock->readPointer) {
+        fileBlock->data[fileBlock->writePointer] = buf[bytesWritten];
+        fileBlock->writePointer = (fileBlock->writePointer + 1) % fileBlock->file.size; // Esto hace circular al buffer
         bytesWritten++;
     }
 
     return bytesWritten;
 }
 
-uint32_t readRaw(uint64_t fileId, void *buffer, uint32_t size, uint32_t offset) {
-    RawFileControlBlock *file = findRawFile(fileId);
-    if (file == NULL) {
-        return 0; // Error: archivo no encontrado
+// Devuelve la cantidad de bytes leídos, o -1 para offset fuera de rango y -2 para archivo no encontrado
+int64_t readRaw(uint64_t fileId, void *buffer, uint32_t size, uint32_t offset) {
+    RawFileControlBlock *fileBlock = findRawFile(fileId);
+    if (fileBlock == NULL) {
+        log_to_serial("E: readRaw: archivo no encontrado");
+        return -2; // Error: archivo no encontrado
     }
 
-    if (offset >= file->file.size) {
-        return 0; // Error: offset fuera de rango
+    if (offset >= fileBlock->file.size) {
+        log_to_serial("E: readRaw: offset fuera de rango");
+        return -1; // Error: offset fuera de rango
     }
 
-    uint32_t maxRead = file->file.size - offset;
+    uint32_t maxRead = fileBlock->file.size - offset;
     uint32_t bytesToRead = (size < maxRead) ? size : maxRead;
 
     uint8_t *buf = (uint8_t*)buffer;
     for (uint32_t i = 0; i < bytesToRead; i++) {
-        buf[i] = file->data[offset + i];
+        buf[i] = fileBlock->data[offset + i];
     }
 
     return bytesToRead;
 }
 
-uint32_t writeRaw(uint64_t fileId, void *buffer, uint32_t size, uint32_t offset) {
-    RawFileControlBlock *file = findRawFile(fileId);
-    if (file == NULL) {
-        return 0; // Error: archivo no encontrado
+// Devuelve la cantidad de bytes escritos, o -1 para offset fuera de rango y -2 para archivo no encontrado
+// No realloca automáticamente
+int64_t writeRaw(uint64_t fileId, void *buffer, uint32_t size, uint32_t offset) {
+    RawFileControlBlock *fileBlock = findRawFile(fileId);
+    if (fileBlock == NULL) {
+        return -2; // Error: archivo no encontrado
     }
 
-    if (offset >= file->file.size) {
-        return 0; // Error: offset fuera de rango
+    if (offset >= fileBlock->file.size) {
+        return -1; // Error: offset fuera de rango
     }
 
-    uint32_t maxWrite = file->file.size - offset;
+    uint32_t maxWrite = fileBlock->file.size - offset;
     uint32_t bytesToWrite = (size < maxWrite) ? size : maxWrite;
 
     uint8_t *buf = (uint8_t*)buffer;
     for (uint32_t i = 0; i < bytesToWrite; i++) {
-        file->data[offset + i] = buf[i];
+        fileBlock->data[offset + i] = buf[i];
     }
 
     return bytesToWrite;
 }
 
-
-uint64_t * listFiles(char * path) {
-    // Contar archivos que coincidan con el path
-    int count = 0;
-    FifoFileControlBlock *currentFifo = fifoFileList;
-    while (currentFifo != NULL) {
-        if (strcmp_impl(currentFifo->file.path, path) == 0) {
-            count++;
-        }
-        currentFifo = currentFifo->next;
+// 0 éxito, -1 error (función interna)
+int reallocRawFile(RawFileControlBlock *fileBlock, uint32_t newSize) {
+    if (newSize <= fileBlock->file.size) {
+        fileBlock->file.size = newSize; // Actualizar el tamaño del archivo
+        return 0; // No se necesita reallocar
     }
 
-    RawFileControlBlock *currentRaw = rawFileList;
-    while (currentRaw != NULL) {
-        if (strcmp_impl(currentRaw->file.path, path) == 0) {
-            count++;
-        }
-        currentRaw = currentRaw->next;
+    uint8_t *newData = (uint8_t*)malloc(newSize);
+    if (newData == NULL) {
+        log_to_serial("E: reallocRawFile: no hay memoria para alocar más datos");
+        return -1; // Error: no hay memoria
     }
 
-    // Crear array de IDs (null terminated)
-    uint64_t *result = (uint64_t*)malloc((count + 1) * sizeof(uint64_t));
-    if (result == NULL) {
-        return NULL;
+    // Copiar los datos existentes al nuevo buffer
+    for (uint32_t i = 0; i < fileBlock->file.size; i++) {
+        newData[i] = fileBlock->data[i];
+    }
+    // Llenar con ceros el resto del nuevo buffer
+    for (uint32_t i = fileBlock->file.size; i < newSize; i++) {
+        newData[i] = 0;
     }
 
-    int index = 0;
-    currentFifo = fifoFileList;
-    while (currentFifo != NULL) {
-        if (strcmp_impl(currentFifo->file.path, path) == 0) {
-            result[index++] = currentFifo->file.id;
-        }
-        currentFifo = currentFifo->next;
-    }
-
-    currentRaw = rawFileList;
-    while (currentRaw != NULL) {
-        if (strcmp_impl(currentRaw->file.path, path) == 0) {
-            result[index++] = currentRaw->file.id;
-        }
-        currentRaw = currentRaw->next;
-    }
-
-    result[count] = 0; // Null terminator
-    return result;
+    // Actualizar el puntero de datos del archivo
+    free(fileBlock->data); // Liberar el buffer antiguo
+    fileBlock->data = newData;
+    fileBlock->file.size = newSize; // Actualizar el tamaño del archivo
+    return 0; // Éxito
 }
 
+// Escribe en un archivo raw, reallocando si es necesario
+// Devuelve la cantidad de bytes escritos, o -1 para error de reallocación y -2 para archivo no encontrado
+int64_t writeRawWithRealloc(uint64_t fileId, void *buffer, uint32_t size, uint32_t offset) {
+    RawFileControlBlock *fileBlock = findRawFile(fileId);
+    if (fileBlock == NULL) {
+        return -2; // Error: archivo no encontrado
+    }
+
+    if (offset + size > fileBlock->file.size) {
+        if (reallocRawFile(fileBlock, offset + size) != 0) {
+            return -1; // Error: no se pudo reallocar el archivo
+        }
+    }
+
+    return writeRaw(fileId, buffer, size, offset); // Llamar a la función de escritura normal
+}
+
+
 File getFileById(uint64_t fileId) {
-    File emptyFile = {0};
+    File emptyFile = {.id = 0};
     
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
     if (fifoFile != NULL) {
@@ -357,81 +494,132 @@ File getFileById(uint64_t fileId) {
     return emptyFile; // Archivo no encontrado
 }
 
+// Devuelve una lista de IDs de todos los archivos, ordenada por path
+// La lista es dinámica, se debe liberar con free() después de usarla
+// Devuelve NULL si no se encontraron archivos o si hubo un error
+// La lista termina con un 0 para indicar el final
+// La verdad podría ser más eficiente si guardo los archivos en orden directamente, pero bueno... quedará pendiente
+uint64_t * listFiles() {
+    uint32_t totalFiles = fifo_files_count + raw_files_count;
+
+    if (totalFiles == 0) {
+        return NULL;
+    }
+    
+    // Crear array temporal para ordenar por path
+    typedef struct {
+        uint64_t id;
+        char path[256]; // inicialmente lo programé siendo directo un puntero al path del FCB, para no usar strcpy, 
+                        // pero por las dudas lo copio porque si se borra un archivo en el medio de esto (si queremos hacer que PinkOS sea multi-threaded por ejemplo)
+                        // habría problemas porque después para el ordenamiento estaría leyendo un puntero a memoria liberada
+                        // igual medio que esta sería el menor de los problemas si queremos hacer PinkOS multi-threaded me parece...
+    } FileEntry;
+
+    FileEntry *fileEntries = (FileEntry*)malloc(sizeof(FileEntry) * totalFiles);
+    if (fileEntries == NULL) {
+        return NULL; // Error de memoria
+    }
+    
+    // Llenar array con archivos FIFO
+    uint32_t index = 0;
+    FifoFileControlBlock * currentFifo = fifoFileList;
+    while (currentFifo != NULL) {
+        fileEntries[index].id = currentFifo->file.id;
+        strcpy(fileEntries[index].path, currentFifo->file.path);
+        index++;
+        currentFifo = currentFifo->next;
+    }
+    
+    // Llenar array con archivos Raw
+    RawFileControlBlock * currentRaw = rawFileList;
+    while (currentRaw != NULL) {
+        fileEntries[index].id = currentRaw->file.id;
+        strcpy(fileEntries[index].path, currentRaw->file.path);
+        index++;
+        currentRaw = currentRaw->next;
+    }
+    
+    // Ordenar por path usando bubble sort (no es lo más eficiente pero es simple y funca)
+    for (uint32_t i = 0; i < totalFiles - 1; i++) {
+        for (uint32_t j = 0; j < totalFiles - i - 1; j++) {
+            if (strcmp(fileEntries[j].path, fileEntries[j + 1].path) > 0) {
+                // Intercambiar
+                FileEntry temp = fileEntries[j];
+                fileEntries[j] = fileEntries[j + 1];
+                fileEntries[j + 1] = temp;
+            }
+        }
+    }
+    
+    // Crear el array de resultados (null terminated)
+    uint64_t *result = (uint64_t*)malloc(sizeof(uint64_t) * (totalFiles + 1));
+    if (result == NULL) {
+        free(fileEntries);
+        return NULL; // Error de memoria
+    }
+    
+    // Copiar los IDs al array de resultados
+    for (uint32_t i = 0; i < totalFiles; i++) {
+        result[i] = fileEntries[i].id;
+    }
+    result[totalFiles] = 0; // termino con null
+    
+    free(fileEntries);
+    return result;
+}
+
+
+
+// Pid 0 se toma como modo kernel, o sea que puede setear permisos de cualquier archivo
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
+    InternalFilePermissions internalPermissions;
+    if (convertToInternalPermissions(permissions, &internalPermissions) != 0) {
+        return -1; // Error: permisos inválidos/mal formados
+    }
+
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
     if (fifoFile != NULL) {
-        if (fifoFile->file.permissions.writing_owner == pid) {
-            fifoFile->file.permissions = permissions;
-            return 0;
+        if(pid && fifoFile->permissions.writing_owner != pid) {
+            return -1; // Error: sin permisos para cambiar los permisos
         }
-        return -1; // Error: sin permisos
+        fifoFile->permissions = internalPermissions;
+        return 0; // Éxito
     }
 
     RawFileControlBlock *rawFile = findRawFile(fileId);
     if (rawFile != NULL) {
-        if (rawFile->file.permissions.writing_owner == pid) {
-            rawFile->file.permissions = permissions;
-            return 0;
+        if(pid && rawFile->permissions.writing_owner != pid) {
+            return -1; // Error: sin permisos para cambiar los permisos
         }
-        return -1; // Error: sin permisos
+        rawFile->permissions = internalPermissions;
+        return 0; // Éxito
     }
 
     return -1; // Error: archivo no encontrado
 }
 
-int setFilePath(uint64_t fileId, Pid pid, const char *newPath) {
-    if (newPath == NULL || strlen_impl(newPath) >= 256) {
+
+int setFilePath(uint64_t fileId, const char *newPath) {
+    if (newPath == NULL || strlen(newPath) >= 256) {
         return -1; // Error: path inválido
     }
 
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
     if (fifoFile != NULL) {
-        if (fifoFile->file.permissions.writing_owner == pid) {
-            strcpy_impl(fifoFile->file.path, newPath);
-            return 0;
-        }
-        return -1; // Error: sin permisos
+        strcpy(fifoFile->file.path, newPath);
+        return 0;
     }
 
     RawFileControlBlock *rawFile = findRawFile(fileId);
     if (rawFile != NULL) {
-        if (rawFile->file.permissions.writing_owner == pid) {
-            strcpy_impl(rawFile->file.path, newPath);
-            return 0;
-        }
-        return -1; // Error: sin permisos
+        strcpy(rawFile->file.path, newPath);
+        return 0;
     }
 
     return -1; // Error: archivo no encontrado
 }
 
-// Funciones auxiliares
 
-static int strcmp_impl(const char *str1, const char *str2) {
-    while (*str1 && *str2 && *str1 == *str2) {
-        str1++;
-        str2++;
-    }
-    return *str1 - *str2;
-}
-
-static void strcpy_impl(char *dest, const char *src) {
-    while (*src) {
-        *dest = *src;
-        dest++;
-        src++;
-    }
-    *dest = '\0';
-}
-
-static int strlen_impl(const char *str) {
-    int len = 0;
-    while (*str) {
-        len++;
-        str++;
-    }
-    return len;
-}
 
 static FifoFileControlBlock* findFifoFile(uint64_t fileId) {
     FifoFileControlBlock *current = fifoFileList;
@@ -455,32 +643,45 @@ static RawFileControlBlock* findRawFile(uint64_t fileId) {
     return NULL;
 }
 
-static int checkPermissions(FilePermissions permissions, Pid pid, FileAction action) {
+
+// Función booleana que en base a una struct de permisos, indica si un pid particular tiene permisos para realizar una acción dada
+// No se considera si el programa del proceso es "sudo" (o sea tiene permisos globales de acceso a archivos), eso se hace con validatePermissions en el syscallDispatcher como el resto de los permisos globales
+// Devuelve 1 si tiene permisos, 0 si no
+//* Es interna, la función pública es validateFileAccessPermissions y recibe un archivo, no un struct de permisos
+static int checkPermissions(InternalFilePermissions permissions, Pid pid, FileAction action) {
     // Determinar qué permisos verificar según la acción
     Pid owner;
+    Program program;
     char condition;
     
     if (action == FILE_WRITE) {
         owner = permissions.writing_owner;
+        program = permissions.writing_owner_program;
         condition = permissions.writing_conditions;
-    } else {
+    } else if (action == FILE_READ) {
         owner = permissions.reading_owner;
+        program = permissions.reading_owner_program;
         condition = permissions.reading_conditions;
+    } else if (action == FILE_READ_WRITE) {
+        return checkPermissions(permissions, pid, FILE_READ) && checkPermissions(permissions, pid, FILE_WRITE);
+    } else {
+        return 0; // Acción no válida, no tiene permisos
     }
 
     switch (condition) {
-        case '*': // Todos pueden acceder
-            return 0;
+        case '*': // Cualquiera puede acceder
+            return 1;
         case '-': // Nadie puede acceder
-            return -1;
-        case '.': // Solo el owner
-            return (pid == owner) ? 0 : -1;
-        case '+': // Owner y sus hijos/threads (simplificado: mismo owner)
-            return (pid == owner) ? 0 : -1;
-        case 'p': // Procesos del mismo programa (simplificado: mismo owner)
-            return (pid == owner) ? 0 : -1;
+            return 0;
+        case '.': // Solo el owner y su grupo
+            return isSameProcessGroup(pid, owner);
+        case '+': // Solo el grupo del owner y sus descendientes
+            return isDescendantOf(pid, owner); // no hace falta traer el main del owner porque un thread siempre crea archivos a nombre del main del grupo, la validación está en convertToInternalPermissions 
+        case 'p': // Procesos del mismo programa 
+            Process requesting_process = getProcess(pid); 
+            return (requesting_process.pid != 0 && requesting_process.program.command == program.command);
         default:
-            return -1; // Condición desconocida
+            return 0; // Condición desconocida
     }
 }
 

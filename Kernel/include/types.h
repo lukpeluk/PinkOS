@@ -33,6 +33,7 @@ typedef enum {
 //      -> Los descendientes son todos los procesos que en el arbol de procesos están por debajo del proceso main del proceso actual
 //      -> El permiso "nadie" es útil por ejemplo para crear archivos solo lectura o archivos que solo puede usar el kernel
 //      -> Tanto un programa con permisos root y el kernel mismo pueden leer y escribir en cualquier archivo, sin importar las condiciones
+//* ojo, cuando se crea un archivo y se le pasan los permisos, estos van a ser modificados, ya que por ejemplo el owner siempre será el main del grupo de procesos por más que se pase un thread
 typedef struct FilePermissions{
     Pid writing_owner;
     char writing_conditions;
@@ -40,12 +41,12 @@ typedef struct FilePermissions{
     char reading_conditions;
 } FilePermissions;
 
+// Los permisos no se encuentran en el archivo, no son públicos, pero podés preguntar si tenés permisos o no para hacer algo sobre un archivo
 typedef struct File{
     uint64_t id;    // ID único del archivo
     char path[256]; // Ruta al archivo incluyendo el nombre
     FileType type;  // Tipo de archivo, si es FIFO, raw_data, etc. Afecta a cómo se lee y escribe el archivo
     uint32_t size;  // Tamaño del archivo en bytes
-    FilePermissions permissions; // Quién puede leer/escribir el archivo
 } File;
 
 // ----- Process Manager Types -----

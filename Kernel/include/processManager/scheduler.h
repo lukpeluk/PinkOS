@@ -49,6 +49,9 @@ int isSameProcessGroup(Pid pid1, Pid pid2);
 // Devuelve el PID del proceso main del grupo al que pertenece el proceso especificado
 Pid getProcessGroupMain(Pid pid);
 
+// Devuelve si un proceso dado es descendiente de otro proceso (o sea, si es hijo, hijo de un hijo, thread de un hijo, etc.)
+// Si el proceso es el mismo devuelve 1 (se toma como que un proceso siempre es descendiente de sí mismo)
+int isDescendantOf(Pid child_pid, Pid parent_pid);
 
 Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
 
