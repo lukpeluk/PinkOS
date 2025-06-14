@@ -174,6 +174,7 @@ void unregisterEventSubscription(int eventId, Pid pid) {
                 // Removing a listener in the middle or end of the list
                 previous->next = current->next;
             }
+            free(current->condition_data); // Free the condition data if it was allocated
             free(current); // Free the memory allocated for the listener
             return; // Exit after removing the listener
         }
@@ -198,7 +199,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
     Listener* current = eventManager.events[eventId].listeners;
     Listener* previous = NULL;
     while (current != NULL) {
-        if (pid != NULL && current->pid != pid) {
+        if (pid != NULL && !isSameProcessGroup(current->pid, pid)) {
             // If the PID does not match, skip this listener
             current = current->next;
             continue;
@@ -234,12 +235,14 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             if (previous == NULL) {
                 // Removing the first listener in the list
                 eventManager.events[eventId].listeners = current->next;
+                free(current->condition_data); // Free the condition data if it was allocated
                 free(current); // Free the memory allocated for the listener
                 current = eventManager.events[eventId].listeners; // Move to next listener
                 continue; // Skip the rest of the loop to avoid double incrementing current
             } else {
                 // Removing a listener in the middle or end of the list
                 previous->next = current->next;
+                free(current->condition_data); // Free the condition data if it was allocated
                 free(current); // Free the memory allocated for the listener
                 current = previous->next; // Move to next listener
                 continue; // Skip the rest of the loop to avoid double incrementing current
@@ -276,6 +279,7 @@ void handleProcessDeath(Pid pid) {
                     // Removing a listener in the middle or end of the list
                     previous->next = current->next;
                 }
+                free(current->condition_data); // Free the condition data if it was allocated
                 free(current); // Free the memory allocated for the listener
                 current = (previous == NULL) ? eventManager.events[i].listeners : previous->next; // Move to next listener
             } else {
