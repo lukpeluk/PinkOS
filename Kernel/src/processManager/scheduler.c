@@ -5,12 +5,13 @@
 #include <stdlib.h>
 #include <memoryManager/memoryManager.h>
 #include <windowManager/windowManager.h>
+#include <fileSystem/fileSystem.h>
 
 #define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
 #define TICKS_TILL_SWITCH 1     // Cantidad de ticks hasta cambiar de proceso
 
 #define NULL 0
-
+#define VALIDATE_IO_FILE(id) (!id || validateFileType(stdin, FILE_TYPE_FIFO))
 
 typedef struct Semaphore {
     uint64_t id;                    // ID único del semáforo
@@ -27,6 +28,9 @@ typedef struct ProcessControlBlock {
     struct ProcessControlBlock * parent;
     struct ProcessControlBlock *next; // Siguiente proceso (lista circular)
     Semaphore * waiting_for;          // Semáforo que el proceso está esperando, NULL si no tiene
+    uint64_t stdin;
+    uint64_t stdout;                // Archivos de entrada/salida del proceso, deben mapearse al crear el proceso, si no se especifica no se asigna ninguno
+    uint64_t stderr;
 } ProcessControlBlock;
 
 
@@ -287,8 +291,9 @@ void quitWrapper(){
 
 // -- Crear procesos -- //
 
-// Agrega un nuevo proceso al planificador, no lo ejecuta inmediatamente
+// Agrega un nuevo proceso al planificador (función interna); no lo ejecuta inmediatamente
 // Le asigna un PID, inicializa el stack y los registros, y lo agrega a la lista de procesos
+// No se encarga de crear la ventana ni asignar I/O, eso lo debe hacer quien llame a esta función
 ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry, char *arguments, ProcessType type, Priority priority, ProcessControlBlock *parent) {
 
     // log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
@@ -320,23 +325,27 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     // log_to_serial("addProcessToScheduler : Asignando PID al nuevo proceso");
     // log_decimal(">>>>>>>>>>>>>>>>>>>>>>>>>>>> . addProcessToScheduler: PID asignado: ", newProcessBlock->process.pid);
 
-    newProcessBlock->process.type = type;                       // Tipo de proceso (normal, gráfico, etc.)
+    newProcessBlock->process.type = type;
     newProcessBlock->process.state = PROCESS_STATE_NEW;         // Estado inicial del proceso
     newProcessBlock->process.priority = priority;
     newProcessBlock->parent = parent;                           // Guardar el padre del proceso, si es que tiene uno
     newProcessBlock->quantum = getQuantumByPriority(priority);  // Cantidad de ticks que el proceso puede ejecutar antes de ser interrumpido
     newProcessBlock->waiting_for = NULL;                        // Inicializar el semáforo de espera como NULL
+
+    // Los descriptores de I/O en principio no se asignan, quien llame a esta función debe encargarse de asignarlos si es necesario
+    newProcessBlock->stdin = 0;
+    newProcessBlock->stdout = 0;
+    newProcessBlock->stderr = 0;
     
     newProcessBlock->stackBase = allocateStack();
-    newProcessBlock->registers.rsp = newProcessBlock->stackBase - 8;    // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
-    newProcessBlock->registers.rdi = (uint64_t)arguments;               // Guardar el argumento en los registros del proceso, el resto de los registros son basura
-
-
     if (newProcessBlock->stackBase == NULL) {
         log_to_serial("E: addProcessToScheduler: Error al alocar memoria para el stack del proceso");
         free(newProcessBlock); // Liberar el PCB si no se pudo alocar el stack
-        return NULL; // Error al alocar memoria para el stack
+        return NULL; // Error al alocar memoria
     }
+
+    newProcessBlock->registers.rsp = newProcessBlock->stackBase - 8;    // Inicializar stack pointer y restar lo que se va a usar para el ret a quitProgram
+    newProcessBlock->registers.rdi = (uint64_t)arguments;               // Guardar el argumento en los registros del proceso, el resto de los registros son basura
 
     // Guardo un puntero a la función de salida del programa, que es quitProgram (por eso rsp - 8)
     push_to_custom_stack_pointer(newProcessBlock->stackBase, (uint64_t)quitWrapper);
@@ -361,24 +370,28 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     // Si es el primer proceso, inicializar la lista (solo pasaría con el init)
     if (processList == NULL) {
         processList = newProcessBlock;
-        // currentProcessBlock = newProcessBlock; // Como es el primer proceso, lo hacemos el actual
     }
     processListTail->next = newProcessBlock;  
     newProcessBlock->next = processList;      
     processListTail = newProcessBlock;        
 
     processCount++;
-    //     log_to_serial("addProcessToScheduler: Proceso agregado con exito");
+    // log_to_serial("addProcessToScheduler: Proceso agregado con exito");
     return newProcessBlock; // Retornar el nuevo proceso agregado
 }
 
 
-Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_pid) {
+Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid parent_pid, uint64_t stdin, uint64_t stdout, uint64_t stderr) {
     // para debug
     if(parent_pid == 0) {
         // log_to_serial("newProcess: Creando nuevo proceso sin padre, Init");
     } else {
         // log_to_serial("newProcess: Creando nuevo proceso con padre");
+    }
+
+    if(!VALIDATE_IO_FILE(stdin) || !VALIDATE_IO_FILE(stdout) || !VALIDATE_IO_FILE(stderr)) {
+        log_to_serial("E: newProcess: algún descriptor no es un FIFO válido");
+        return 0;
     }
 
     if(parent_pid == 0 && processList != NULL) {
@@ -402,21 +415,50 @@ Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_p
     ProcessControlBlock * newProcessBlock = addProcessToScheduler(program, program.entry, arguments, PROCESS_TYPE_MAIN, priority, parent);
     if (newProcessBlock == NULL) {
         log_to_serial("E: addProcessToScheduler: Error al agregar el proceso al scheduler");
-        return 0; // Error al agregar el proceso al scheduler
+        return 0; 
     }
 
+    // Asignar los descriptores de I/O del proceso
+    // --------------------------------------------
+    if(stdin){
+        FilePermissions stdin_permissions = getFilePermissions(stdin); 
+        stdin_permissions.reading_owner = newProcessBlock->process.pid;
+        stdin_permissions.reading_conditions = '.';
+        setFilePermissions(stdin, 0, stdin_permissions);
+        newProcessBlock->stdin = stdin;
+    }
+    if(stdout){
+        FilePermissions stdout_permissions = getFilePermissions(stdout);
+        stdout_permissions.writing_owner = newProcessBlock->process.pid;
+        stdout_permissions.writing_conditions = '.';
+        setFilePermissions(stdout, 0, stdout_permissions);
+        newProcessBlock->stdout = stdout;
+    }
+    if(stderr){
+        FilePermissions stderr_permissions = getFilePermissions(stderr);
+        stderr_permissions.writing_owner = newProcessBlock->process.pid;
+        stderr_permissions.writing_conditions = '.';
+        setFilePermissions(stderr, 0, stderr_permissions);
+        newProcessBlock->stderr = stderr;
+    }
+
+    // Si es gráfico, crear la ventana asociada
     if (newProcessBlock->process.program.permissions & DRAWING_PERMISSION) {
         log_to_serial("newProcess: El proceso es grafico, creando ventana asociada");
         uint8_t *buffer = addWindow(newProcessBlock->process.pid);
         if (buffer == NULL) {
-            // log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
-            return 0;
+            log_to_serial("addProcessToScheduler: Error al agregar la ventana del proceso grafico");
+            terminateProcess(newProcessBlock->process.pid); // Si no se pudo crear la ventana, eliminar el proceso (capaz es demasiado drástico, no sé, para pensar)
         }
     }
 
     // log_to_serial("newMainProcess: Agregando nuevo proceso al scheduler");
     // log_decimal("newMain with PID: ", newProcessBlock->process.pid);
     return newProcessBlock->process.pid;
+}
+
+Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_pid){
+    return newProcessWithIO(program, arguments, priority, parent_pid, 0, 0, 0); // Llamar a la función con descriptores de I/O nulos (nomás por backwards compatibility) 
 }
 
 // Si se crea un thread desde un thread, se le asigna de padre el main del thread que lo creó
@@ -429,13 +471,19 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
-        parent = getProcessControlBlock(parent->parent);
+        parent = parent->parent;
     }
 
-    // le saco permisos gráficos al thread
-    Program threadProgram = parent->process.program;
-    // threadProgram.permissions &= ~DRAWING_PERMISSION; // Quitar permisos gráficos al thread
-    ProcessControlBlock * newProcessBlock = addProcessToScheduler(threadProgram, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
+    ProcessControlBlock * newProcessBlock = addProcessToScheduler(parent->process.program, entrypoint, arguments, PROCESS_TYPE_THREAD, priority, parent);
+    if (newProcessBlock == NULL) {
+        log_to_serial("E: addProcessToScheduler: Error al agregar el thread al scheduler");
+        return 0;
+    }
+
+    // Asignar los descriptores de I/O del thread (hereda los del padre así que no hay que setear permisos ni validar nada)
+    newProcessBlock->stdin = parent->stdin;
+    newProcessBlock->stdout = parent->stdout;
+    newProcessBlock->stderr = parent->stderr;
     
     // log_to_serial("W: newThread: Agregando nuevo thread al scheduler:");
     // log_decimal("I: newThread with PID: ", newProcessBlock->process.pid);
@@ -468,10 +516,13 @@ int terminateSingleProcess(uint32_t pid) {
 
     // Marcarlo como terminado para que el scheduler lo elimine
     to_remove->process.state = PROCESS_STATE_TERMINATED;
-    processCount++;
+    processCount--;
 
-    handleProcessDeath(to_remove->process.pid); // Enviar evento de muerte
+    // Cerrar la escritura de todos los fifos del proceso
+    closeAllFifosOfProcess(to_remove->process.pid);
 
+    // Emitir evento de muerte
+    handleProcessDeath(to_remove->process.pid); 
 }
 
 
@@ -534,7 +585,6 @@ void scheduleNextProcess() {
             // log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
             free(current->stackBase); // Liberar el stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
-
 
             prev->next = nextProcess; // Eliminar el proceso actual de la lista
             current = nextProcess;

@@ -85,10 +85,12 @@ int64_t writeRawWithRealloc(uint64_t fileId, void *buffer, uint32_t size, uint32
 File getFileById(uint64_t fileId);
 uint64_t * listFiles(); // devuelve los IDs de todos los archivos, ordenados por path (es más un tree que un ls)
 
+// El pid que se pasa se usa nomás para validar que el proceso tenga permisos para cambiar los permisos del archivo
 // Solo el owner de escritura o algo corriendo en modo kernel pueden cambiar los permisos de un archivo
 //      -> Para indicar que se llama como kernel, pasar un pid = 0; eso bypasea el chequeo de permisos
 // Retorna 0 si se pudo cambiar, -1 si no se pudo cambiar 
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions);
+FilePermissions getFilePermissions(uint64_t fileId); // Devuelve los permisos del archivo, validar antes que el archivo exista, si no devuelve la struct con todo 0
 
 // Cambia la ruta del archivo, devuelve 0 si se pudo cambiar, -1 si no se pudo cambiar
 int setFilePath(uint64_t fileId, const char *newPath); 

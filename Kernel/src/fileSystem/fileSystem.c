@@ -570,7 +570,7 @@ uint64_t * listFiles() {
 }
 
 
-
+// El pid que se pasa se usa nomás para validar que el proceso tenga permisos para cambiar los permisos del archivo
 // Pid 0 se toma como modo kernel, o sea que puede setear permisos de cualquier archivo
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
     InternalFilePermissions internalPermissions;
@@ -599,6 +599,31 @@ int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
     return -1; // Error: archivo no encontrado
 }
 
+FilePermissions getFilePermissions(uint64_t fileId) {
+    FilePermissions emptyPermissions = {0};
+
+    FifoFileControlBlock *fifoFile = findFifoFile(fileId);
+    if (fifoFile != NULL) {
+        FilePermissions permissions;
+        permissions.writing_owner = fifoFile->permissions.writing_owner;
+        permissions.writing_conditions = fifoFile->permissions.writing_conditions;
+        permissions.reading_owner = fifoFile->permissions.reading_owner;
+        permissions.reading_conditions = fifoFile->permissions.reading_conditions;
+        return permissions;
+    }
+
+    RawFileControlBlock *rawFile = findRawFile(fileId);
+    if (rawFile != NULL) {
+        FilePermissions permissions;
+        permissions.writing_owner = rawFile->permissions.writing_owner;
+        permissions.writing_conditions = rawFile->permissions.writing_conditions;
+        permissions.reading_owner = rawFile->permissions.reading_owner;
+        permissions.reading_conditions = rawFile->permissions.reading_conditions;
+        return permissions;
+    }
+
+    return emptyPermissions; // Archivo no encontrado
+}
 
 int setFilePath(uint64_t fileId, const char *newPath) {
     if (newPath == NULL || strlen(newPath) >= 256) {

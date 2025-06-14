@@ -8,12 +8,57 @@
 
 #define IS_GRAPHIC(ProcessBlock) (ProcessBlock->process.program.permissions & DRAWING_PERMISSION)
 
+/* DOCS
+    * Términos/conceptos del manejo de procesos en PinkOS:
+    * ----------------------------------------------------
+        * Hay procesos y threads;
+        *   -> Aunque a todo le llamamos proceso, así que decimos que hay dos tipos de procesos: main y thread.
+            * Un proceso main puede tener hijos propios, una ventana asociada en el caso de ser gráfico, y puede crear múltiples threads.
+            * Cuando soportemos archivos binarios, un proceso main será el que tenga su propio espacio de memoria (que compartirá con sus threads)
+            * Un thread es un proceso que comparte varias cosas con su proceso padre, como el stdin/stdout, permisos, ventana asociada, etc.
+            * Un thread no puede tener hijos ni threads propios; se creará todo a nombre del proceso main del thread.
+            * Puede pensarse a un thread como un worker del padre, se usa para hacer tareas en paralelo a nombre del mismo proceso, y para manejar los eventos asincrónicamente.
+            * Un proceso se crea a partir de un programa, un thread a partir de una función dentro del programa
+            * Cuando un proceso main muere, se matan a todos sus hijos incluyendo a sus threads
+            * Cuando un thread muere, no pasa nada ya que no tiene hijos propios y todos sus archivos también son del padre así que ni deben cerrarse
+            * Ambos procesos y threads tienen PID, y a efectos de scheduling (prioridad, semáforos, quantum, etc.) son tratados igual
+            
+        * Le llamamos "grupo de procesos" a un proceso main y sus threads
+            * Este es un concepto útil ya que comparten muchas cosas, como stdin/stdout, permisos sobre archivos, ventana asociada, etc.
+        
+        * Un proceso siempre tiene un padre, menos el primero que es el init (PID 1)
+            * En espacio de usuario, solo se permite crear procesos o bien hijos tuyos, o bien hijos de init (corriendo en el background, tipo nohup)
+            * No se puede matar a init
+
+        * Los descendientes de un proceso son todos los procesos que están por debajo de él en el árbol de procesos
+            * Es necesario saber los descendientes porque para los permisos puede interesar que algún archivo esté restringido exclusivamente a los descendientes de un proceso (más que nada para un IPC medianamente seguro)
+            * También porque al morir un proceso se matan todos sus descendientes (no permitimos procesos huérfanos, si querés que un proceso no dependa del padre, ejecutalo como nohup)
+             
+        * Un proceso puede estar en uno de los siguientes estados:
+            * NEW: El proceso fue creado pero no se inicializó (lo guardamos de onda, la verdad no se usa realmente)
+            * READY: El proceso está listo para ejecutarse, esperando su turno en el scheduler
+            * RUNNING: El proceso está actualmente en ejecución
+            * WAITING: El proceso está esperando algo (puede ser un semáforo o un evento como teclado, cambio de hora, etc.)
+            * TERMINATED: El proceso ha finalizado su ejecución y está listo para ser eliminado
+        
+        * Cada proceso tiene su STDIN, STDOUT Y STDERR, que son archivos FIFO (pipes)
+            * Si el proceso es main, estos archivos se le pasan al ser creado
+                -> Y los permisos se setean automáticamente para que el proceso se vuelva el owner de la acción que corresponda (leer o escribir según sea stdin o stdout/stderr)
+            * Si el proceso es un thread, hereda los archivos del padre
+                -> así que debe ser claro qué worker escribe/lee, o se deben usar mútexes para no generar conflictos
+            * Cuando muere un proceso, se cierran sus fifos de escritura ya que no se va a escribir más en ellos
+            * Pueden no tener (estar seteados a 0), en ese caso se ignora la entrada/salida (leer la entrada lee un EOF, escribir la salida no hace nada)
+            * Quien orquesta estos pipeos, creando y asignando los archivos, es el padre de cada proceso; por ejemplo la shell en el caso más común
+                -> Ej. si la shell recibe "A | B", mapearía el input de teclado a stdin de A, stdout de A a stdin de B, y stdout/error de B a la pantalla
+                    (Estos mapeos son siempre via archivos FIFO que la shell crea)
+*/
 
 void initScheduler();
 void schedulerLoop();
 
-// Agrega un proceso al scheduler, devuelve el PID del proceso agregado o 0 si hubo un error
+// Agrega un proceso main al scheduler, devuelve el PID del proceso agregado o 0 si hubo un error
 Pid newProcess(Program program, char *arguments, Priority priority, Pid parent_pid);
+Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid parent_pid, uint64_t stdin, uint64_t stdout, uint64_t stderr);
 
 // Crea un nuevo hilo (thread) para un proceso existente, devuelve el PID del nuevo hilo o 0 si hubo un error
 // La diferencia entre thread y proceso es que comparten el mismo espacio de memoria, no tienen una ventana asociada y no pueden tener hijos propios
@@ -50,7 +95,7 @@ int isSameProcessGroup(Pid pid1, Pid pid2);
 Pid getProcessGroupMain(Pid pid);
 
 // Devuelve si un proceso dado es descendiente de otro proceso (o sea, si es hijo, hijo de un hijo, thread de un hijo, etc.)
-// Si el proceso es el mismo devuelve 1 (se toma como que un proceso siempre es descendiente de sí mismo)
+// Si el proceso es el mismo devuelve 1 (por fines prácticos en esta función se toma como que un proceso siempre es descendiente de sí mismo)
 int isDescendantOf(Pid child_pid, Pid parent_pid);
 
 Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
