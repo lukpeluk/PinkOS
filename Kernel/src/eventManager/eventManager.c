@@ -2,6 +2,7 @@
 #include <eventManager/eventIds.h>
 
 #include <memoryManager/memoryManager.h>
+#include <windowManager/windowManager.h>
 #include <drivers/serialDriver.h>
 #include <lib.h>
 #include <drivers/pitDriver.h>
@@ -18,14 +19,15 @@ typedef struct Listener {
     Pid pid;
     void (*handler)(void* data);            // Para las suscripciones, es el handler que se va a llamar cuando ocurra el evento, como argumento se le pasa un puntero a los datos del evento
     void* data;                             // Para los waiting, es el dato que se memcopiará al puntero del evento
+    void* condition_data;                   // Esto se le pasa al filter para saber a qué condición se refiere el listener, por ejemplo, si es un evento de teclado, puede ser el código de la tecla que se está esperando  
     EventType type;
-    // char * arguments; // Arguments for the handler, if needed
     struct Listener* next; // Pointer to the next listener in the linked list
 } Listener;
 
 typedef struct {
     int id;
-    uint64_t size;
+    uint64_t data_size;
+    uint64_t condition_data_size; // Size of the condition data, if applicable
     Listener* listeners; // Pointer to the first listener in a linked list
 
 } Event;
@@ -40,46 +42,51 @@ static EventManager eventManager;
 void initEventManager() {
     // log_to_serial("Event Manager initialized");
     eventManager.events[KEY_EVENT].id = KEY_EVENT;
-    eventManager.events[KEY_EVENT].size = sizeof(KeyboardEvent);
+    eventManager.events[KEY_EVENT].data_size = sizeof(KeyboardEvent);
+    eventManager.events[KEY_EVENT].condition_data_size = sizeof(KeyboardCondition); // Size of the condition data for keyboard events
     eventManager.events[KEY_EVENT].listeners = NULL;
     // log_to_serial("Event Manager initialized: KEY_EVENT");
-    // log_decimal("Event size: ", eventManager.events[KEY_EVENT].size);
+    // log_decimal("Event size: ", eventManager.events[KEY_EVENT].data_size);
 
 
 
     eventManager.events[SLEEP_EVENT].id = SLEEP_EVENT;
-    eventManager.events[SLEEP_EVENT].size = sizeof(uint64_t);
+    eventManager.events[SLEEP_EVENT].data_size = sizeof(uint64_t);
+    eventManager.events[SLEEP_EVENT].condition_data_size = sizeof(SleepCondition); // Size of the condition data for sleep events
     eventManager.events[SLEEP_EVENT].listeners = NULL;
     // log_to_serial("Event Manager initialized: SLEEP_EVENT");
-    // log_decimal("Event size: ", eventManager.events[SLEEP_EVENT].size);
+    // log_decimal("Event size: ", eventManager.events[SLEEP_EVENT].data_size);
 
     eventManager.events[RTC_EVENT].id = RTC_EVENT;
-    eventManager.events[RTC_EVENT].size = sizeof(RTC_Time);
+    eventManager.events[RTC_EVENT].data_size = sizeof(RTC_Time);
+    eventManager.events[RTC_EVENT].condition_data_size = sizeof(RTCCondition); // Size of the condition data for RTC events
     eventManager.events[RTC_EVENT].listeners = NULL;
     // log_to_serial("Event Manager initialized: RTC_EVENT");
-    // log_decimal("Event size: ", eventManager.events[RTC_EVENT].size);
+    // log_decimal("Event size: ", eventManager.events[RTC_EVENT].data_size);
 
     eventManager.events[PROCESS_DEATH_EVENT].id = PROCESS_DEATH_EVENT;
-    eventManager.events[PROCESS_DEATH_EVENT].size = sizeof(Pid);
+    eventManager.events[PROCESS_DEATH_EVENT].data_size = sizeof(Pid);
+    eventManager.events[PROCESS_DEATH_EVENT].condition_data_size = sizeof(ProcessDeathCondition); // Size of the condition data for process death events
     eventManager.events[PROCESS_DEATH_EVENT].listeners = NULL;
     // log_to_serial("Event Manager initialized: PROCESS_DEATH_EVENT");
-    // log_decimal("Event size: ", eventManager.events[PROCESS_DEATH_EVENT].size);
+    // log_decimal("Event size: ", eventManager.events[PROCESS_DEATH_EVENT].data_size);
 
     eventManager.events[EXCEPTION_EVENT].id = EXCEPTION_EVENT;
-    eventManager.events[EXCEPTION_EVENT].size = sizeof(Exception);
+    eventManager.events[EXCEPTION_EVENT].data_size = sizeof(Exception);
+    eventManager.events[EXCEPTION_EVENT].condition_data_size = sizeof(ExceptionCondition); // Size of the condition data for exception events
     eventManager.events[EXCEPTION_EVENT].listeners = NULL;
     // log_to_serial("Event Manager initialized: EXCEPTION_EVENT");
-    // log_decimal("Event size: ", eventManager.events[EXCEPTION_EVENT].size);
+    // log_decimal("Event size: ", eventManager.events[EXCEPTION_EVENT].data_size);
 
     eventManager.events[BROADCAST_EVENT].id = BROADCAST_EVENT;
-    eventManager.events[BROADCAST_EVENT].size = 0; // Broadcast events don't have a specific size
+    eventManager.events[BROADCAST_EVENT].data_size = 0; // Broadcast events don't have a specific size
     eventManager.events[BROADCAST_EVENT].listeners = NULL;
     // log_to_serial("Event Manager initialized: BROADCAST_EVENT");
-    // log_decimal("Event size: ", eventManager.events[BROADCAST_EVENT].size);
+    // log_decimal("Event size: ", eventManager.events[BROADCAST_EVENT].data_size);
     
 }
 
-void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)) {
+void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data), void* condition_data) {
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID
     }
@@ -91,6 +98,18 @@ void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)
 
     newListener->pid = pid;
     newListener->handler = handler;
+    newListener->data = NULL; // No data for subscriptions
+    if (condition_data != NULL){
+        newListener->condition_data = malloc(eventManager.events[eventId].condition_data_size);
+        if (!newListener->condition_data) {
+            free(newListener); // Free the listener if condition data allocation fails
+            return; // Memory allocation failed
+        }
+        memcpy(newListener->condition_data, condition_data, eventManager.events[eventId].condition_data_size);
+       
+    } else {
+        newListener->condition_data = NULL; // No condition data for subscriptions
+    }
     newListener->type = SUSCRIPTION;
 
     // Add the new listener to the linked list of listeners for the event
@@ -100,7 +119,7 @@ void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)
 
 }
 
-void registerEventWaiting(int eventId, Pid pid, void* data) {
+void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data) {
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID
     }
@@ -111,7 +130,18 @@ void registerEventWaiting(int eventId, Pid pid, void* data) {
     }
 
     newListener->pid = pid;
+    newListener->handler = NULL; // No handler for waiting events
     newListener->data = data;
+    if (condition_data != NULL){    
+        newListener->condition_data = malloc(eventManager.events[eventId].condition_data_size);
+        if (!newListener->condition_data) {
+            free(newListener); // Free the listener if condition data allocation fails
+            return; // Memory allocation failed
+        }
+        memcpy(newListener->condition_data, condition_data, eventManager.events[eventId].condition_data_size);
+    } else {
+        newListener->condition_data = NULL; // No condition data for waiting events
+    }
     newListener->type = WAITING;
 
     // Add the new listener to the linked list of listeners for the event
@@ -152,24 +182,41 @@ void unregisterEventSubscription(int eventId, Pid pid) {
     }
 }
 
-
-void notifyEvent(int eventId, void* data) {
+/**
+ * Notify all listeners of a specific event.
+ * 
+ * @param pid The PID of the process to notify, or NULL to notify all processes.
+ * @param eventId The ID of the event to notify.
+ * @param data Pointer to the data associated with the event.
+ * @param filter Optional filter function to apply to the condition data of each listener.
+ */
+void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition_data, void* data)) {
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID
     }
 
     Listener* current = eventManager.events[eventId].listeners;
+    Listener* previous = NULL;
     while (current != NULL) {
+        if (pid != NULL && current->pid != pid) {
+            // If the PID does not match, skip this listener
+            current = current->next;
+            continue;
+        }
+        if (filter != NULL && !filter(current->condition_data, data)) {
+            // If a filter is provided and it returns false, skip this listener
+            current = current->next;
+            continue;
+        }
         if (current->type == SUSCRIPTION) {
-
-            void *eventData = malloc(eventManager.events[eventId].size);
+            void *eventData = malloc(eventManager.events[eventId].data_size);
             if (!eventData) {
                 // Handle error: memory allocation failed
                 // You might want to log this or take some other action
                 return;
             }  
             // Copy the data to the eventData buffer
-            memcpy(eventData, data, eventManager.events[eventId].size);
+            memcpy(eventData, data, eventManager.events[eventId].data_size);
             
             // Create a thread to handle the event
             Pid pid = newThread(current->handler, eventData, PRIORITY_NORMAL, current->pid);
@@ -182,12 +229,36 @@ void notifyEvent(int eventId, void* data) {
             }
         } else if (current->type == WAITING) {
             // Notify to the scheduler that the process is not waiting anymore
-            memcpy(current->data, data, eventManager.events[eventId].size);
+            memcpy(current->data, data, eventManager.events[eventId].data_size);
             wakeProcess(current->pid);
+            if (previous == NULL) {
+                // Removing the first listener in the list
+                eventManager.events[eventId].listeners = current->next;
+                free(current); // Free the memory allocated for the listener
+                current = eventManager.events[eventId].listeners; // Move to next listener
+                continue; // Skip the rest of the loop to avoid double incrementing current
+            } else {
+                // Removing a listener in the middle or end of the list
+                previous->next = current->next;
+                free(current); // Free the memory allocated for the listener
+                current = previous->next; // Move to next listener
+                continue; // Skip the rest of the loop to avoid double incrementing current
+            }
             
         }
+        previous = current;
         current = current->next;
     }
+}
+
+
+int filterProcessDeathCondition(void* condition_data, void* data) {
+    if (condition_data == NULL || data == NULL) {
+        return 1; // No condition, accept all events
+    }
+    ProcessDeathCondition* condition = (ProcessDeathCondition*)condition_data;
+    Pid* pid = (Pid*)data;
+    return (*pid == condition->pid); // Filter by PID
 }
 
 void handleProcessDeath(Pid pid) {
@@ -214,22 +285,60 @@ void handleProcessDeath(Pid pid) {
         }
     }
 
-    notifyEvent(PROCESS_DEATH_EVENT, &pid);
+    notifyEvent(NULL, PROCESS_DEATH_EVENT, &pid, filterProcessDeathCondition);
+}
+
+
+int filterSleepCondition(void* condition_data, void* data) {
+    if (condition_data == NULL || data == NULL) {
+        return 1; // No condition, accept all events
+    }
+    SleepCondition* condition = (SleepCondition*)condition_data;
+    uint64_t* millis = (uint64_t*)data;
+    return (*millis == condition->millis); // Filter by milliseconds
 }
 
 void handleSleep(uint64_t millis) {
-    notifyEvent(SLEEP_EVENT, &millis);
+    notifyEvent(NULL, SLEEP_EVENT, &millis, filterSleepCondition);
+}
+
+int filterRTCCondition(void* condition_data, void* data) {
+    if (condition_data == NULL || data == NULL) {
+        return 1; // No condition, accept all events
+    }
+    RTCCondition* condition = (RTCCondition*)condition_data;
+    RTC_Time* time = (RTC_Time*)data;
+    return (time->seconds == condition->seconds && time->minutes == condition->minutes && time->hours == condition->hours); // Filter by time
 }
 
 void handleRTCEvent(RTC_Time time) {
-    notifyEvent(RTC_EVENT, &time);
+    notifyEvent(NULL, RTC_EVENT, &time, filterRTCCondition);
+}
+
+int filterKeyboardCondition(void* condition_data, void* data) {
+    if (condition_data == NULL || data == NULL) {
+        return 1; // No condition, accept all events
+    }
+    KeyboardCondition* condition = (KeyboardCondition*)condition_data;
+    KeyboardEvent* event = (KeyboardEvent*)data;
+    return (event->ascii == condition->ascii); // Filter by ASCII character
 }
 
 void handleKeyEvent(KeyboardEvent keyEvent) {
-    notifyEvent(KEY_EVENT, &keyEvent);
+    Pid process_with_focus = getFocusedWindow();
+    notifyEvent(process_with_focus, KEY_EVENT, &keyEvent, filterKeyboardCondition);
+}
+
+int filterExceptionCondition(void* condition_data, void* data) {
+    if (condition_data == NULL || data == NULL) {
+        return 1; // No condition, accept all events
+    }
+    ExceptionCondition* condition = (ExceptionCondition*)condition_data;
+    Exception* exception = (Exception*)data;
+    return (exception->exception_id == condition->exception_id); // Filter by exception ID
 }
 
 void handleException(Exception exception) {
-    notifyEvent(EXCEPTION_EVENT, &exception);
+    notifyEvent(NULL, EXCEPTION_EVENT, &exception, filterExceptionCondition);
 }
 

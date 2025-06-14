@@ -11,10 +11,36 @@
 #include <exceptions/exceptions.h>
 #include <processManager/scheduler.h>
 
+typedef struct KeyboardCondition {
+    // char scan_code; // The scan code of the key to filter
+    char ascii; // The ASCII character to filter
+} KeyboardCondition;
+
+typedef struct RTCCondition {
+    uint8_t seconds; // Seconds to filter
+    uint8_t minutes; // Minutes to filter
+    uint8_t hours;   // Hours to filter
+} RTCCondition;
+
+typedef struct SleepCondition {
+    uint64_t millis; // Milliseconds to filter
+} SleepCondition;
+
+typedef struct ProcessDeathCondition {
+    Pid pid; // PID of the process that died
+} ProcessDeathCondition;
+
+typedef struct ExceptionCondition {
+    uint64_t exception_id; // Exception ID to filter
+} ExceptionCondition;
+
+
+
+
 
 void initEventManager();
-void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data));
-void registerEventWaiting(int eventId, Pid pid, void* data);
+void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data), void* condition_data);
+void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data);
 void unregisterEventSubscription(int eventId, Pid pid);
 
 void handleProcessDeath(Pid pid);

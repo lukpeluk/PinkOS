@@ -69,11 +69,11 @@ void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uin
             break;
         case REGISTER_EVENT_SUSCRIPTION_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
-            registerEventSubscription((int) arg1, getCurrentProcessPID(), arg2);
+            registerEventSubscription((int) arg1, getCurrentProcessPID(), arg2, (void *)arg3);
             break;
         case REGISTER_EVENT_WAITING_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_WAITING_PERMISSION);
-            registerEventWaiting((int) arg1, getCurrentProcessPID(), (void *)arg2);
+            registerEventWaiting((int) arg1, getCurrentProcessPID(), (void *)arg2, (void *)arg3);
             break;
         case UNREGISTER_EVENT_SUSCRIPTION_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
