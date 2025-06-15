@@ -15,6 +15,7 @@ typedef enum {
     SUSCRIPTION,
     WAITING,
 } EventType;
+
 typedef struct Listener {
     Pid pid;
     void (*handler)(void* data);            // Para las suscripciones, es el handler que se va a llamar cuando ocurra el evento, como argumento se le pasa un puntero a los datos del evento
@@ -29,7 +30,6 @@ typedef struct {
     uint64_t data_size;
     uint64_t condition_data_size; // Size of the condition data, if applicable
     Listener* listeners; // Pointer to the first listener in a linked list
-
 } Event;
 
 
@@ -86,6 +86,9 @@ void initEventManager() {
     
 }
 
+// Registra un listener a un evento dado, en base al event id, el pid del proceso listener, un handler a ejecutar cuando el evento ocurra, y una condición.
+// La condición es para limitar la escucha, por ejemplo en evento de teclado, solo escuchar la letra 'a', o en evento de muerte de un proceso, especificar el PID
+// En principio cualquiera puede registrar una subscripción a un evento, pero si no tiene permisos de escucha del evento no se le notificará nada
 void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data), void* condition_data) {
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID

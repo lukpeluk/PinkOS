@@ -496,7 +496,7 @@ File getFileById(uint64_t fileId) {
 }
 
 // Devuelve una lista de IDs de todos los archivos, ordenada por path
-// La lista es dinámica, se debe liberar con free() después de usarla
+// La lista es dinámica, es tarea de quien llama a la función liberar la memoria
 // Devuelve NULL si no se encontraron archivos o si hubo un error
 // La lista termina con un 0 para indicar el final
 // La verdad podría ser más eficiente si guardo los archivos en orden directamente, pero bueno... quedará pendiente
@@ -571,6 +571,7 @@ uint64_t * listFiles() {
 
 
 // El pid que se pasa se usa nomás para validar que el proceso tenga permisos para cambiar los permisos del archivo
+// Solo alguien del grupo del owner puede cambiar los permisos
 // Pid 0 se toma como modo kernel, o sea que puede setear permisos de cualquier archivo
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
     InternalFilePermissions internalPermissions;
@@ -580,7 +581,7 @@ int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
 
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
     if (fifoFile != NULL) {
-        if(pid && fifoFile->permissions.writing_owner != pid) {
+        if(pid && isSameProcessGroup(fifoFile->permissions.writing_owner, pid)) {
             return -1; // Error: sin permisos para cambiar los permisos
         }
         fifoFile->permissions = internalPermissions;
@@ -589,7 +590,7 @@ int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
 
     RawFileControlBlock *rawFile = findRawFile(fileId);
     if (rawFile != NULL) {
-        if(pid && rawFile->permissions.writing_owner != pid) {
+        if(pid && isSameProcessGroup(rawFile->permissions.writing_owner, pid)) {
             return -1; // Error: sin permisos para cambiar los permisos
         }
         rawFile->permissions = internalPermissions;
@@ -680,7 +681,10 @@ static int checkPermissions(InternalFilePermissions permissions, Pid pid, FileAc
     Program program;
     char condition;
     
-    if (action == FILE_WRITE) {
+    if(action == FILE_REMOVE){
+        // Solo el owner de escritura y su grupo puede eliminar el archivo
+        return isSameProcessGroup(pid, permissions.writing_owner);
+    } else if (action == FILE_WRITE) {
         owner = permissions.writing_owner;
         program = permissions.writing_owner_program;
         condition = permissions.writing_conditions;

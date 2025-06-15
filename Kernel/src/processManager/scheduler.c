@@ -129,6 +129,19 @@ Process getParent(Pid pid){
     return process->parent->process; // Devuelve el proceso padre
 }
 
+// si no existe el proceso devuelve todo 0, pero debería validarse antes ya que esos pueden ser I/O válidos
+IO_Files getIOFiles(Pid pid){
+    IO_Files IO_files = {0};
+
+    ProcessControlBlock * process = getProcessControlBlock(pid);
+    if(process == NULL) return IO_files;
+
+    IO_files.stdin = process->stdin;
+    IO_files.stdin = process->stdout;
+    IO_files.stdin = process->stderr;
+    return IO_files;
+}
+
 // Devuelve una lista de todos los procesos en ejecución (para ps)
 // Deja en count la cantidad de procesos encontrados
 // Es tarea de quien llame a esta función liberar la memoria de la lista devuelta
@@ -140,7 +153,7 @@ Process * getAllProcesses(int *count) {
     } 
     *count = processCount; 
 
-    Process * processes = (Process *)malloc(sizeof(Process) * processCount); // Allocar memoria para 256 procesos
+    Process * processes = (Process *)malloc(sizeof(Process) * processCount);
     if(processes == NULL) return NULL; // Error al alocar memoria
 
     ProcessControlBlock * current = processList;
@@ -699,8 +712,9 @@ int wakeProcess(Pid pid) {
 
     do {
         if (current->process.pid == pid) {
-            // Cambiar el estado del proceso a WAITING
+            // Cambiar el estado del proceso a READY
             current->process.state = PROCESS_STATE_READY;
+            current->waiting_for = NULL; // Si estaba esperando un semáforo, limpiarlo
             return 0; // Éxito
         }
         current = current->next;
@@ -731,13 +745,16 @@ Semaphore * getSemaphore(uint64_t id) {
 
 // TODO: que los semáforos tengan permisos, al igual que los archivos, syscalls, etc. 
 //     -> (Básicamente quién puede modificarlo/esperarlo, si el proceso actual y sus threads, el actual e hijos, todas las instancias del programa, o todos.)
-void sem_init(int initial_value) {
+uint64_t sem_init(int initial_value) {
     Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
+    if(sem == NULL) return 0;
 
     sem->id = nextSemaphoreId++; 
     sem->value = initial_value;
     sem->next = firstSemaphore;
     firstSemaphore = sem; 
+
+    return sem->id;
 }
 
 
@@ -789,6 +806,7 @@ void sem_wait(uint64_t id) {
     if (sem->value < 0) {
         // No uso setWaiting porque es una función externa, iteraría al pedo
         currentProcessBlock->process.state = PROCESS_STATE_WAITING; 
+        currentProcessBlock->waiting_for = sem; // Guardar el semáforo que está esperando
         scheduleNextProcess();
     }
 }

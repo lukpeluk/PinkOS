@@ -7,5 +7,6 @@
 #define PROCESS_DEATH_EVENT 3
 #define EXCEPTION_EVENT 4
 #define BROADCAST_EVENT 5
+#define GLOBAL_KEY_EVENT 6
 
 #endif

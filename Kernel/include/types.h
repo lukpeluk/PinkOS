@@ -24,6 +24,7 @@ typedef enum {
     FILE_READ = 'r',  
     FILE_WRITE = 'w', 
     FILE_READ_WRITE = 'a',
+    FILE_REMOVE = 'd',
 } FileAction;
 
 // Quién puede leer y escribir en un archivo, no necesariamente quien puede leer es quien puede escribir

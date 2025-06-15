@@ -31,6 +31,10 @@
 #define SEM_WAIT_SYSCALL 32 // Deja al proceso en espera hasta que el semáforo tenga un valor positivo
 #define SEM_POST_SYSCALL 33 // Desencola un proceso que estaba esperando este semáforo, si no hay nadie esperando, incrementa el valor del semáforo
 
+#define READ_STDIN 40
+#define WRITE_STDOUT 41
+#define WRITE_STDERR 42
+
 // 100 - 199 reserved for EVENT syscalls
 #define SUSCRIBE_TO_EVENT_SYSCALL 100 // Registra un evento para que el proceso pueda recibir notificaciones
 #define UNSUBSCRIBE_TO_EVENT_SYSCALL 101 // Desregistra un evento para que el proceso no reciba más notificaciones

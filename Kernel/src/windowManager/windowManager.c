@@ -141,8 +141,9 @@ int switchToWindow(Pid pid) {
     return -1; // No se encontró la ventana con el PID especificado
 }
 
-
 // Devuelve los pids de las ventanas abiertas, iterando por esto y buscando el nombre del programa asociado al proceso implementás alt+tab
+// Null terminated
+// Es tarea de quien llame a esta función liberar la memoria del arreglo devuelto
 Pid * getWindows(){
     int count = 0;
     WindowControlBlock *current = focusedWindow;
@@ -157,7 +158,7 @@ Pid * getWindows(){
         return NULL;
     }
 
-    Pid *pids = (Pid *)malloc(sizeof(Pid) * count);
+    Pid *pids = (Pid *)malloc(sizeof(Pid) * count + 1); // +1 para el NULL al final
     if (pids == NULL) {
         // log_to_serial("getWindows: Error al allocar memoria para el arreglo de PIDs");
         return NULL;
@@ -168,6 +169,8 @@ Pid * getWindows(){
         pids[i] = current->pid;
         current = current->next;
     }
+
+    pids[count] = 0; // NULL al final para indicar el final de la lista
 
     return pids;
 }

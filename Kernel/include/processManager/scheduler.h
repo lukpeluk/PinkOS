@@ -85,6 +85,8 @@ Process getProcess(Pid pid); // Devuelve el proceso del pid especificado
 // Devuelve el proceso padre del proceso especificado, si devuelve un proceso con pid 0, significa que no hay padre (es el init o no existe el proceso)
 Process getParent(Pid pid);
 
+// si no existe el proceso devuelve todo 0, pero debería validarse antes ya que esos pueden ser I/O válidos
+IO_Files getIOFiles(Pid pid);
 
 // Retorna 1 si ambos procesos pertenecen al mismo grupo, 0 si no
 // Un grupo de procesos es el proceso main y sus threads, ya que para muchas cosas se los considera como un solo proceso
@@ -109,10 +111,10 @@ Priority getPriority(Pid pid); // Obtiene la prioridad de un proceso, devuelve L
 int setWaiting(Pid pid); // Deja el proceso en espera, si es el actual no se vuelve de esta función ya que se pasa al siguiente proceso
 int wakeProcess(Pid pid); // Despierta un proceso que estaba en espera
 
-void sem_init(int initial_value); // inicializa un semáforo con el valor especificado, devuelve el id del semáforo creado
-int sem_destroy(uint64_t id);     // destruye el semáforo con el id especificado, no se puede destruir si hay procesos esperándolo
-void sem_wait(uint64_t id);       // decrementa el semáforo de id especificado, si el valor es menor a cero bloquea el proceso
-void sem_post(uint64_t id);       // incrementa el semáforo de id especificado, si el valor es mayor o igual a cero despierta un proceso que estuviera esperando
+uint64_t sem_init(int initial_value);   // inicializa un semáforo con el valor especificado, devuelve el id del semáforo creado
+int sem_destroy(uint64_t id);           // destruye el semáforo con el id especificado, no se puede destruir si hay procesos esperándolo
+void sem_wait(uint64_t id);             // decrementa el semáforo de id especificado, si el valor es menor a cero bloquea el proceso
+void sem_post(uint64_t id);             // incrementa el semáforo de id especificado, si el valor es mayor o igual a cero despierta un proceso que estuviera esperando
 
 // Guarda los registros del proceso actual en el backup de registros
 // Importante ya que no solo se debe guardar el contexto en cada timertick, sino que debe guardarse en cada interrupción ya que puede no volver por donde vino
