@@ -1,5 +1,5 @@
 #include <programs.h>
-#include <syscallCodes.h>
+#include <syscalls/syscallCodes.h>
 #include <environmentApiEndpoints.h>
 #include <stdin.h>
 
@@ -8,22 +8,22 @@ extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg
 #define BUFFER_SIZE 200
 
 void parrot_main(char * args){
-    char buffer[BUFFER_SIZE];
-    char c;
+    // char buffer[BUFFER_SIZE];
+    // char c;
 
-    while (1){
-        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) " - ", 0, 0, 0);
+    // while (1){
+    //     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) " - ", 0, 0, 0);
 
-        int i = 0;
-        do{
-            c = get_char_from_stdin();
-            if(i < BUFFER_SIZE - 1 && c){
-                buffer[i] = c;
-                i++;
-            }
-        } while(c != '\n');
+    //     int i = 0;
+    //     do{
+    //         c = get_char_from_stdin();
+    //         if(i < BUFFER_SIZE - 1 && c){
+    //             buffer[i] = c;
+    //             i++;
+    //         }
+    //     } while(c != '\n');
         
-        buffer[i] = 0;
-        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) buffer, 0, 0, 0);
-    }
+    //     buffer[i] = 0;
+    //     syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t) buffer, 0, 0, 0);
+    // }
 }

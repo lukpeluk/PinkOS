@@ -1,7 +1,7 @@
 #include <programs.h>
-#include <stdpink.h>
-#include <graphicsLib.h>
-#include <audioLib.h>
+#include <libs/stdpink.h>
+#include <libs/graphicsLib.h>
+#include <libs/audioLib.h>
 #include <songs.h>
 #include <keyboard.h>
 #include <stdint.h>

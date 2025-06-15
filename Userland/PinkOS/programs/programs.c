@@ -1,208 +1,209 @@
 #include <programs.h>
-#include <syscallCodes.h>
+#include <syscalls/syscallCodes.h>
 #include <permissions.h>
-
-int strcmp(const char* a, const char* b) {
-    while (*a && *b && *a == *b) {
-        a++;
-        b++;
-    }
-    return *a - *b;
-}
+#include <libs/stdpink.h>
 
 
 static Program programs[] = {
     {
-        (char *)"echo", 
-        (char *)"echo", 
+        "shell", 
+        "PinkOS Shell", 
+        shell_main, 
+        0xFFFFFFFF, 
+        "The PinkOS Shell",
+        "Starts the PinkOS shell"
+    },
+    {
+        "echo", 
+        "echo", 
         echo_main, 
         0,
-        (char *)"Prints the argument to the console",
-        (char *)"usage: echo <text> \nEcho v1 \n Use this program to print text to the screen"
+        "Prints the argument to the console",
+        "usage: echo <text> \nEcho v1 \n Use this program to print text to the screen"
     },
     {
-        (char *)"forrestgump",
-        (char *)"Forrest Gump",
+        "forrestgump",
+        "Forrest Gump",
         forrest_gump_main,
         0,
-        (char *)"Run Forrest, run!",
-        (char *)"usage: forrest_gump \nForrest Gump v1 \n Runs, and runs, and runs..."
+        "Run Forrest, run!",
+        "usage: forrest_gump \nForrest Gump v1 \n Runs, and runs, and runs..."
     },
     {
-        (char *)"parrot",
-        (char *)"Parrot",
+        "parrot",
+        "Parrot",
         parrot_main,
         0,
-        (char *)"Like echo but for user input via stdin",
-        (char *)"usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
+        "Like echo but for user input via stdin",
+        "usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
     },
     {
-        (char *)"monalisa",
-        (char *)"Mona Lisa",
+        "monalisa",
+        "Mona Lisa",
         mona_lisa_main,
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
-        (char *)"Draws the Mona Lisa",
-        (char *)"usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the Mona Lisa on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
+        "Draws the Mona Lisa",
+        "usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the Mona Lisa on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
     },
     {
-        (char *)"date",
-        (char *)"Date",
+        "date",
+        "Date",
         date_main,
         0,
-        (char *)"Prints the current date",
-        (char *)"usage: date \nDate v1 \n Prints the current date"
+        "Prints the current date",
+        "usage: date \nDate v1 \n Prints the current date"
     },
     {
-        (char *)"time",
-        (char *)"Time",
+        "time",
+        "Time",
         time_main,
         0,
-        (char *)"Prints the current time",
-        (char *)"usage: time \nTime v1 \n Prints the current time"
+        "Prints the current time",
+        "usage: time \nTime v1 \n Prints the current time"
     },
     {
-        (char *)"help",
-        (char *)"Help",
+        "help",
+        "Help",
         help_main,
         0,
-        (char *)"Prints the help menu",
-        (char *)"usage: help \nHelp v1 \n Prints the help menu"
+        "Prints the help menu",
+        "usage: help \nHelp v1 \n Prints the help menu"
     },
     {
-        (char *)"man",
-        (char *)"MAN",
+        "man",
+        "MAN",
         man_main,
         0,
-        (char *)"Prints the manual of a program",
-        (char *)"Omg, you're reading the manual of the manual.\nThis is a bit meta, don't you think?"
+        "Prints the manual of a program",
+        "Omg, you're reading the manual of the manual.\nThis is a bit meta, don't you think?"
     },
     {
-        (char *)"test",
-        (char *)"Test",
+        "test",
+        "Test",
         test_main,
         0,
-        (char *)"Test program",
-        (char *)"usage: test <args> \nTest v1 \n Use this program to test the exception handling"
+        "Test program",
+        "usage: test <args> \nTest v1 \n Use this program to test the exception handling"
     },
     {
-        (char *)"ps",
-        (char *)"PS",
+        "ps",
+        "PS",
         ps_main,
         0,
-        (char *)"Prints the list of running processes",
-        (char *)"usage: ps \nPS v1 \n Prints the list of running processes"
+        "Prints the list of running processes",
+        "usage: ps \nPS v1 \n Prints the list of running processes"
     },
     {
-        (char *)"snake",
-        (char *)"Snake",
+        "snake",
+        "Snake",
         snake_main,
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
-        (char *)"Snake game",
-        (char *)"usage: snake <players> \nSnake v3.9 \n Use this program to play the snake game. \n You can play with 1 or 2 players. \n Player 1 controls: WASD \n Player 2 controls: IJKL \n Press ESC to exit the game. \n Have fun!"
+        "Snake game",
+        "usage: snake <players> \nSnake v3.9 \n Use this program to play the snake game. \n You can play with 1 or 2 players. \n Player 1 controls: WASD \n Player 2 controls: IJKL \n Press ESC to exit the game. \n Have fun!"
     },
     {
-        (char *)"spotify",
-        (char *)"Spotify",
+        "spotify",
+        "Spotify",
         spotify_main,
         PLAY_AUDIO_PERMISSION,
-        (char *)"Plays a song",
-        (char *)"Usage: spotify [-b] <song name>\nSpotify v2.0\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t * Pink Panther theme\n\t* Super Mario Bros theme\n\t* Fur Elise\n\t* Never Gonna Give You Up\n\nIf not in background mode, you can use space to pause/resume the song.\n"
+        "Plays a song",
+        "Usage: spotify [-b] <song name>\nSpotify v2.0\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t * Pink Panther theme\n\t* Super Mario Bros theme\n\t* Fur Elise\n\t* Never Gonna Give You Up\n\nIf not in background mode, you can use space to pause/resume the song.\n"
     },
     {
-        (char *)"pause",
-        (char *)"Pause",
+        "pause",
+        "Pause",
         pause_main,
         PLAY_AUDIO_PERMISSION,
-        (char *)"Pauses the current song",
-        (char *)"usage: pause \nPause v1 \n Pauses the current song"
+        "Pauses the current song",
+        "usage: pause \nPause v1 \n Pauses the current song"
     },
     {
-        (char *)"resume",
-        (char *)"Resume",
+        "resume",
+        "Resume",
         resume_main,
         PLAY_AUDIO_PERMISSION,
-        (char *)"Resumes the current song",
-        (char *)"usage: resume \nResume v1 \n Resumes the current song"
+        "Resumes the current song",
+        "usage: resume \nResume v1 \n Resumes the current song"
     },
     {
-        (char *)"clear",
-        (char *)"Clear",
+        "clear",
+        "Clear",
         clear_main,
         0,
-        (char *)"Clears the screen",
-        (char *)"usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
+        "Clears the screen",
+        "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
     },
     {
-        (char *)"ls",
-        (char *)"List",
+        "ls",
+        "List",
         easter_egg_main,
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
-        (char *)"List files",
-        (char *)"usage: ls \nList v1 \n List files in the current directory"
+        "List files",
+        "usage: ls \nList v1 \n List files in the current directory"
     },
     {
-        (char *)"ascii",
-        (char *)"Test ascii",
+        "ascii",
+        "Test ascii",
         test_ascii_main,
         0,
-        (char *)"Tests all ascii chars in stdout in a loop.",
-        (char *)"Usage: ascii\nTest ascii v1\n Tests all ascii chars in stdout in a loop."
+        "Tests all ascii chars in stdout in a loop.",
+        "Usage: ascii\nTest ascii v1\n Tests all ascii chars in stdout in a loop."
     },
     {
-        (char *)"demo",
-        (char *)"Demo",
+        "demo",
+        "Demo",
         demo_main,
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION, // | 0b10000000000000000000000000000000 ,
-        (char *)"Demo program for showcasing permissions",
-        (char *)"usage: demo \nDemo v1 \n Use this program to showcase the permission system of PinkOS in the demonstration."
+        "Demo program for showcasing permissions",
+        "usage: demo \nDemo v1 \n Use this program to showcase the permission system of PinkOS in the demonstration."
     }, 
     {
-        (char *)"whatsapp",
-        (char *)"Whatsapp",
+        "whatsapp",
+        "Whatsapp",
         whatsapp_main,
         MAKE_ETHEREAL_REQUEST_PERMISSION,
-        (char *)"Mandate mensajitos con el puerto serial",
-        (char *)"usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
+        "Mandate mensajitos con el puerto serial",
+        "usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
     },
     {
-        (char *)"francis",
-        (char *)"Francis",
+        "francis",
+        "Francis",
         francis_main,
         MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
-        (char *)"LO AMO",
-        (char *)"usage: francis \nFrancis v1 \n Use this program to see the love of your life."
+        "LO AMO",
+        "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
     },
     {
-        (char *)"pietra",
-        (char *)"Pietra",
+        "pietra",
+        "Pietra",
         pietra_main,
         MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
-        (char *)"Dibujar un bitmap",
-        (char *)"usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
+        "Dibujar un bitmap",
+        "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
     },
     {
-        (char *)"chatgpt",
-        (char *)"ChatGPT",
+        "chatgpt",
+        "ChatGPT",
         chatgpt_main,
         MAKE_ETHEREAL_REQUEST_PERMISSION,
-        (char *)"Chat with GPT-3",
-        (char *)"usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
+        "Chat with GPT-3",
+        "usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
     },
     {
-        (char *)"set_timezone",
-        (char *)"Set Timezone",
+        "set_timezone",
+        "Set Timezone",
         set_timezone_main,
         SET_TIMEZONE_PERMISSION,
-        (char *)"Set the timezone",
-        (char *)"usage: set_timezone <timezone> \nSet Timezone v1 \n Use this program to set the timezone of the system."
+        "Set the timezone",
+        "usage: set_timezone <timezone> \nSet Timezone v1 \n Use this program to set the timezone of the system."
     },
     {
-        (char *)"apt_install",
-        (char *)"Apt Install",
+        "apt_install",
+        "Apt Install",
         apt_install_main,
         MAKE_ETHEREAL_REQUEST_PERMISSION | CHANGE_FONT_SIZE_PERMISSION,
-        (char *)"Install a package",
-        (char *)"usage: apt_install \nApt Install v1 \n Use this program to install a package."
+        "Install a package",
+        "usage: apt_install \nApt Install v1 \n Use this program to install a package."
     },
     {
         "changetheme",

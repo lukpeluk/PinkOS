@@ -1,6 +1,6 @@
 #include <programs.h>
 #include <stdint.h>
-#include <stdpink.h>
+#include <libs/stdpink.h>
 #include <colors.h>
 
 

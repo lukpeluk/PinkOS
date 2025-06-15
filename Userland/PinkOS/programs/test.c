@@ -1,5 +1,5 @@
 #include <programs.h>
-#include <stdpink.h>
+#include <libs/stdpink.h>
 #include <stdint.h>
 
 extern void make_0x0_exception();

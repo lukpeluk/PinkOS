@@ -1,8 +1,8 @@
-#include <stdpink.h>
+#include <libs/stdpink.h>
 #include <stdint.h>
 
 #include <programs.h>
-#include <syscallCodes.h>
+#include <syscalls/syscallCodes.h>
 #include <environmentApiEndpoints.h>
 
 typedef struct {

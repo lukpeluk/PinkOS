@@ -2,13 +2,13 @@
 #include <keyboard.h>
 #include <programs.h>
 #include <permissions.h>
-#include <graphicsLib.h>
+#include <libs/graphicsLib.h>
 #include <stdin.h>
-#include <syscallCodes.h>
-#include <stdpink.h>
+#include <syscalls/syscallCodes.h>
+#include <libs/stdpink.h>
 #include <environmentApiEndpoints.h>
 #include <math.h>
-#include <audioLib.h>
+#include <libs/audioLib.h>
 #include <pictures.h>
 #include <ascii.h>
 

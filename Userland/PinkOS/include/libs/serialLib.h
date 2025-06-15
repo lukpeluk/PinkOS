@@ -12,6 +12,8 @@ typedef struct EtherPinkResponse{
 
 void make_ethereal_request(char * request, EtherPinkResponse * response);
 
+void log_to_serial(char * message); 
+
 
 
 #endif

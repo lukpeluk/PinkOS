@@ -1,8 +1,8 @@
-#include <serialLib.h>
+#include <libs/serialLib.h>
 #include <programs.h>
-#include <syscallCodes.h>
+#include <syscalls/syscallCodes.h>
 #include <environmentApiEndpoints.h>
-#include <stdpink.h>
+#include <libs/stdpink.h>
 
 #define BUFFER_SIZE 200
 

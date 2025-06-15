@@ -1,6 +1,6 @@
 #include <programs.h>
-#include <serialLib.h>
-#include <stdpink.h>
+#include <libs/serialLib.h>
+#include <libs/stdpink.h>
 
 
 void apt_install_main(char * args){

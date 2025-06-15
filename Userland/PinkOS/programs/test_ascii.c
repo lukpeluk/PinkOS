@@ -1,4 +1,4 @@
-#include <stdpink.h>
+#include <libs/stdpink.h>
 
 
 void test_ascii_main(char *args){

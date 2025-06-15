@@ -184,20 +184,22 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             }
             break; 
 
-        case WRITE_STDOUT:
+        case WRITE_STDOUT: {
             // * orden syscall: buffer con la info a escribir, cantidad de bytes a escribir
             // * retrona: un signed int de 64 bits, con la cantidad de bytes que en efecto escribió, -1 si el archivo está cerrado para escritura, -2 si el archivo no existe
 
-            IO_Files IO_files = getIOFiles(getCurrentProcessPID());
-            return writeFifo(IO_files.stdout, (void *)arg1, (uint32_t)arg2);
+                IO_Files IO_files = getIOFiles(getCurrentProcessPID());
+                return writeFifo(IO_files.stdout, (void *)arg1, (uint32_t)arg2);
+            }
             break;
 
-        case WRITE_STDERR:
+        case WRITE_STDERR:{
             // * orden syscall: buffer con la info a escribir, cantidad de bytes a escribir
             // * retrona: un signed int de 64 bits, con la cantidad de bytes que en efecto escribió, -1 si el archivo está cerrado para escritura, -2 si el archivo no existe
 
-            IO_Files IO_files = getIOFiles(getCurrentProcessPID());
-            return writeFifo(IO_files.stderr, (void *)arg1, (uint32_t)arg2);
+                IO_Files IO_files = getIOFiles(getCurrentProcessPID());
+                return writeFifo(IO_files.stderr, (void *)arg1, (uint32_t)arg2);
+            }
             break;
 
         // ------ EVENT HANDLING ------

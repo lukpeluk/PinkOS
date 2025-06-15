@@ -1,6 +1,6 @@
-#include <audioLib.h>
+#include <libs/audioLib.h>
 #include <stdint.h>
-#include <stdpink.h>
+#include <libs/stdpink.h>
 #include <songs.h>
 
 

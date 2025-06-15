@@ -1,5 +1,5 @@
-#include <serialLib.h>
-#include <syscallCodes.h>
+#include <libs/serialLib.h>
+#include <syscalls/syscallCodes.h>
 
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2);
 

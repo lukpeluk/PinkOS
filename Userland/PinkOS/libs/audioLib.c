@@ -1,9 +1,8 @@
-#include <audioLib.h>
+#include <libs/audioLib.h>
 #include <stdint.h>
-#include <syscallCodes.h>
-#include <stdpink.h>
+#include <syscalls/syscallCodes.h>
+#include <libs/stdpink.h>
 
-extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
 void play_audio(Note** notes, uint8_t loop, uint64_t tempo){
     syscall(PLAY_AUDIO_SYSCALL, (uint64_t)notes, (uint64_t)loop, tempo, 0, 0);

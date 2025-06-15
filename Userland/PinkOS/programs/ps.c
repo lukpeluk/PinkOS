@@ -1,5 +1,5 @@
 #include <programs.h>
-#include <stdpink.h>
+#include <libs/stdpink.h>
 
 void ps_main(char *args) {
     //    PID TTY          TIME CMD

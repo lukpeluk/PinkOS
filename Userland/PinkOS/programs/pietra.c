@@ -1,9 +1,9 @@
-#include <serialLib.h>
+#include <libs/serialLib.h>
 #include <programs.h>
-#include <syscallCodes.h>
+#include <syscalls/syscallCodes.h>
 #include <environmentApiEndpoints.h>
-#include <stdpink.h>
-#include <graphicsLib.h>
+#include <libs/stdpink.h>
+#include <libs/graphicsLib.h>
 #include <colors.h>
 
 #define FRANCIS_WIDTH 640

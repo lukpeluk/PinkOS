@@ -1,5 +1,5 @@
-#include <stdpink.h>
-#include <syscallCodes.h>
+#include <libs/stdpink.h>
+#include <syscalls/syscallCodes.h>
 
 extern uint64_t syscall(uint64_t syscall, uint64_t arg1);
 
