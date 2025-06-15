@@ -15,6 +15,7 @@
 #define SUCCESS 2
 #define ERROR 3
 #define GETTING_HEADERS 4
+#define SERIAL_OCCUPIED 5
 
 // RESPONSE TYPES
 #define FIXED_SIZE 0
