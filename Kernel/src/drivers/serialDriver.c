@@ -59,6 +59,14 @@ void finish_request(uint16_t code){
 }
 
 void make_ethereal_request(char * request, EtherPinkResponse * response){
+    if(current || clientResponse){
+        // si ya hay una request en curso, no se puede hacer otra
+        log_to_serial("ERROR: Ya hay una request en curso");
+        response->code = SERIAL_OCCUPIED;
+        response->size = 0;
+        return;
+    }
+
     // El cliente no debería usar todavía los datos porque code es NO_DATA_YET
     clientResponse = response;
     clientResponse->code = NO_DATA_YET;
