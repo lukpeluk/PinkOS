@@ -12,11 +12,13 @@
 #include <drivers/serialDriver.h>
 #include <drivers/pitDriver.h>
 #include <drivers/audioDriver.h>
+#include <drivers/mouseDriver.h>
 
 #include <processManager/scheduler.h>
 #include <windowManager/windowManager.h>
 #include <eventManager/eventManager.h>
 #include <processManager/scheduler.h>
+#include <programManager/programManager.h>
 
 #include <tests/tests.h>
 
@@ -318,7 +320,6 @@ void testScheduler(){
 		.entry = shell_main,
 		.permissions = 0xFFFFFFFF,
 		.help = "The PinkOS Shell",
-		.description = "Starts the PinkOS shell",
 	};
 
     // Test scheduler by creating a few processes and checking if they run
@@ -362,6 +363,7 @@ int main()
     initVideoDriver();
     initWindowManager();
     initEventManager();
+    initProgramManager();
 	init_rtc();
 	set_timezone(-3);
     init_mouse();

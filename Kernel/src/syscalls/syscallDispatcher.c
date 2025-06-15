@@ -12,19 +12,20 @@
 #include <processManager/scheduler.h>
 #include <windowManager/windowManager.h>
 #include <eventManager/eventManager.h>
+#include <programManager/programManager.h>
 #include <types.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return
 
-void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-void audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-void serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
+uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 
-void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     if(syscall < 1000)
         systemSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1100)
@@ -45,47 +46,300 @@ void syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t 
 
 
 // --- SYSTEM SYSCALLS ---
-void systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall) {
-        case SET_HANDLER_SYSCALL:
-            VALIDATE_PERMISSIONS(SET_HANDLER_PERMISSION);
-            registerHandler(arg1, (void *)arg2);
-            break;
+
+        // ----- PROCESS MANAGEMENT -----
         case RUN_PROGRAM_SYSCALL:
-            VALIDATE_PERMISSIONS(SET_PROCESS_PERMISSION);
-            // runProgram((Program *)arg1, (char *)arg2);
-            newProcess(*((Program*)arg1), (char *)arg2, PRIORITY_LOW, getCurrentProcessPID());
+            {// Orden Syscall: Program, args, priority, I/O (stdin, stdout, stderr), nohup
+
+                IO_Files* io_files = (IO_Files*)arg4;
+                // Program program = getProgram("comando");
+                char * args = strdup((char *)arg2); //TODO: allocar a nombre del proceso
+
+                return newProcessWithIO(*((Program*)arg1), args, arg3, arg5 ? getCurrentProcessPID() : 0, 
+                                io_files->stdin, io_files->stdout, io_files->stderr);
+            }
             break;
-        case QUIT_PROGRAM_SYSCALL:
-            // quitProgram();
+        case NEW_THREAD_SYSCALL:
+            VALIDATE_PERMISSIONS(SET_PROCESS_PERMISSION);
+            // Orden Syscall: entrypoint, args, priority
+
+            char * args = strdup((char *)arg2); //TODO: allocar a nombre del proceso
+            return newThread((ProgramEntry)arg1, args, arg3, getCurrentProcessPID());
+            break;
+        case QUIT_SYSCALL:
+            // Terminates the current process
             terminateProcess(getCurrentProcessPID());
             break;
-        case USER_ENVIRONMENT_API_SYSCALL:
-            callUserEnvironmentApiHandler(arg1, arg2, arg3, arg4, arg5);
+        case KILL_PROCESS_SYSCALL:
+            // Terminates the process with the given PID
+            terminateProcess((Pid)arg1);
             break;
-        case SET_SYSTEM_STACK_BASE_SYSCALL:
-            // ! DEPRECATED
-            // loadStackBase(arg1);
+        case CHANGE_PRIORITY_SYSCALL:
+            // Changes the priority of the process with the given PID
+            changePriority((Pid)arg1, (Priority)arg2);
             break;
-        case REGISTER_EVENT_SUSCRIPTION_SYSCALL:
+        
+        // SCHEDULING
+        case YIELD_SYSCALL:
+            // VALIDATE_PERMISSIONS(YIELD_PERMISSION);
+            // Yield the CPU to allow the scheduler to choose another process
+            scheduleNextProcess();
+            break;
+        case SET_WAITING_SYSCALL:
+            // VALIDATE_PERMISSIONS(WAITING_PERMISSION);
+            // Sets the current process to waiting state
+            setWaiting((Pid)arg1);
+            break;
+        case AGARRINI_LA_PALINI_SYSCALL: // Alias for WAKE_PROCESS_SYSCALL
+            // VALIDATE_PERMISSIONS(WAKE_PROCESS_PERMISSION);
+            // Wakes up the process with the given PID
+            wakeProcess((Pid)arg1);
+            break;
+        
+        // PROCESS INFO
+        case GET_PID_SYSCALL:
+            // Returns the PID of the current process
+            return getCurrentProcessPID();
+            break;
+        case GET_PROCESS_INFO_SYSCALL:
+            {
+                Process process = getProcess((Pid)arg1);
+                if (process.pid == 0) {
+                    return 0; // no encontrado
+                }
+                *(Process*) arg2 = process;
+            }
+            break;
+        case GET_PROCESS_LIST_SYSCALL:
+            // En arg1 se pasa un puntero a int donde se guardará
+            {
+                Process * processes = getAllProcesses(arg1);
+                if (processes == NULL) {
+                    return 0;
+                }
+                // Return the address of the process list
+                return (uint64_t)processes;
+            }
+            break;
+        case GET_GROUP_MAIN_PID_SYSCALL:
+            // Returns the PID of the main process of the group to which the current process belongs
+            return (uint64_t)getProcessGroupMain(getCurrentProcessPID());
+            break;
+        
+        // ----- SEMAPHORES -----
+        case SEM_INIT_SYSCALL:
+            // Initializes a semaphore with the given initial value
+            // VALIDATE_PERMISSIONS(SEM_INIT_PERMISSION);
+            sem_init((int)arg1);
+            break;
+        case SEM_DESTROY_SYSCALL:
+            // Destroys the semaphore with the given ID
+            // VALIDATE_PERMISSIONS(SEM_DESTROY_PERMISSION);
+            sem_destroy(arg1);
+            break;
+        case SEM_WAIT_SYSCALL:
+            // Waits for the semaphore with the given ID
+            // VALIDATE_PERMISSIONS(SEM_WAIT_PERMISSION);
+            sem_wait(arg1);
+            break;
+        case SEM_POST_SYSCALL:
+            // Posts to the semaphore with the given ID
+            // VALIDATE_PERMISSIONS(SEM_POST_PERMISSION);
+            sem_post(arg1);
+            break;
+
+
+        // ------ EVENT HANDLING ------
+        case SUSCRIBE_TO_EVENT_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
-            registerEventSubscription((int) arg1, getCurrentProcessPID(), arg2, (void *)arg3);
+            registerEventSubscription((int)arg1, getCurrentProcessPID(), (void (*)(void *))arg2, (void *)arg3);
             break;
-        case REGISTER_EVENT_WAITING_SYSCALL:
+        case UNSUBSCRIBE_TO_EVENT_SYSCALL:
+            // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
+            unregisterEventSubscription((int)arg1, getCurrentProcessPID());
+            break;
+        case WAIT_EVENT_SYSCALL:
             // VALIDATE_PERMISSIONS(EVENT_WAITING_PERMISSION);
-            registerEventWaiting((int) arg1, getCurrentProcessPID(), (void *)arg2, (void *)arg3);
+            // Waits for the event with the given ID
+            registerEventWaiting((int)arg1, getCurrentProcessPID(), (void *)arg2, (void *)arg3);
             break;
-        case UNREGISTER_EVENT_SUSCRIPTION_SYSCALL:
-            // VALIDATE_PERMISSIONS(EVENT_SUSCRIPTION_PERMISSION);
-            unregisterEventSubscription((int) arg1, getCurrentProcessPID());
+
+        // ----- FILE SYSTEM -----
+        case MK_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_CREATE_PERMISSION);
+            return createFile((char *)arg1, (FileType)arg2, (uint32_t)arg3, *(FilePermissions *)arg4);
             break;
+        case RM_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_DELETE_PERMISSION);
+            if (!validateFileAccessPermissions(arg1, getCurrentProcessPID(), FILE_WRITE)) {
+                return 0; // Permission denied
+            }
+            return removeFile(arg1);
+            break;
+
+        case OPEN_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_OPEN_PERMISSION);
+            uint64_t fileId = openFile((char *)arg1, (Pid)arg2, (FileAction)arg3, (FileType)arg4);
+            if (!validateFileAccessPermissions(fileId, (Pid)arg2, (FileAction)arg3))
+                return 0; // Permission denied
+
+            return fileId;
+            break;
+        case CLOSE_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_CLOSE_PERMISSION);
+            return closeFile((uint64_t)arg1, getCurrentProcessPID());
+            break;
+        case CLOSE_FIFO_FOR_WRITING_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_CLOSE_PERMISSION);
+            return closeFifoForWriting((uint64_t)arg1);
+            break;
+
+        case READ_RAW_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_READ_PERMISSION);
+            return readRaw((uint64_t)arg1, (void *)arg2, (uint32_t)arg3, (uint32_t)arg4);
+            break;
+        case WRITE_RAW_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_WRITE_PERMISSION);
+            return writeRaw((uint64_t)arg1, (void *)arg2, (uint32_t)arg3, (uint32_t)arg4);
+            break;
+        case READ_FIFO_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_READ_PERMISSION);
+            return readFifo((uint64_t)arg1, (void *)arg2, (uint32_t)arg3);
+            break;
+        case WRITE_FIFO_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_WRITE_PERMISSION);
+            return writeFifo((uint64_t)arg1, (void *)arg2, (uint32_t)arg3);
+            break;
+
+        case GET_FILE_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_READ_PERMISSION);
+            *(File*) arg2 = getFileById((uint64_t)arg1);
+            break;
+        case GET_FILE_LIST_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_READ_PERMISSION);
+            // return getFileList((uint64_t)arg1, getCurrentProcessPID());
+            break;
+
+        case SET_FILE_PERMISSIONS_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_SET_PERMISSIONS_PERMISSION);
+            return setFilePermissions((uint64_t)arg1, getCurrentProcessPID(), *(FilePermissions *)arg2);
+            break;
+        case GET_FILE_PERMISSIONS_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_GET_PERMISSIONS_PERMISSION);
+            {
+                FilePermissions permissions = getFilePermissions((uint64_t)arg1);
+                if (permissions.writing_owner == 0 && permissions.reading_owner == 0) {
+                    // File not found or no permissions set
+                    return 0;
+                }
+                *(FilePermissions *)arg2 = permissions;
+            }
+            break;
+        case VALIDATE_FILE_ACCESS_PERMISSIONS_SYSCALL:
+            // VALIDATE_PERMISSIONS(FILE_VALIDATE_PERMISSIONS_PERMISSION);
+            // Validates if the current process has permissions to access the file with the given action
+            return validateFileAccessPermissions((char *)arg1, (Pid)arg2, (FileAction)arg3);
+            break;
+
+        // MEMORY MANAGER
+        // case ALLOCATE_MEMORY_SYSCALL:
+        //     // VALIDATE_PERMISSIONS(MEMORY_ALLOCATE_PERMISSION);
+        //     return allocateMemory((uint64_t)arg1, (uint64_t)arg2);
+        //     break;
+        // case REALLOCATE_MEMORY_SYSCALL:
+        //     // VALIDATE_PERMISSIONS(MEMORY_REALLOCATE_PERMISSION);
+        //     return reallocateMemory((uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3);
+        //     break;
+        // case FREE_MEMORY_SYSCALL:
+        //     // VALIDATE_PERMISSIONS(MEMORY_FREE_PERMISSION);
+        //     return freeMemory((uint64_t)arg1);
+        //     break;
+        // TODO : Ver temas de system monitor
+
+        // WINDOW MANAGER
+        case SWITCH_WINDOW_SYSCALL:
+            // VALIDATE_PERMISSIONS(SWITCH_WINDOW_PERMISSION);
+            switchToWindow((Pid)arg1);
+            break;
+        case GET_WINDOW_LIST_SYSCALL:
+            // VALIDATE_PERMISSIONS(GET_WINDOW_LIST_PERMISSION);
+            return getWindows();
+            break;
+        case GET_FOCUSED_WINDOW_SYSCALL:
+            // VALIDATE_PERMISSIONS(GET_FOCUSED_WINDOW_PERMISSION);
+            return getFocusedWindow();
+            break;
+        case IS_FOCUSED_WINDOW_SYSCALL:
+            // VALIDATE_PERMISSIONS(IS_FOCUSED_WINDOW_PERMISSION);
+            {
+                Pid focusedWindow = getFocusedWindow();
+                return (focusedWindow == (Pid)arg1) ? 1 : 0; // Returns 1 if the PID is the focused window, 0 otherwise
+            }
+            break;
+        
+        // PROGRAM MANAGER
+        case GET_PROGRAM_SYSCALL:
+            // VALIDATE_PERMISSIONS(GET_PROGRAM_PERMISSION);
+            {
+
+                Program* program = getProgramByCommand((char *)arg1);
+                if (program == NULL) {
+                    // Program not found, return 0
+                    return 0;
+                }
+                // Return the address of the program
+                *(Program *)arg2 = *program;
+            }
+            break;
+        case GET_PROGRAM_LIST_SYSCALL:
+            // VALIDATE_PERMISSIONS(GET_PROGRAM_LIST_PERMISSION);
+            // Devuelve el puntero a la lista de programas y deja en arg1 la cantidad de programas
+            {
+                Program* programs = getAllPrograms();
+                *(int *)arg1 = getProgramsCount(); // Store the count of programs in arg1
+                // Return the address of the program list
+                return (uint64_t)programs;
+            }
+            break;
+        case SEARCH_PROGRAM_SYSCALL:
+            // VALIDATE_PERMISSIONS(SEARCH_PROGRAM_PERMISSION);
+            {
+                Program* program = searchProgramByPrefix((char *)arg1);
+                if (program == NULL) {
+                    // Program not found, return 0
+                    return 0;
+                }
+                // Return the PID of the program
+                return program->entry;
+            }
+            break;
+        case INSTALL_PROGRAM_SYSCALL:
+            // VALIDATE_PERMISSIONS(INSTALL_PROGRAM_PERMISSION);
+            {
+                Program * program = (Program *)arg1;
+                return installProgram(program); 
+            }
+            break;
+        case UNINSTALL_PROGRAM_SYSCALL:
+            // VALIDATE_PERMISSIONS(UNINSTALL_PROGRAM_PERMISSION);
+            {
+                const char * command = (const char *)arg1;
+                return uninstallProgramByCommand(command);
+            }
+            break;
+
+        // SYSTEM MONITOR
         default:
             break;
     }
+    return 0;
 }
 
+
 // --- VIDEO DRIVER SYSCALLS ---
-void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     uint8_t * videoBuffer = getBufferByPID(getCurrentProcessPID());
     switch (syscall)
     {
@@ -212,7 +466,7 @@ void videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
 }
 
 // --- PIT DRIVER SYSCALLS ---
-void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case SLEEP_SYSCALL:
@@ -228,7 +482,7 @@ void pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, 
 }
 
 // --- RTC DRIVER SYSCALLS ---
-void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case GET_RTC_TIME_SYSCALL:
@@ -245,7 +499,7 @@ void rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, 
 }
 
 // --- KEYBOARD DRIVER SYSCALLS ---
-void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case GET_KEY_EVENT_SYSCALL:
@@ -265,7 +519,7 @@ void keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t a
 }
 
 // --- AUDIO DRIVER SYSCALLS ---
-void audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case PLAY_AUDIO_SYSCALL:
@@ -303,7 +557,7 @@ void audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2
 }
 
 // --- SERIAL DRIVER SYSCALLS ---
-void serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
+uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     switch (syscall)
     {
         case MAKE_ETHEREAL_REQUEST_SYSCALL:

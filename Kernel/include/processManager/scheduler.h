@@ -72,7 +72,7 @@ int terminateProcess(Pid pid);
 
 
 // Pasa al siguiente proceso de la lista del scheduler
-void scheduleNextProcess(); // es un yeld básicamente
+void scheduleNextProcess(); // es un yield básicamente
 
 
 // Es necesario para saber cosas como en qué buffer de video escribir o darte cuenta de no matar el proceso actual
@@ -98,7 +98,7 @@ Pid getProcessGroupMain(Pid pid);
 // Si el proceso es el mismo devuelve 1 (por fines prácticos en esta función se toma como que un proceso siempre es descendiente de sí mismo)
 int isDescendantOf(Pid child_pid, Pid parent_pid);
 
-Process * getAllProcesses(); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
+Process * getAllProcesses(int * count); // Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
 
 int changePriority(Pid pid, Priority newPriority); // Cambia la prioridad de un proceso, devuelve -1 si no se pudo cambiar, 0 si se cambió correctamente
 Priority getPriority(Pid pid); // Obtiene la prioridad de un proceso, devuelve LOW, NORMAL o HIGH

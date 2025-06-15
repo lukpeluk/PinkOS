@@ -278,15 +278,18 @@ _irq0CHandler:
 
 ;Syscall
 _irq80Handler:
-	pushState
-
+	makeBackup
+	pushStateBesidesReturn
+	call saveRegisters
+	call backupCurrentProcessRegisters
+	
 	call syscallDispatcher
 
 	; signal pic EOI (End of Interrupt)
 	mov al, 20h
 	out 20h, al
 
-	popState
+	popStateBesidesReturn
 	iretq
 
 ;Zero Division Exception

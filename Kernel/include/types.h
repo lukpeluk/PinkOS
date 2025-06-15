@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#define NULL ((void*)0)
 
 // ----- Forward declarations -----
 typedef struct File File;
@@ -57,6 +58,12 @@ typedef void (*ProgramEntry)(char*);
 #define SMALL_TEXT_SIZE 64
 #define MEDIUM_TEXT_SIZE 56
 
+typedef struct IO_Files {
+    uint64_t stdin;  // Entrada estándar del proceso
+    uint64_t stdout; // Salida estándar del proceso
+    uint64_t stderr; // Error estándar del proceso
+} IO_Files;
+
 // CRI (Context recovery info) -> nos re inventamos el nombre el cuatri pasado lol, cosas de querer implementar pseudo procesos antes de cursar SO
 typedef struct {
     uint64_t ss;      // Stack Segment
@@ -66,24 +73,24 @@ typedef struct {
     uint64_t rip;     // Instruction Pointer
 } InterruptStackFrame;
 
-// typedef struct {
-//     char command[SMALL_TEXT_SIZE];
-//     char name[SMALL_TEXT_SIZE];
-//     ProgramEntry entry;
-//     uint32_t permissions;
-//     char help[MEDIUM_TEXT_SIZE];  // A very brief description
-//     char* description;  // All the information about the command (deprecated by the man page file)
-//     File man_page; // A publically readable but unmodifiable file with the program's manual
-// } Program;
-
 typedef struct {
-    char* command;
-    char* name;
+    char command[SMALL_TEXT_SIZE];
+    char name[SMALL_TEXT_SIZE];
     ProgramEntry entry;
     uint32_t permissions;
-    char* help;         // This is the help command (a very brief description)
-    char* description;  // All the information about the command
+    char help[MEDIUM_TEXT_SIZE];  // A very brief description
+    // char* description;  // All the information about the command (deprecated by the man page file)
+    uint64_t man_page; // A publically readable but unmodifiable file with the program's manual
 } Program;
+
+// typedef struct {
+//     char* command;
+//     char* name;
+//     ProgramEntry entry;
+//     uint32_t permissions;
+//     char* help;         // This is the help command (a very brief description)
+//     char* description;  // All the information about the command
+// } Program;
 
 typedef enum {
     PRIORITY_LOW,

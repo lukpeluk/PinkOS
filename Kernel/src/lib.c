@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <types.h>
 
 void * memset(void * destination, int32_t c, uint64_t length)
 {
@@ -117,3 +118,11 @@ int strlen(const char *str) {
     return len;
 }
 
+char *strdup(const char *str) {
+    char * new = malloc(strlen((char *)str) + 1);
+    if (new == NULL)
+        return NULL;
+    
+    strcpy(new, (char *)str);
+    return new;
+}

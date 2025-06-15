@@ -1,7 +1,6 @@
 ; basic assembly functions for system calls
 
 GLOBAL syscall
-GLOBAL sys_draw_char
 
 section .text
 syscall:

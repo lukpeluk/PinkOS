@@ -129,8 +129,9 @@ Process getParent(Pid pid){
     return process->parent->process; // Devuelve el proceso padre
 }
 
-// Devuelve una lista de todos los procesos en ejecución (para ps), cuando se encuentre un proceso con pid 0, significa el final de la lista
+// Devuelve una lista de todos los procesos en ejecución (para ps)
 // Deja en count la cantidad de procesos encontrados
+// Es tarea de quien llame a esta función liberar la memoria de la lista devuelta
 Process * getAllProcesses(int *count) {
     if(count == NULL) return NULL;
     if(processList == NULL){
@@ -150,7 +151,6 @@ Process * getAllProcesses(int *count) {
         current = current->next;
     } while (current != processList);
 
-    processes[index].pid = 0; // Marcar el final de la lista con un proceso inválido
     return processes;
 }
 
