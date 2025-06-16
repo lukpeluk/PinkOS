@@ -711,7 +711,6 @@ void draw_status_bar()
 
 	int screen_width = 0;
 	syscall(GET_SCREEN_WIDTH_SYSCALL, (uint64_t)&screen_width, 0, 0, 0, 0);
-
 	int char_width = getCharWidth();
 	time_position.x = getScreenWidth() - (11 * char_width);
 	logo_str[2] = 169;
@@ -966,19 +965,23 @@ void shell_main(char *args)
 {
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	// syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
+	log_to_serial("PinkOS shell started");
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
 
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"1", 0, 0, 0);
+	// installProgram(get_program_entry("francis"));
+	// runProgram(get_program_entry("francis"), (char *)"", PRIORITY_LOW, 0, 0);
 
-	home_screen();
+	// home_screen();
 	redraw();
 
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
-	syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)key_handler, 0, 0, 0);
-	syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
+	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)key_handler, 0, 0, 0);
+	subscribeToEvent(KEY_EVENT, (uint64_t)key_handler, 0);
+	subscribeToEvent(RTC_EVENT, (uint64_t)status_bar_handler, 0);
+	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	current_text_color = ColorSchema->text;

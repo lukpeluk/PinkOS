@@ -371,12 +371,7 @@ int main()
     // test_serial();
 
     log_to_serial("I: Kernel binary initialized, clearing BSS");
-    // schedulingTest("Scheduler Test");
-
-    // while (1)
-    // {
-    //     /* code */
-    // }
+    // schedulingTest("Scheduler Test");    
 
 	// testScreen();
 
@@ -384,7 +379,7 @@ int main()
 	// testAudio();
     // log_to_serial("I: Audio test finished");
 
-    ncPrint((const char *)"ya se termino todo lo de kernel, yendo a userspace\n");
+    // ncPrint((const char *)"ya se termino todo lo de kernel, yendo a userspace\n");
 
     ((EntryPoint)PinkOSAddress)();
 

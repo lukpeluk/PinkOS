@@ -408,7 +408,7 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
     }
 
     if(parent_pid == 0 && processList != NULL) {
-        // log_to_serial("newProcess: Init ya existe, error!");
+        log_to_serial("newProcess: Init ya existe, error!");
         return 0; // No se puede crear un proceso sin padre si ya hay un init
     }
 
