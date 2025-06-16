@@ -271,7 +271,7 @@ void unsubscribeFromEvent(int event_id);
  * @param condition_data condition for receiving the event, can be NULL if no condition is needed
  * @return void
 */
-void waitForEvent(int event_id, void (*callback)(void *), void * condition_data);
+void waitForEvent(int event_id, void * data, void * condition_data);
 
 // *** File System Management ***
 /**
