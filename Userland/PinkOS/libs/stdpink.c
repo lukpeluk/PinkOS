@@ -195,8 +195,8 @@ void unsubscribeFromEvent(int event_id) {
     syscall(UNSUBSCRIBE_TO_EVENT_SYSCALL, (uint64_t)event_id, 0, 0, 0, 0);
 }
 
-void waitForEvent(int event_id, void (*callback)(void *), void * condition_data) {
-    syscall(WAIT_EVENT_SYSCALL, (uint64_t)event_id, (uint64_t)callback, (uint64_t)condition_data, 0, 0);
+void waitForEvent(int event_id, void * data, void * condition_data) {
+    syscall(WAIT_EVENT_SYSCALL, (uint64_t)event_id, (uint64_t)data, (uint64_t)condition_data, 0, 0);
 }
 
 // *** File System Management ***
