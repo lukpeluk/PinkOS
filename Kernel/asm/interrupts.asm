@@ -283,6 +283,9 @@ _irq80Handler:
 	call saveRegisters
 	call backupCurrentProcessRegisters
 	
+	popStateBesidesReturn
+	pushStateBesidesReturn
+
 	call syscallDispatcher
 
 	; signal pic EOI (End of Interrupt)
