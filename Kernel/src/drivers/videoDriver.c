@@ -101,6 +101,15 @@ void putPixel(uint8_t * videoBuffer, uint32_t hexColor, uint64_t x, uint64_t y) 
 // BASIC SHAPES
 
 void drawRectangle(uint8_t * videoBuffer, Point * start, Point * end, uint32_t hexColor){
+	if(videoBuffer == NULL || start == NULL || end == NULL) {
+		return; // Invalid parameters
+	}
+	if(start->x >= end->x || start->y >= end->y || start->x >= VBE_mode_info->width || start->y >= VBE_mode_info->height || end->x > VBE_mode_info->width || end->y > VBE_mode_info->height) {
+		return; // Invalid rectangle dimensions
+	}
+	if(start->x < 0 || start->y < 0 || end->x < 0 || end->y < 0) {
+		return; // Negative coordinates are not allowed
+	}
 	for(uint64_t i = start->x; i < end->x; i++){
 		for(uint64_t j = start->y; j < end->y; j++){
 			putPixel(videoBuffer, hexColor, i, j);
