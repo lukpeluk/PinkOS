@@ -483,7 +483,7 @@ void execute_program(int input_line)
 	// if the program is found, execute it
 	else
 	{
-		running_program = 1;
+		// running_program = 1;
 
 		if (program->permissions & DRAWING_PERMISSION)
 		{
@@ -502,8 +502,21 @@ void execute_program(int input_line)
 		}
 
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
+		Pid pid = getProcessGroupMain();
+		add_number_to_stdout(pid);
 
-		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
+		// uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 256, (FilePermissions){.writing_owner = pid, .writing_conditions = '*', .reading_owner = pid, .reading_conditions = '*'});
+		// uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 256, (FilePermissions){.writing_owner = pid, .writing_conditions = '*', .reading_owner = pid, .reading_conditions = '*'});
+		// uint64_t stderr = mkFile("stderr", FILE_TYPE_FIFO, 256, (FilePermissions){.writing_owner = pid, .writing_conditions = '*', .reading_owner = pid, .reading_conditions = '*'});
+		// IO_Files io_files = {
+		// 	.stdin = stdin,
+		// 	.stdout = stdout,
+		// 	.stderr = stderr,
+		// };
+		
+		// // syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
+		installProgram(program); // install the program if it was not installed yet
+		runProgram(program, arguments, PRIORITY_NORMAL, 0, 0);
 
 		restoreContext(0); // restore the context to the shell
 	}
@@ -921,15 +934,20 @@ void home_screen_exit_handler(char event_type, int hold_times, char ascii, char 
 
 void home_screen()
 {
-
-	syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)home_screen_exit_handler, 0, 0, 0);
-
+	typedef struct KeyboardCondition {
+		// char scan_code; // The scan code of the key to filter
+		char ascii; // The ASCII character to filter
+	} KeyboardCondition;
+	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)home_screen_exit_handler, 0, 0, 0);
+	KeyboardCondition condition = {
+		.ascii = ' ', // Exit the home screen with ESC
+	};
 	Point position = {0};
 	int scale = 12;
-
+	
 	int screen_width = getScreenWidth();
 	int screen_height = getScreenHeight();
-
+	
 	position.x = (screen_width - MONA_LISA_WIDTH * scale) / 2;
 	position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
 
@@ -941,23 +959,25 @@ void home_screen()
 	// center the text
 	position.x = 0;
 	position.y = 400;
-
+	
 	drawRectangle(ColorSchema->background, screen_width, 140, position);
 	position.x += 50;
 	position.y += 25;
 	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Welcome to PinkOS!", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
-
+	
 	position.y += 50;
-
+	
 	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press any key to continue", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
-
+	
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
-
-	while (show_home_screen)
-	{
-		_hlt();
-	}
+	KeyboardEvent event;
+	
+	waitForEvent(KEY_EVENT, (uint64_t)&event, (uint64_t)&condition);
+	// while (show_home_screen)
+	// {
+	// 	_hlt();
+	// }
 }
 
 
@@ -971,7 +991,7 @@ void shell_main(char *args)
 	// installProgram(get_program_entry("francis"));
 	// runProgram(get_program_entry("francis"), (char *)"", PRIORITY_LOW, 0, 0);
 
-	// home_screen();
+	home_screen();
 	redraw();
 
 
