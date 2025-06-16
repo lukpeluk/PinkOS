@@ -12,8 +12,8 @@
 #include <processManager/scheduler.h>
 
 typedef struct KeyboardCondition {
-    // char scan_code; // The scan code of the key to filter
-    char ascii; // The ASCII character to filter
+    char scan_code; // The scan code of the key to filter
+    char ascii;     // The ASCII character to filter
 } KeyboardCondition;
 
 typedef struct RTCCondition {
@@ -33,8 +33,6 @@ typedef struct ProcessDeathCondition {
 typedef struct ExceptionCondition {
     uint64_t exception_id; // Exception ID to filter
 } ExceptionCondition;
-
-
 
 
 

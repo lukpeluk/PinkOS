@@ -2,6 +2,8 @@
 #include <libs/stdpink.h>
 
 void ps_main(char *args) {
+    setWaiting(getPID());
+
     //    PID TTY          TIME CMD
     char *header_pid = (char *) "PID";
     char *header_tty = (char *) "TTY";

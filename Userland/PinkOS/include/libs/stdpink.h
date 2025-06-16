@@ -148,7 +148,7 @@ int writeStderr(const void * buffer, uint32_t size);
  * @param pid the PID of the process to set as waiting
  * @return void
 */
-void setWaiting(Pid pid);
+int setWaiting(Pid pid);
 
 /**
  * Wakes up the process with the given PID

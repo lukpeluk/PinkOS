@@ -132,10 +132,14 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
         return; // Memory allocation failed
     }
 
+    log_to_serial("I: EventManager: Registering waiting event");
+
     newListener->pid = pid;
     newListener->handler = NULL; // No handler for waiting events
     newListener->data = data;
     if (condition_data != NULL){    
+        log_to_serial("I: EventManager: Has condition data");
+
         newListener->condition_data = malloc(eventManager.events[eventId].condition_data_size);
         if (!newListener->condition_data) {
             free(newListener); // Free the listener if condition data allocation fails
@@ -154,6 +158,8 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
 
     // log_to_serial("W: ------ EventManager: Registering waiting event");
 
+    log_to_serial("I: EventManager: Setting process as waiting");
+    log_decimal("I: EventManager: PID: ", pid);
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 
     // log_to_serial("E: EventManager: Le chupo un webo el wait... no espero una chota");
@@ -205,11 +211,13 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
         if (pid != NULL && !isSameProcessGroup(current->pid, pid)) {
             // If the PID does not match, skip this listener
             current = current->next;
+            previous = current;
             continue;
         }
         if (filter != NULL && !filter(current->condition_data, data)) {
             // If a filter is provided and it returns false, skip this listener
             current = current->next;
+            previous = current;
             continue;
         }
         if (current->type == SUSCRIPTION) {
@@ -233,8 +241,12 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             }
         } else if (current->type == WAITING) {
             // Notify to the scheduler that the process is not waiting anymore
-            memcpy(current->data, data, eventManager.events[eventId].data_size);
+            // Si el proceso dejó un puntero no nulo, es para que le copie la data del evento
+            if(current->data != NULL) {
+                memcpy(current->data, data, eventManager.events[eventId].data_size);
+            }
             wakeProcess(current->pid);
+
             if (previous == NULL) {
                 // Removing the first listener in the list
                 eventManager.events[eventId].listeners = current->next;
@@ -248,6 +260,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
                 free(current->condition_data); // Free the condition data if it was allocated
                 free(current); // Free the memory allocated for the listener
                 current = previous->next; // Move to next listener
+                previous = previous->next; // Update previous to the next listener
                 continue; // Skip the rest of the loop to avoid double incrementing current
             }
             
@@ -328,7 +341,7 @@ int filterKeyboardCondition(void* condition_data, void* data) {
     }
     KeyboardCondition* condition = (KeyboardCondition*)condition_data;
     KeyboardEvent* event = (KeyboardEvent*)data;
-    return (event->ascii == condition->ascii); // Filter by ASCII character
+    return (event->ascii == condition->ascii || event->scan_code == condition->scan_code); // Filter by ASCII or scancode character
 }
 
 void handleKeyEvent(KeyboardEvent keyEvent) {

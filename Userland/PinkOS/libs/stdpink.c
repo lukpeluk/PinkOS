@@ -102,8 +102,8 @@ void yield() {
     syscall(YIELD_SYSCALL, 0, 0, 0, 0, 0);
 }
 
-void setWaiting(Pid pid) {
-    syscall(SET_WAITING_SYSCALL, (uint64_t)pid, 0, 0, 0, 0);
+int setWaiting(Pid pid) {
+    return syscall(SET_WAITING_SYSCALL, (uint64_t)pid, 0, 0, 0, 0);
 }
 
 void wakeProcess(Pid pid) {

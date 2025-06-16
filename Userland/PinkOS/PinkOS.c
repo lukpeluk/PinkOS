@@ -3,32 +3,27 @@
 #include <libs/serialLib.h>
 #include <programs.h>
 #include <permissions.h>
+#include <libs/events.h>
 
 int init_main()
 {
-	// static Program shell = {
-	// 	.command = "shell",
-	// 	.name = "PinkOS Shell",
-	// 	.entry = shell_main,
-	// 	.permissions = 0xFFFFFFFF,
-	// 	.help = "The PinkOS Shell",
-	// 	// .description = "Starts the PinkOS shell",
-	// };
-	// Inicializa el shell
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("snake"), (uint64_t)"1", 0, 0, 0);
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("francis"), (uint64_t)"1", 0, 0, 0);
-	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("pietra"), (uint64_t)"1", 0, 0, 0);
-	log_to_serial("SOY INIT");
 	installProgram(get_program_entry("shell"));
-	runProgram(get_program_entry("shell"), "", PRIORITY_NORMAL, 0, 1);
+	
+	while(1){
+		Pid shell_pid = runProgram(get_program_entry("shell"), "", PRIORITY_NORMAL, 0, 1);
 
-	// Si no se pudo inicializar el shell, se queda en un bucle infinito
-	while (1)
-	{
-		_hlt();
+		// ProcessDeathCondition shell_pid_condition = { .pid = shell_pid};
+		log_to_serial("PinkOS: Shell started with PID: ");
+		log_decimal("PID: ", shell_pid);
+		log_decimal("W: MI PID: ", getPID());
+
+		// int a = setWaiting(getPID());
+		// log_decimal("PinkOS: Set waiting: ", a);
+
+		// waitForEvent(PROCESS_DEATH_EVENT, &shell_pid, &shell_pid_condition);			// Espera a que el shell muera para volver a iniciarla
+		while(1);
+		log_to_serial("E: PinkOS: Shell process died, restarting...");
 	}
-
-	return 0;
 }
 
 int main(){
@@ -36,7 +31,7 @@ int main(){
 		.command = "init",
 		.name = "Init",
 		.entry = init_main,
-		.permissions = 0xFFFFFFFF & ~DRAWING_PERMISSION,
+		.permissions = 0xFFFFFFFF & ~DRAWING_PERMISSION, // Para que innit no sea gráfico, y que no tenga una ventana
 		.help = "The PinkOS init process",
 		// .description = "Starts the system and runs the first program (the shell)",
 	};

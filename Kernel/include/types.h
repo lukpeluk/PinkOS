@@ -100,7 +100,7 @@ typedef enum {
 } Priority;
 
 typedef enum ProcessState {
-    PROCESS_STATE_NEW,
+    PROCESS_STATE_NEW = 0,
     PROCESS_STATE_RUNNING,
     PROCESS_STATE_READY,
     PROCESS_STATE_WAITING,

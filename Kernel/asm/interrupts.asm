@@ -139,6 +139,9 @@ SECTION .text
 	call saveRegisters
 	call backupCurrentProcessRegisters
 
+	popState
+	pushState
+
 	mov rdi, %1 ; pasaje de parametro
 	call irqDispatcher
 
@@ -156,6 +159,9 @@ SECTION .text
 	pushState
 	call saveRegisters
 	call backupCurrentProcessRegisters
+
+	popState
+	pushState
 
 	mov rdi, %1
 	call irqDispatcher
@@ -245,6 +251,7 @@ picSlaveMask:
 ;8254 Timer (Timer Tick)
 _irq00Handler:
 	; makeBackup
+	
 	irqHandlerMaster 0
 
 ;Keyboard
@@ -287,10 +294,13 @@ _irq80Handler:
 	pushStateBesidesReturn
 
 	call syscallDispatcher
+	mov rdi, rax
 
 	; signal pic EOI (End of Interrupt)
 	mov al, 20h
 	out 20h, al
+
+	mov rax, rdi
 
 	popStateBesidesReturn
 	iretq

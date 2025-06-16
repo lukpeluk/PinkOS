@@ -13,6 +13,9 @@
 #define NULL 0
 #define VALIDATE_IO_FILE(id) (!id || validateFileType(stdin, FILE_TYPE_FIFO))
 
+extern void _hlt();
+
+
 typedef struct Semaphore {
     uint64_t id;                    // ID único del semáforo
     int value;                      // Contador del semáforo
@@ -579,7 +582,7 @@ void scheduleNextProcess() {
     ProcessControlBlock *nextProcess = currentProcessBlock->next;
     ProcessControlBlock * current = nextProcess;
     ProcessControlBlock * prev = currentProcessBlock; // Empezar desde el final de la lista para poder eliminar el proceso actual si es necesario
-    currentProcessBlock = nextProcess; // Actualizar el proceso actual al siguiente
+    // currentProcessBlock = nextProcess; // Actualizar el proceso actual al siguiente
 
     // Pasa de largo los que no están en estado READY o NEW
     while (current->process.state != PROCESS_STATE_READY && current->process.state != PROCESS_STATE_NEW) {
@@ -602,12 +605,17 @@ void scheduleNextProcess() {
             prev->next = nextProcess; // Eliminar el proceso actual de la lista
             current = nextProcess;
             continue;
-        } 
+        }
+        if (current->process.state == PROCESS_STATE_WAITING) {
+            // Si el proceso está esperando, no lo consideramos para programar
+            log_to_serial("W: scheduleNextProcess: Proceso en estado WAITING, saltando");
+        }
 
         // vuelvo a llegar, no había ningún proceso en estado READY o NEW
         if (current == currentProcessBlock) {
-            // log_to_serial("scheduleNextProcess: No hay procesos en estado READY");
-            return; // No hay procesos en estado READY ni NEW, no se puede programar otro proceso
+            log_to_serial("E: scheduleNextProcess: No hay procesos en estado READY");
+            // No hay procesos en estado READY ni NEW, no se puede programar otro proceso
+            _hlt();
         }
 
         current = current->next;
@@ -637,6 +645,8 @@ void scheduleNextProcess() {
 
     // log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     ticksSinceLastSwitch = 0; // Reiniciar el contador de ticks desde el último cambio de proceso
+
+    log_decimal("I: scheduleNextProcess: Proceso con PID ", currentProcessBlock->process.pid);
     magic_recover(&currentProcessBlock->registers);
 }
 
@@ -689,15 +699,18 @@ int setWaiting(Pid pid) {
             current->process.state = PROCESS_STATE_WAITING;
 
             if(current == currentProcessBlock) {
+                log_to_serial("I: setWaiting: Proceso actual puesto en espera");
                 // Si el proceso actual es el que se está poniendo en espera, programar el siguiente proceso
                 scheduleNextProcess(); // Cambiar al siguiente proceso
             }
+
             return 0; // Éxito
         }
         current = current->next;
     }
     while (current != processList);
 
+    log_to_serial("E: setWaiting: Proceso no encontrado");
     return -1; // Error: proceso no encontrado
 }
 

@@ -23,7 +23,7 @@ static uint64_t ticks = 0;
 void timer_handler() {
 	ticks++;
 	// saveRegisters(); // Ya no se hace acá, ahora desde assembler cada vez que hay una interrupción se hace el backup de los registros
-	// log_to_serial("TICK");
+	log_to_serial("TICK");
 	audioLoop(); // Call the audio driver main loop to update the audio stream
 	videoLoop(); // Call the video driver main loop to update the video buffer
 	schedulerLoop(); // Call the scheduler to switch processes if needed

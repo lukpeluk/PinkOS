@@ -12,7 +12,7 @@
 #include <libs/audioLib.h>
 #include <pictures.h>
 #include <colors.h>
-#include <libs/eventIds.h>
+#include <libs/events.h>
 #include <libs/serialLib.h>
 
 #define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
@@ -36,17 +36,6 @@ static struct PreviousAudioState{
 Colors* ColorSchema = &PinkOSMockupColors;
 
 static int show_home_screen = 1;
-
-typedef struct
-{
-	uint8_t seconds;
-	uint8_t minutes;
-	uint8_t hours;
-	uint8_t day;
-	uint8_t month;
-	uint8_t year;
-	uint8_t day_of_week;
-} RTC_Time;
 
 typedef struct
 {
@@ -934,10 +923,6 @@ void home_screen_exit_handler(char event_type, int hold_times, char ascii, char 
 
 void home_screen()
 {
-	typedef struct KeyboardCondition {
-		// char scan_code; // The scan code of the key to filter
-		char ascii; // The ASCII character to filter
-	} KeyboardCondition;
 	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)home_screen_exit_handler, 0, 0, 0);
 	KeyboardCondition condition = {
 		.ascii = ' ', // Exit the home screen with ESC

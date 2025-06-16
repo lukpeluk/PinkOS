@@ -119,7 +119,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * retorna 0 si error
 
             VALIDATE_PROCESS_PERMISSIONS(arg1);
-            setWaiting((Pid)arg1);
+            return setWaiting((Pid)arg1);
             break;
         case AGARRINI_LA_PALINI_SYSCALL: // Alias for WAKE_PROCESS_SYSCALL 
             // * orden syscall: pid del proceso a despertar
