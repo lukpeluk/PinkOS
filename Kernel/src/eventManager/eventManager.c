@@ -19,7 +19,7 @@ typedef enum {
 typedef struct Listener {
     Pid pid;
     void (*handler)(void* data);            // Para las suscripciones, es el handler que se va a llamar cuando ocurra el evento, como argumento se le pasa un puntero a los datos del evento
-    void* data;                             // Para los waiting, es el dato que se memcopiará al puntero del evento
+    void* data;                             // Para los waiting, es el lugar donde se memcopiará la información del evento
     void* condition_data;                   // Esto se le pasa al filter para saber a qué condición se refiere el listener, por ejemplo, si es un evento de teclado, puede ser el código de la tecla que se está esperando  
     EventType type;
     struct Listener* next; // Pointer to the next listener in the linked list
