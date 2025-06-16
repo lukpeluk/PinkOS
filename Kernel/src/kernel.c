@@ -346,7 +346,7 @@ int main()
     init_pit();
     init_serial();
 
-    sleep(1000);
+    // sleep(1000);
 
     log_to_serial("I: Usa ':I' adelante de los mensajes para que el sea informativo");
     log_to_serial("W: Usa ':W' adelante de los mensajes para que el sea de advertencia");

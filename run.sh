@@ -7,7 +7,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     -m 2G \
     -audiodev pa,id=speaker \
     -machine pcspk-audiodev=speaker \
-    -serial tcp::4444,server,nowait
+    -serial tcp::4444,server
     # -rtc base=localtime \
 
     # -serial tcp::4444,server,nowait
@@ -18,7 +18,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     -m 512 \
     -audiodev coreaudio,id=speaker \
     -machine pcspk-audiodev=speaker \
-    -serial tcp::4444,server,nowait
+    -serial tcp::4444,server
 else
   echo "Sistema operativo no soportado"
   exit 1
