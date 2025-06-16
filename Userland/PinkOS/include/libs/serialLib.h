@@ -12,7 +12,9 @@ typedef struct EtherPinkResponse{
 
 void make_ethereal_request(char * request, EtherPinkResponse * response);
 
-void log_to_serial(char * message); 
+void log_to_serial(const char * message); 
+void log_decimal(const char * message, uint64_t value);
+void log_hex(const char * message, uint64_t value);
 
 
 

@@ -148,6 +148,8 @@
 // 1500 - 1599 reserved for SERIAL DRIVER syscalls
 #define MAKE_ETHEREAL_REQUEST_SYSCALL 1500
 #define LOG_TO_SERIAL_SYSCALL 1501
+#define LOG_DECIMAL_TO_SERIAL_SYSCALL 1502
+#define LOG_HEX_TO_SERIAL_SYSCALL 1503
 
 // 1600 - 1699 reserved for MOUSE DRIVER syscalls
 // (Nothing yet, but believe me, there will be)

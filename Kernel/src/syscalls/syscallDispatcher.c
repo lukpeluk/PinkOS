@@ -58,15 +58,21 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
         case RUN_PROGRAM_SYSCALL: {
             // * Orden Syscall: Program, char * args, priority, I/O struct (stdin, stdout, stderr), int (bool) nohup
             // * retorna el pid del proceso creado, 0 si error
+
                 IO_Files io_files = {0};
                 if (arg4 != NULL) {
                     io_files = *(IO_Files *)arg4; // Si se pasa un struct de I/O, lo usamos
                 }
                     
-                // Program program = getProgram("comando"); //TODO: que te pasen el comando, no programa
+                Program * program = getProgramByCommand(arg1);
+                if(program == NULL) {
+                    log_to_serial("E: Program not found");
+                    return 0; // Error: program not found
+                }
+
                 char * args = strdup((char *)arg2); //TODO: allocar a nombre del proceso
 
-                return newProcessWithIO(*((Program*)arg1), args, arg3, arg5 ? 1 : getCurrentProcessPID(), 
+                return newProcessWithIO(*program, args, arg3, arg5 ? 1 : getCurrentProcessPID(), 
                                 io_files.stdin, io_files.stdout, io_files.stderr);
             }
             break;
@@ -653,6 +659,12 @@ uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t
             break;
         case LOG_TO_SERIAL_SYSCALL:
             log_to_serial((char *)arg1);
+            break;
+        case LOG_DECIMAL_TO_SERIAL_SYSCALL:
+            log_decimal((char*)arg1, (int)arg2);
+            break;
+        case LOG_HEX_TO_SERIAL_SYSCALL:
+            log_hex((char*)arg1, (int)arg2);
             break;
         default:
             break;
