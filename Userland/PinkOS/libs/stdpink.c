@@ -345,7 +345,7 @@ char * num_to_string(int num) {
 
 
 void print(char * string){
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
+    writeStdout(string, strlen(string));
 }
 
 void printf(char * format, ...) {
@@ -359,17 +359,18 @@ void printf(char * format, ...) {
             switch (*str) {
                 case 'd': {
                     int num = va_arg(args, int);
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)num_to_string(num), 0, 0, 0);
+                    char * num_str = num_to_string(num);
+                    writeStdout(num_str, strlen(num_str));
                     break;
                 }
                 case 's': {
                     char *string = va_arg(args, char *);
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
+                    writeStdout(string, strlen(string));
                     break;
                 }
                 case 'c': {
                     char c = (char)va_arg(args, int);
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)c, 0, 0, 0);
+                    writeStdout(&c, 1);
                     break;
                 }
                 case '0' ... '9': {
@@ -384,24 +385,25 @@ void printf(char * format, ...) {
                         while (string[len] != '\0') {
                             len++;
                         }
-                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
+                        writeStdout(string, len);
                         for (int i = 0; i < width - len; i++) {
-                            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)' ', 0, 0, 0);
+                            char space = ' ';
+                            writeStdout(&space, 1);
                         }
                     } else {
-                        syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)invalid_format_message, 0, 0, 0);
+                        writeStderr(invalid_format_message, strlen(invalid_format_message));
                         va_end(args);
                         return;
                     }
                     break;
                 }
                 default:
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)invalid_format_message, 0, 0, 0);                
+                    writeStderr(invalid_format_message, strlen(invalid_format_message));
                     va_end(args);
                     return;
             }
         } else {
-            syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)*str, 0, 0, 0);
+            writeStdout(str, 1);
         }
         str++;
     }
@@ -410,16 +412,19 @@ void printf(char * format, ...) {
 }
 
 void putChar(char c){
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)c, 0, 0, 0);
+    writeStdout(&c, 1);
 }
 
 void puts(char * string){
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)string, 0, 0, 0);
-    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_CHAR_ENDPOINT, (uint64_t)'\n', 0, 0, 0);
+    writeStdout(string, strlen(string));
+    char newline = '\n';
+    writeStdout(&newline, 1);
 }
 
 char getChar(){
-    return (char)get_char_from_stdin();
+    char c;
+    readStdin(&c, 1);
+    return c;
 }
 
 // void clearStdinBuffer(){
@@ -467,7 +472,7 @@ void scanf(char * format, ...){
                     break;
                 }
                 default:
-                    syscall(USER_ENVIRONMENT_API_SYSCALL, PRINT_STRING_ENDPOINT, (uint64_t)invalid_format_message, 0, 0, 0);
+                    writeStderr(invalid_format_message, strlen(invalid_format_message));
                     va_end(args);
                     return;
             }
