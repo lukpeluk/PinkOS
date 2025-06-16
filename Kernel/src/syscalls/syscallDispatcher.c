@@ -66,7 +66,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                 // Program program = getProgram("comando"); //TODO: que te pasen el comando, no programa
                 char * args = strdup((char *)arg2); //TODO: allocar a nombre del proceso
 
-                return newProcessWithIO(*((Program*)arg1), args, arg3, arg5 ? getCurrentProcessPID() : 0, 
+                return newProcessWithIO(*((Program*)arg1), args, arg3, arg5 ? 1 : getCurrentProcessPID(), 
                                 io_files.stdin, io_files.stdout, io_files.stderr);
             }
             break;
