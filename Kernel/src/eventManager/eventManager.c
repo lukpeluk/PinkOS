@@ -156,7 +156,7 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
 
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 
-    // log_to_serial("E: EventManager: Le chupó un webo el wait... no esperó una chota");
+    // log_to_serial("E: EventManager: Le chupo un webo el wait... no espero una chota");
 }
 
 void unregisterEventSubscription(int eventId, Pid pid) {

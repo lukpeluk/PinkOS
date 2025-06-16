@@ -69,7 +69,7 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
     Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
     Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
     if(writing_owner_pid == 0 || reading_owner_pid == 0 || internalPermissions == NULL) {
-        log_to_serial("E: createFile: Error: owner inválido o referencia nula");
+        log_to_serial("E: createFile: Error: owner invalido o referencia nula");
         return -1;
     }
     Process writing_owner_process = getProcess(writing_owner_pid);
@@ -90,7 +90,7 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
 
 uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissions permissions) {
     if (path == NULL || strlen(path) >= 256) {
-        log_to_serial("E: createFile: path inválido o demasiado largo");
+        log_to_serial("E: createFile: path invalido o demasiado largo");
         return 0; // Error: path inválido
     }
 
@@ -441,7 +441,7 @@ int reallocRawFile(RawFileControlBlock *fileBlock, uint32_t newSize) {
 
     uint8_t *newData = (uint8_t*)malloc(newSize);
     if (newData == NULL) {
-        log_to_serial("E: reallocRawFile: no hay memoria para alocar más datos");
+        log_to_serial("E: reallocRawFile: no hay memoria para alocar mas datos");
         return -1; // Error: no hay memoria
     }
 

@@ -181,7 +181,7 @@ int changePriority(Pid pid, Priority newPriority){
     current->process.priority = newPriority;
     current->quantum = getQuantumByPriority(newPriority); // Actualizar el quantum del proceso según la nueva prioridad
 
-    // log_to_serial("changePriority: Prioridad cambiada con éxito");
+    // log_to_serial("changePriority: Prioridad cambiada con exito");
     // log_decimal("changePriority: Proceso con PID ", current->process.pid);
     return 0;
 }
@@ -403,7 +403,7 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
     }
 
     if(!VALIDATE_IO_FILE(stdin) || !VALIDATE_IO_FILE(stdout) || !VALIDATE_IO_FILE(stderr)) {
-        log_to_serial("E: newProcess: algún descriptor no es un FIFO válido");
+        log_to_serial("E: newProcess: algun descriptor no es un FIFO valido");
         return 0;
     }
 
