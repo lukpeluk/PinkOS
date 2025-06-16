@@ -13,6 +13,7 @@
 #include <windowManager/windowManager.h>
 #include <eventManager/eventManager.h>
 #include <programManager/programManager.h>
+#include <lib.h>
 #include <types.h>
 
 #define VALIDATE_PERMISSIONS(permission) if (!validatePermissions(permission)) return 0;
@@ -57,13 +58,16 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
         case RUN_PROGRAM_SYSCALL: {
             // * Orden Syscall: Program, char * args, priority, I/O struct (stdin, stdout, stderr), int (bool) nohup
             // * retorna el pid del proceso creado, 0 si error
-
-                IO_Files* io_files = (IO_Files*)arg4;
+                IO_Files io_files = {0};
+                if (arg4 != NULL) {
+                    io_files = *(IO_Files *)arg4; // Si se pasa un struct de I/O, lo usamos
+                }
+                    
                 // Program program = getProgram("comando"); //TODO: que te pasen el comando, no programa
                 char * args = strdup((char *)arg2); //TODO: allocar a nombre del proceso
 
                 return newProcessWithIO(*((Program*)arg1), args, arg3, arg5 ? getCurrentProcessPID() : 0, 
-                                io_files->stdin, io_files->stdout, io_files->stderr);
+                                io_files.stdin, io_files.stdout, io_files.stderr);
             }
             break;
         case NEW_THREAD_SYSCALL: {
@@ -646,6 +650,9 @@ uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t
         case MAKE_ETHEREAL_REQUEST_SYSCALL:
             VALIDATE_PERMISSIONS(MAKE_ETHEREAL_REQUEST_PERMISSION);
             make_ethereal_request((char *)arg1, (EtherPinkResponse *)arg2);
+            break;
+        case LOG_TO_SERIAL_SYSCALL:
+            log_to_serial((char *)arg1);
             break;
         default:
             break;

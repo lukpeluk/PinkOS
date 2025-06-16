@@ -20,6 +20,7 @@ void itoa(int value, char *str, int base);
 int strcmp(const char *str1, const char *str2);
 void strcpy(char *dest, const char *src);
 int strlen(const char *str);
+char* strdup(const char *str);
 
 char *cpuVendor(char *result);
 
