@@ -83,7 +83,7 @@ void make_ethereal_request(char * request, EtherPinkResponse * response){
     } 
 }
 
-// Manda un mensaje al puerto serie, para debug
+// Manda un mensaje al puerto serie, para debug (con prefijo "LOG: ")
 void log_to_serial(char * message){
     if (!message) return;
 
@@ -98,6 +98,19 @@ void log_to_serial(char * message){
     }
     write_serial('\n'); 
 }
+
+
+// Manda un mensaje al puerto serie, para debug
+void send_to_serial(char * message){
+    if (!message) return;
+
+    while(*message){
+        write_serial(*message);
+        message++;
+    }
+    write_serial('\n'); 
+}
+
 
 
 // Las cosas se reciben byte a byte, pero algunos elementos son de más de un byte...
@@ -207,5 +220,107 @@ void log_string(char* prefix, char* str) {
     
     // Enviar todo en una sola llamada
     log_to_serial(buffer);
+}
+
+// Memory debugging functions
+void mem_register_sector(uint64_t start_addr, uint64_t end_addr, char* tag) {
+    char buffer[200]; // Buffer para construir el comando completo
+    char start_hex[20], end_hex[20];
+    char *p = buffer;
+    
+    // Construir el comando "MEMREG <start_hex> <end_hex> <tag>"
+    char *cmd = "MEMREG 0x";
+    while (*cmd) {
+        *p++ = *cmd++;
+    }
+    
+    // Convertir dirección de inicio a hex
+    itoa(start_addr, start_hex, 16);
+    char *start_p = start_hex;
+    while (*start_p) {
+        *p++ = *start_p++;
+    }
+    
+    // Agregar espacio y 0x
+    *p++ = ' ';
+    *p++ = '0';
+    *p++ = 'x';
+    
+    // Convertir dirección de fin a hex
+    itoa(end_addr, end_hex, 16);
+    char *end_p = end_hex;
+    while (*end_p) {
+        *p++ = *end_p++;
+    }
+    
+    // Agregar espacio y tag
+    *p++ = ' ';
+    while (*tag) {
+        *p++ = *tag++;
+    }
+    
+    *p = '\0'; // Terminar el string
+    
+    // Enviar el comando
+    send_to_serial(buffer); 
+}
+
+void mem_log_address(uint64_t address, char* name) {
+    char buffer[200]; // Buffer para construir el comando completo
+    char addr_hex[20];
+    char *p = buffer;
+    
+    // Construir el comando "MEMLOG <address_hex> <name>"
+    char *cmd = "MEMLOG 0x";
+    while (*cmd) {
+        *p++ = *cmd++;
+    }
+    
+    // Convertir dirección a hex
+    itoa(address, addr_hex, 16);
+    char *addr_p = addr_hex;
+    while (*addr_p) {
+        *p++ = *addr_p++;
+    }
+    
+    // Agregar espacio y nombre
+    *p++ = ' ';
+    while (*name) {
+        *p++ = *name++;
+    }
+    
+    *p = '\0'; // Terminar el string
+    
+    // Enviar el comando
+    send_to_serial(buffer);
+}
+
+void mem_free_sector(uint64_t start_addr) {
+    char buffer[100]; // Buffer para construir el comando completo
+    char start_hex[20];
+    char *p = buffer;
+    
+    // Construir el comando "MEMFREE <start_hex>"
+    char *cmd = "MEMFREE 0x";
+    while (*cmd) {
+        *p++ = *cmd++;
+    }
+    
+    // Convertir dirección de inicio a hex
+    itoa(start_addr, start_hex, 16);
+    char *start_p = start_hex;
+    while (*start_p) {
+        *p++ = *start_p++;
+    }
+    
+    *p = '\0'; // Terminar el string
+    
+    // Enviar el comando
+    send_to_serial(buffer); // No necesitamos respuesta para este comando
+}
+
+void mem_list_sectors() {
+    // Enviar comando para listar todos los sectores registrados
+    send_to_serial("MEMLIST");
 }
 

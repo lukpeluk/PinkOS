@@ -15,6 +15,61 @@ CONSTANT_PROMPT = "No uses emojis, por favor responde únicamente con texto en A
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
 API_KEY = "AIzaSyCcOusago52BmRAI1WGcyhXAnlJHlnR16Q"  # Reemplaza con tu API Key de Google
 
+class MemoryDebugger:
+    def __init__(self):
+        # Lista de sectores registrados (dirección_inicio, dirección_fin, tag)
+        self.memory_sectors = []
+    
+    def register_memory_sector(self, start_addr, end_addr, tag):
+        """Registra un nuevo sector de memoria"""
+        # Validar que el rango sea correcto
+        if start_addr > end_addr:
+            return f"ERROR: Direccion inicio {hex(start_addr)} > direccion fin {hex(end_addr)} - rango invalido"
+        
+        self.memory_sectors.append((start_addr, end_addr, tag))
+        return f"Sector registrado: {hex(start_addr)}-{hex(end_addr)} [{tag}]"
+    
+    def log_memory_address(self, address, name):
+        """Busca en qué sectores se encuentra una dirección"""
+        matching_sectors = []
+        
+        for start, end, tag in self.memory_sectors:
+            if start <= address <= end:
+                matching_sectors.append(tag)
+        
+        if matching_sectors:
+            sectors_str = ", ".join(matching_sectors)
+            return f"{name} esta en la direccion {hex(address)} en el sector [{sectors_str}]"
+        else:
+            # Mostrar información adicional para debugging
+            debug_info = f"{name} esta en la direccion {hex(address)} en sector [DESCONOCIDO]"
+            if self.memory_sectors:
+                debug_info += f"\nSectores disponibles:"
+                for start, end, tag in self.memory_sectors:
+                    debug_info += f"\n  {hex(start)}-{hex(end)} [{tag}]"
+            else:
+                debug_info += "\nNo hay sectores registrados"
+            return debug_info
+    
+    def free_memory_sector(self, start_addr):
+        """Libera un sector que coincida exactamente con la dirección de inicio"""
+        for i, (start, end, tag) in enumerate(self.memory_sectors):
+            if start == start_addr:
+                removed_sector = self.memory_sectors.pop(i)
+                return f"Sector liberado: {hex(start)}-{hex(end)} [{tag}]"
+        
+        return f"No se encontro sector con direccion de inicio {hex(start_addr)}"
+    
+    def list_sectors(self):
+        """Lista todos los sectores registrados (para debugging)"""
+        if not self.memory_sectors:
+            return "No hay sectores registrados"
+        
+        result = "Sectores registrados:\n"
+        for start, end, tag in self.memory_sectors:
+            result += f"  {hex(start)}-{hex(end)} [{tag}]\n"
+        return result.rstrip()
+
 def send_to_google_api(user_prompt):
     """Envía un prompt a la API de Google y retorna la respuesta."""
     try:
@@ -234,6 +289,7 @@ def main():
     reconnect_delay = 0.1  # segundos entre intentos de reconexión
     first_attempt = True
     tick_counter = TickCounter()
+    memory_debugger = MemoryDebugger()
 
     while True:  # Bucle principal para reconexión
         try:
@@ -349,6 +405,60 @@ def main():
                                 # SUCCESS(2), PLAIN_TEXT(0), ASCII_STREAM(1)
                                 send_response_with_header(client_socket, 2, 0, 1, response_data)
                                 print(f"Respuesta de la API enviada: {api_response}")
+                                continue
+
+                            # Manejar comandos de debugging de memoria
+                            if line.startswith("MEMREG "):
+                                parts = line[7:].strip().split()
+                                if len(parts) >= 3:
+                                    try:
+                                        start_addr = int(parts[0], 16)  # Convertir de hex
+                                        end_addr = int(parts[1], 16)    # Convertir de hex
+                                        tag = " ".join(parts[2:])       # El resto es el tag
+                                        
+                                        result = memory_debugger.register_memory_sector(start_addr, end_addr, tag)
+                                        print(f"[MEMORY DEBUG] {result}")
+                                    except ValueError:
+                                        error_msg = "Error: Direcciones invalidas en MEMREG"
+                                        print(f"[MEMORY DEBUG] {error_msg}")
+                                else:
+                                    error_msg = "Error: MEMREG requiere <inicio_hex> <fin_hex> <tag>"
+                                    print(f"[MEMORY DEBUG] {error_msg}")
+                                continue
+
+                            if line.startswith("MEMLOG "):
+                                parts = line[7:].strip().split(None, 1)  # Split en máximo 2 partes
+                                if len(parts) >= 2:
+                                    try:
+                                        address = int(parts[0], 16)  # Convertir de hex
+                                        name = parts[1]              # El resto es el nombre
+                                        
+                                        result = memory_debugger.log_memory_address(address, name)
+                                        print(f"[MEMORY DEBUG] {result}")
+                                    except ValueError:
+                                        error_msg = "Error: Direccion invalida en MEMLOG"
+                                        print(f"[MEMORY DEBUG] {error_msg}")
+                                else:
+                                    error_msg = "Error: MEMLOG requiere <direccion_hex> <nombre>"
+                                    print(f"[MEMORY DEBUG] {error_msg}")
+                                continue
+
+                            if line.startswith("MEMFREE "):
+                                addr_str = line[8:].strip()
+                                try:
+                                    start_addr = int(addr_str, 16)  # Convertir de hex
+                                    
+                                    result = memory_debugger.free_memory_sector(start_addr)
+                                    print(f"[MEMORY DEBUG] {result}")
+                                except ValueError:
+                                    error_msg = "Error: Direccion invalida en MEMFREE"
+                                    print(f"[MEMORY DEBUG] {error_msg}")
+                                continue
+
+                            # Comando extra para listar sectores (para debugging del servidor)
+                            if line == "MEMLIST":
+                                result = memory_debugger.list_sectors()
+                                print(f"[MEMORY DEBUG] {result}")
                                 continue
 
                             if line.startswith("apt install "):
