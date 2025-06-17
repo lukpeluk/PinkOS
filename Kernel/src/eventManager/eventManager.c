@@ -30,6 +30,7 @@ typedef struct {
     uint64_t data_size;
     uint64_t condition_data_size; // Size of the condition data, if applicable
     Listener* listeners; // Pointer to the first listener in a linked list
+    int one_time; // If true, the event will be removed after being notified once
 } Event;
 
 
@@ -45,6 +46,7 @@ void initEventManager() {
     eventManager.events[KEY_EVENT].data_size = sizeof(KeyboardEvent);
     eventManager.events[KEY_EVENT].condition_data_size = sizeof(KeyboardCondition); // Size of the condition data for keyboard events
     eventManager.events[KEY_EVENT].listeners = NULL;
+    eventManager.events[KEY_EVENT].one_time = 0; // Set to 0 if you want the event to persist after being notified
     // log_to_serial("Event Manager initialized: KEY_EVENT");
     // log_decimal("Event size: ", eventManager.events[KEY_EVENT].data_size);
 
@@ -54,6 +56,7 @@ void initEventManager() {
     eventManager.events[SLEEP_EVENT].data_size = sizeof(uint64_t);
     eventManager.events[SLEEP_EVENT].condition_data_size = sizeof(SleepCondition); // Size of the condition data for sleep events
     eventManager.events[SLEEP_EVENT].listeners = NULL;
+    eventManager.events[SLEEP_EVENT].one_time = 1;
     // log_to_serial("Event Manager initialized: SLEEP_EVENT");
     // log_decimal("Event size: ", eventManager.events[SLEEP_EVENT].data_size);
 
@@ -61,6 +64,7 @@ void initEventManager() {
     eventManager.events[RTC_EVENT].data_size = sizeof(RTC_Time);
     eventManager.events[RTC_EVENT].condition_data_size = sizeof(RTCCondition); // Size of the condition data for RTC events
     eventManager.events[RTC_EVENT].listeners = NULL;
+    eventManager.events[RTC_EVENT].one_time = 0; 
     // log_to_serial("Event Manager initialized: RTC_EVENT");
     // log_decimal("Event size: ", eventManager.events[RTC_EVENT].data_size);
 
@@ -68,6 +72,7 @@ void initEventManager() {
     eventManager.events[PROCESS_DEATH_EVENT].data_size = sizeof(Pid);
     eventManager.events[PROCESS_DEATH_EVENT].condition_data_size = sizeof(ProcessDeathCondition); // Size of the condition data for process death events
     eventManager.events[PROCESS_DEATH_EVENT].listeners = NULL;
+    eventManager.events[PROCESS_DEATH_EVENT].one_time = 1;
     // log_to_serial("Event Manager initialized: PROCESS_DEATH_EVENT");
     // log_decimal("Event size: ", eventManager.events[PROCESS_DEATH_EVENT].data_size);
 
@@ -75,12 +80,15 @@ void initEventManager() {
     eventManager.events[EXCEPTION_EVENT].data_size = sizeof(Exception);
     eventManager.events[EXCEPTION_EVENT].condition_data_size = sizeof(ExceptionCondition); // Size of the condition data for exception events
     eventManager.events[EXCEPTION_EVENT].listeners = NULL;
+    eventManager.events[EXCEPTION_EVENT].one_time = 0;
     // log_to_serial("Event Manager initialized: EXCEPTION_EVENT");
     // log_decimal("Event size: ", eventManager.events[EXCEPTION_EVENT].data_size);
 
     eventManager.events[BROADCAST_EVENT].id = BROADCAST_EVENT;
     eventManager.events[BROADCAST_EVENT].data_size = 0; // Broadcast events don't have a specific size
     eventManager.events[BROADCAST_EVENT].listeners = NULL;
+    eventManager.events[BROADCAST_EVENT].condition_data_size = 0; // No condition data for broadcast events
+    eventManager.events[BROADCAST_EVENT].one_time = 0;
     // log_to_serial("Event Manager initialized: BROADCAST_EVENT");
     // log_decimal("Event size: ", eventManager.events[BROADCAST_EVENT].data_size);
     
@@ -224,8 +232,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             void *eventData = malloc(eventManager.events[eventId].data_size);
             if (!eventData) {
                 // Handle error: memory allocation failed
-                // You might want to log this or take some other action
-                return;
+                continue;
             }  
             // Copy the data to the eventData buffer
             memcpy(eventData, data, eventManager.events[eventId].data_size);
@@ -234,10 +241,28 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             Pid pid = newThread(current->handler, eventData, PRIORITY_NORMAL, current->pid);
             if (pid == 0) {
                 // Handle error: could not create thread
-                // You might want to log this or take some other action
+                
             } else {
                 // Successfully created thread to handle the event
-                // You can also store the PID of the thread if needed
+                if (eventManager.events[eventId].one_time) {
+                    // If the event is one-time, remove it from the list
+                    if (previous == NULL) {
+                        // Removing the first listener in the list
+                        eventManager.events[eventId].listeners = current->next;
+                        free(current->condition_data);  // Free the condition data if it was allocated
+                        free(current);                  // Free the memory allocated for the listener
+                        current = eventManager.events[eventId].listeners; // Move to next listener
+                        continue; 
+                    } else {
+                        // Removing a listener in the middle or end of the list
+                        previous->next = current->next;
+                        free(current->condition_data); // Free the condition data if it was allocated
+                        free(current); // Free the memory allocated for the listener
+                        current = previous->next; // Move to next listener
+                        previous = previous->next; // Update previous to the next listener
+                        continue;
+                    }
+                }
             }
         } else if (current->type == WAITING) {
             // Notify to the scheduler that the process is not waiting anymore
