@@ -66,8 +66,16 @@ void initFileSystem() {}
 // Deja el resultado en el puntero internalPermissions pasado por referencia
 int convertToInternalPermissions(FilePermissions permissions, InternalFilePermissions *internalPermissions) {
     // me traigo los owners, si existen, traigo el proceso, que sé que es válido y va a incluir el programa
-    Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
-    Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
+    // Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
+    // Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
+    Pid writing_owner_pid = permissions.writing_owner;
+    Pid reading_owner_pid = permissions.reading_owner;
+    log_to_serial("convertToInternalPermissions: Validando owners de permisos");
+    log_decimal("convertToInternalPermissions: writing_owner_pid: ", writing_owner_pid);
+    log_decimal("convertToInternalPermissions: reading_owner_pid: ", reading_owner_pid);
+    log_decimal("convertToInternalPermissions: writing_conditions: ", permissions.writing_conditions);
+    log_decimal("convertToInternalPermissions: reading_conditions: ", permissions.reading_conditions);
+
     if(writing_owner_pid == 0 || reading_owner_pid == 0 || internalPermissions == NULL) {
         log_to_serial("E: createFile: Error: owner invalido o referencia nula");
         return -1;
@@ -93,6 +101,13 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
         log_to_serial("E: createFile: path invalido o demasiado largo");
         return 0; // Error: path inválido
     }
+
+    log_to_serial("createFile: Creando archivo");
+    log_string("createFile: path: ", path);
+    log_decimal("createFile: size: ", size);
+    log_decimal("createFile: type: ", type);
+    log_decimal("createFile: writing_owner: ", permissions.writing_owner);
+    log_decimal("createFile: reading_owner: ", permissions.reading_owner);
 
     InternalFilePermissions internalPermissions;
     if (convertToInternalPermissions(permissions, &internalPermissions) != 0) {

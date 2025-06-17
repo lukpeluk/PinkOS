@@ -78,7 +78,7 @@ uint64_t strlen(const char * s) {
 
 // *** Process Management ***
 
-Pid runProgram(Program * program, char * args, Priority priority, IO_Files * io_files, int nohup) {
+Pid runProgram(char * program, char * args, Priority priority, IO_Files * io_files, int nohup) {
     return (Pid)syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, (uint64_t)nohup);
 }
 
@@ -201,7 +201,18 @@ void waitForEvent(int event_id, void * data, void * condition_data) {
 
 // *** File System Management ***
 
-uint64_t mkFile(char * path, FileType type, uint32_t size, FilePermissions permissions) {
+// El archivo se crea con el proceso actual como dueño
+// Lo puede instacambiar con setFilePermissions
+uint64_t mkFile(char * path, FileType type, uint32_t size) {
+    Pid pid = getPID();
+
+    FilePermissions permissions = {
+        .writing_owner = pid, 
+        .writing_conditions = '.',
+        .reading_owner = pid, 
+        .reading_conditions = '.'
+    };
+
     return syscall(MK_FILE_SYSCALL, (uint64_t)path, (uint64_t)type, (uint64_t)size, (uint64_t)&permissions, 0);
 }
 
@@ -257,10 +268,8 @@ File * getFileList(int * count) {
     return files;
 }
 
-int setFilePermissions(uint64_t id, Pid pid, FilePermissions permissions) {
-    int result;
-    syscall(SET_FILE_PERMISSIONS_SYSCALL, id, (uint64_t)pid, (uint64_t)&permissions, (uint64_t)&result, 0);
-    return result;
+int setFilePermissions(uint64_t id, FilePermissions permissions) {
+    return syscall(SET_FILE_PERMISSIONS_SYSCALL, id, (uint64_t)&permissions, 0, 0, 0);
 }
 
 FilePermissions getFilePermissions(uint64_t id) {
@@ -512,4 +521,11 @@ void seedRandom(uint64_t seed){
 uint32_t randInt(uint32_t min, uint32_t max){
     randmon_seed = randmon_seed * 1664525 + 1013904223;
     return (randmon_seed % (max - min + 1)) + min;
+}
+
+// BACKWARDS COMPATIBILITY
+char get_char_from_stdin(){
+    char c;
+    readStdin(&c, 1);
+    return c;
 }

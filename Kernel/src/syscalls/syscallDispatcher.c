@@ -13,6 +13,7 @@
 #include <windowManager/windowManager.h>
 #include <eventManager/eventManager.h>
 #include <programManager/programManager.h>
+#include <memoryManager/memoryManager.h>
 #include <lib.h>
 #include <types.h>
 
@@ -62,6 +63,9 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                 IO_Files io_files = {0};
                 if (arg4 != NULL) {
                     io_files = *(IO_Files *)arg4; // Si se pasa un struct de I/O, lo usamos
+                    log_to_serial("runProgram: Asignando I/O al nuevo proceso");
+                    log_decimal("runProgram: stdin file id: ", io_files.stdin);
+                    log_decimal("runProgram: stdout file id: ", io_files.stdout);
                 }
                     
                 Program * program = getProgramByCommand(arg1);
@@ -310,7 +314,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             break;
 
         case SET_FILE_PERMISSIONS_SYSCALL:
-            // * orden syscall: file ID, new permissions
+            // * orden syscall: file ID, new permissions (*)
             // * solo alguien con permisos globales de archivos y el grupo del owner de escritura del archivo pueden cambiar los permisos
             // * retorna 0 si no se pudieron cambiar los permisos
 
@@ -330,18 +334,22 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             break;
 
         // TODO: MEMORY MANAGER que guarde quién registró cada cosa
-        // case ALLOCATE_MEMORY_SYSCALL:
-        //     // VALIDATE_PERMISSIONS(MEMORY_ALLOCATE_PERMISSION);
-        //     return allocateMemory((uint64_t)arg1, (uint64_t)arg2);
-        //     break;
+        case ALLOCATE_MEMORY_SYSCALL:
+            // * orden syscall: cantidad de memoria a alocar, alignment
+            // * malloc de toda la vida, devuelve un puntero a la memoria alocada o NULL si no se pudo alocar
+
+            return malloc((uint64_t)arg1);
+            break;
         // case REALLOCATE_MEMORY_SYSCALL:
-        //     // VALIDATE_PERMISSIONS(MEMORY_REALLOCATE_PERMISSION);
         //     return reallocateMemory((uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3);
         //     break;
-        // case FREE_MEMORY_SYSCALL:
-        //     // VALIDATE_PERMISSIONS(MEMORY_FREE_PERMISSION);
-        //     return freeMemory((uint64_t)arg1);
-        //     break;
+        case FREE_MEMORY_SYSCALL:
+            // * orden syscall: puntero a la memoria a liberar
+            // * libera la memoria alocada por malloc, no hace nada si el puntero es NULL
+
+            free((uint64_t)arg1);
+            break;
+
         // TODO : Ver temas de system monitor
 
         // WINDOW MANAGER
@@ -409,6 +417,9 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             }
             break;
         case INSTALL_PROGRAM_SYSCALL:
+            // * orden syscall: puntero a un struct Program con la info del programa a instalar
+            // * retorna 0 si hubo error, 1 si éxito (el programa se instaló o ya estaba instalado)
+
             // VALIDATE_PERMISSIONS(INSTALL_PROGRAM_PERMISSION);
             {
                 Program * program = (Program *)arg1;

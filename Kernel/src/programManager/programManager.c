@@ -107,6 +107,7 @@ void setProgramsCount(int count) {
 // INSTALL/UNINSTALL PROGRAM FUNCTIONS
 
 // Install a new program
+// Returns 1 if installed successfully (or it was already installed), 0 if installation failed
 int installProgram(Program* program) {
     if (!program) return 0;
     
@@ -124,7 +125,7 @@ int installProgram(Program* program) {
     // Check if program already exists
     for (int i = 0; i < programs_count; i++) {
         if (programs[i].command && strcmp(programs[i].command, program->command) == 0) {
-            return 0; // Program already exists
+            return 1; // Program already exists
         }
     }
     

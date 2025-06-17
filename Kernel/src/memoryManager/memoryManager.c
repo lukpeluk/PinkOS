@@ -14,6 +14,7 @@ static uint64_t heapEnd = HEAP_BASE_ADDRESS + HEAP_SIZE;
 void initMemoryManager() {
     // log_to_serial("initMemoryManager: Iniciando el memory manager");
     heapCurrent = heapStart;
+    // mem_register_sector(heapStart, heapEnd, "Heap Memory");
     // log_to_serial("initMemoryManager: Memory manager inicializado");
 }
 

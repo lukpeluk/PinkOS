@@ -84,17 +84,33 @@ uint32_t getQuantumByPriority(Priority priority) {
 }
 
 //! internal
+static int log_process_search = 0;
 ProcessControlBlock * getProcessControlBlock(Pid pid){
     if(processList == NULL) return NULL;
+    log_decimal(" #### getProcessControlBlock: Buscando proceso con PID: ", pid);
+    int iterations = 0;
 
     ProcessControlBlock * current = processList;
     do {
+        if(log_process_search){
+            log_decimal("----------> getProcessControlBlock: analizando: ", current->process.pid);
+            log_decimal("----------> getProcessControlBlock: pid buscado: ", pid);
+            log_decimal("----------> getProcessControlBlock: current->next->process.pid: ", current->next->process.pid);
+            log_decimal("----------> getProcessControlBlock: iteraciones: ", iterations);
+            sleep(250);
+        }
+
         if(current->process.pid == pid){
-            return current; // Devuelve el proceso actual, NULL si no hay ninguno
+            log_process_search = 0; // Resetear el log de búsqueda
+            return current; // Devuelve el proceso actual
         }
         current = current->next;
+        iterations++;
     } while (current != processList);
+    
+    log_process_search = 0; // Resetear el log de búsqueda
 
+    log_to_serial("E: getProcessControlBlock: Proceso no encontrado");
     return NULL; 
 }
 
@@ -115,13 +131,12 @@ Process getProcess(Pid pid) {
     ProcessControlBlock * current = processList;
     do {
         if(current->process.pid == pid){
-            return current->process; // Devuelve el proceso actual, NULL si no hay ninguno
+            return current->process; // Devuelve el proceso actual
         }
         current = current->next;
     } while (current != processList);
 
     return invalid_process;
-    
 }
 
 Process getParent(Pid pid){
@@ -140,8 +155,8 @@ IO_Files getIOFiles(Pid pid){
     if(process == NULL) return IO_files;
 
     IO_files.stdin = process->stdin;
-    IO_files.stdin = process->stdout;
-    IO_files.stdin = process->stderr;
+    IO_files.stdout = process->stdout;
+    IO_files.stderr = process->stderr;
     return IO_files;
 }
 
@@ -220,6 +235,7 @@ int isSameProcessGroup(Pid pid1, Pid pid2){
 Pid getProcessGroupMain(Pid pid) {
     ProcessControlBlock *pcb = getProcessControlBlock(pid);
     if (pcb == NULL) {
+        log_to_serial("E: getProcessGroupMain: Proceso no encontrado");
         return 0; // Proceso no encontrado
     }
 
@@ -261,6 +277,7 @@ uint64_t allocateStack() {
     if (stackMemory == NULL) {
         return 0; // Error: no se pudo allocar memoria para el stack
     }
+
     
     // El stack crece hacia abajo, así que el stack base debe ser el final de la memoria allocada
     return (uint64_t)stackMemory + STACK_SIZE;
@@ -354,6 +371,12 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
     newProcessBlock->stderr = 0;
     
     newProcessBlock->stackBase = allocateStack();
+    char stackStr[MEDIUM_TEXT_SIZE];
+    strcpy(stackStr, "Process Stack: ");
+    strcpy(stackStr + strlen(stackStr), newProcessBlock->process.program.name);
+
+    // mem_register_sector(newProcessBlock->stackBase - STACK_SIZE, newProcessBlock->stackBase, stackStr);
+
     if (newProcessBlock->stackBase == NULL) {
         log_to_serial("E: addProcessToScheduler: Error al alocar memoria para el stack del proceso");
         free(newProcessBlock); // Liberar el PCB si no se pudo alocar el stack
@@ -437,25 +460,63 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
     // Asignar los descriptores de I/O del proceso
     // --------------------------------------------
     if(stdin){
+        log_to_serial("W: newProcess: Asignando stdin al proceso");
+        log_decimal("newProcess: stdin file id: ", stdin);
+
         FilePermissions stdin_permissions = getFilePermissions(stdin); 
         stdin_permissions.reading_owner = newProcessBlock->process.pid;
         stdin_permissions.reading_conditions = '.';
+
+        log_to_serial("newProcess: stdin permissions set");
+        log_decimal("newProcess: stdin permissions reading owner: ", stdin_permissions.reading_owner);
+        log_decimal("newProcess: stdin permissions reading conditions: ", stdin_permissions.reading_conditions);
+        log_decimal("newProcess: stdin permissions writing owner: ", stdin_permissions.writing_owner);
+        log_decimal("newProcess: stdin permissions writing conditions: ", stdin_permissions.writing_conditions);
+
+        log_process_search = 1; // Activar el log de búsqueda de procesos para depuración
         setFilePermissions(stdin, 0, stdin_permissions);
+        log_process_search = 0; // Desactivar el log de búsqueda de procesos
         newProcessBlock->stdin = stdin;
+
+        log_to_serial("I: newProcess: stdin asignado al proceso");
     }
     if(stdout){
+        log_to_serial("W: newProcess: Asignando stdout al proceso");
+        log_decimal("newProcess: stdout file id: ", stdout);
+
         FilePermissions stdout_permissions = getFilePermissions(stdout);
         stdout_permissions.writing_owner = newProcessBlock->process.pid;
         stdout_permissions.writing_conditions = '.';
+
+        log_to_serial("newProcess: stdout permissions set");
+        log_decimal("newProcess: stdout permissions reading owner: ", stdout_permissions.reading_owner);
+        log_decimal("newProcess: stdout permissions reading conditions: ", stdout_permissions.reading_conditions);
+        log_decimal("newProcess: stdout permissions writing owner: ", stdout_permissions.writing_owner);
+        log_decimal("newProcess: stdout permissions writing conditions: ", stdout_permissions.writing_conditions);
+
         setFilePermissions(stdout, 0, stdout_permissions);
         newProcessBlock->stdout = stdout;
+
+        log_to_serial("I: newProcess: stdout asignado al proceso");
     }
     if(stderr){
+        log_to_serial("W: newProcess: Asignando stderr al proceso");
+        log_decimal("newProcess: stderr file id: ", stderr);
+
         FilePermissions stderr_permissions = getFilePermissions(stderr);
         stderr_permissions.writing_owner = newProcessBlock->process.pid;
         stderr_permissions.writing_conditions = '.';
+
+        log_to_serial("newProcess: stderr permissions set");
+        log_decimal("newProcess: stderr permissions reading owner: ", stderr_permissions.reading_owner);
+        log_decimal("newProcess: stderr permissions reading conditions: ", stderr_permissions.reading_conditions);
+        log_decimal("newProcess: stderr permissions writing owner: ", stderr_permissions.writing_owner);
+        log_decimal("newProcess: stderr permissions writing conditions: ", stderr_permissions.writing_conditions);
+
         setFilePermissions(stderr, 0, stderr_permissions);
         newProcessBlock->stderr = stderr;
+
+        log_to_serial("I: newProcess: stderr asignado al proceso");
     }
 
     // Si es gráfico, crear la ventana asociada
@@ -600,6 +661,7 @@ void scheduleNextProcess() {
             }
             // log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
             free(current->stackBase); // Liberar el stack del proceso actual
+            // mem_free_sector(current->stackBase - STACK_SIZE); // Liberar el sector de memoria del stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
 
             prev->next = nextProcess; // Eliminar el proceso actual de la lista
@@ -607,14 +669,18 @@ void scheduleNextProcess() {
             continue;
         }
         if (current->process.state == PROCESS_STATE_WAITING) {
-            // Si el proceso está esperando, no lo consideramos para programar
-            log_to_serial("W: scheduleNextProcess: Proceso en estado WAITING, saltando");
+            // log_to_serial("W: scheduleNextProcess: Proceso en estado WAITING, saltando");
         }
 
         // vuelvo a llegar, no había ningún proceso en estado READY o NEW
         if (current == currentProcessBlock) {
             log_to_serial("E: scheduleNextProcess: No hay procesos en estado READY");
             // No hay procesos en estado READY ni NEW, no se puede programar otro proceso
+
+            // Imprimir la dirección del stack actual para debug (NO DEL PROCESO, SINO EL STACK ACTUAL, USAR ASSEMBLER SI ES NECESARIO)
+            // uint64_t stackPointer;
+            // __asm__ __volatile__("mov %%rsp, %0" : "=r"(stackPointer));
+            // mem_log_address(stackPointer, "scheduleNextProcess: Stack base del proceso actual");
             _hlt();
         }
 
@@ -646,7 +712,7 @@ void scheduleNextProcess() {
     // log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     ticksSinceLastSwitch = 0; // Reiniciar el contador de ticks desde el último cambio de proceso
 
-    log_decimal("I: scheduleNextProcess: Proceso con PID ", currentProcessBlock->process.pid);
+    // log_decimal("I: scheduleNextProcess: Proceso con PID ", currentProcessBlock->process.pid);
     magic_recover(&currentProcessBlock->registers);
 }
 

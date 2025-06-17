@@ -22,46 +22,25 @@
 #define IS_ASCII(ascii) ((char)ascii > 0 && (char)ascii < 256)
 #define IS_PRINTABLE_CHAR(ascii) ((char)ascii >= 32 && (char)ascii < 255 && (char)ascii != ASCII_DEL)
 
+#define PIPE '|'
+
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
-extern void *get_stack_pointer();
 extern void _hlt();
 
-static int background_audio_enabled = 0;
-static struct PreviousAudioState{
-	uint8_t restoring_audio;
-	uint8_t playing;
-	AudioState state;
-} previousAudioState = {0};
+int running_programs = 0; // amount of programs running as child of the shell
 
 Colors* ColorSchema = &PinkOSMockupColors;
 
-static int show_home_screen = 1;
-
-typedef struct
-{
-	uint64_t rax, rbx, rcx, rdx, rsi, rdi, rsp, rbp, r8, r9, r10, r11, r12, r13, r14, r15;
-} Registers;
-
-typedef struct
-{
-	Registers registers;
-	uint64_t cri_rip, cri_rsp, cri_rflags;
-} BackupRegisters;
-
-int running_program = 0; // 0 if no program is running (besides the shell itself, ofc)
-int graphics_mode = 0;	 // 0 for CLI, 1 for GUI
-
 #define BUFFER_SIZE 500
 #define STRING_SIZE 200		 // 199 usable characters and the null termination
-#define KEY_REPEAT_ENABLED 1 // 0 for disabling key repeat
+#define KEY_REPEAT_ENABLED 1 // 0 for disabling key repeat (no me digan que no es god tener esto)
 
-#define COMMAND_BUFFER_SIZE 10
+// #define COMMAND_BUFFER_SIZE 10
 
 static char logo_str[10] = "    PinkOS";
 static char time_str[10] = "  00:00:00";
 static Point time_position = {950, 5};
 static Point logo_position = {10, 5};
-
 
 static const char *command_not_found_msg = (const char *) ">?Command not found\n";
 static const char *default_prompt = (const char *)" > ";
@@ -76,45 +55,19 @@ int scroll = 0; // indica qué línea es la que está en la parte superior de la
 uint32_t current_text_color; // intended to be changed via markup
 int highlighting_text = 0;	 // for highlighting text
 
-char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
-int current_command = 0;
-int oldest_command = 0;
-int command_in_iteration = -1;
+Pid running_program_pid = 0;
+uint64_t console_in = 0;     // file descriptors for stdin and stdout
+uint64_t console_out = 0;
 
-char stdin_buffer[STRING_SIZE] = {0};
-int stdin_write_position = 0;
-int stdin_read_position = 0;
+
+// char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
+// int current_command = 0;
+// int oldest_command = 0;
+// int command_in_iteration = -1;
 
 void draw_status_bar();
 void newPrompt();
 void idle(char *message);
-
-char get_char_from_stdin()
-{
-	if (stdin_write_position == stdin_read_position)
-	{
-		return 0;
-	}
-
-	char c = stdin_buffer[stdin_read_position];
-	stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
-	return c;
-}
-
-void add_char_to_stdin(char c)
-{
-	stdin_buffer[stdin_write_position] = c;
-	stdin_write_position = (stdin_write_position + 1) % STRING_SIZE;
-	if (stdin_write_position == stdin_read_position)
-	{
-		stdin_read_position = (stdin_read_position + 1) % STRING_SIZE;
-	}
-}
-
-void clear_stdin()
-{
-	stdin_read_position = stdin_write_position;
-}
 
 
 // The buffer is an array of strings of fixed length, so that each enter key press will be stored in a new string
@@ -228,6 +181,7 @@ void reset_markup(){
 	highlighting_text = 0;
 }
 
+
 // recieves a string and updates the current color and highlighting state if the string contains markup at the beginning
 // returns the amount of markup chars detected, to avoid printing them
 int process_markup(char *string)
@@ -256,10 +210,35 @@ int process_markup(char *string)
 	return markup_chars;
 }
 
+void draw_status_bar()
+{
+	int screen_width = 0;
+	syscall(GET_SCREEN_WIDTH_SYSCALL, (uint64_t)&screen_width, 0, 0, 0, 0);
+	int char_width = getCharWidth();
+	time_position.x = getScreenWidth() - (11 * char_width);
+	logo_str[2] = 169;
+
+	drawRectangle(ColorSchema->status_bar_background, screen_width, char_width + 10, (Point){0, 0});
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)logo_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&logo_position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)time_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&time_position, 0);
+}
+
+
+// configures the current line as a prompt, and prints a graphical indicator of that
+void newPrompt()
+{
+	scroll_if_out_of_bounds();
+	is_input[current_string] = 1;
+	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
+	reset_markup();
+}
+
+
 void redraw()
 {
 	// clear screen
-	syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
+	clearScreen(ColorSchema->background);
+	
 	draw_status_bar();
 	syscall(SET_CURSOR_LINE_SYSCALL, 2, 0, 0, 0, 0); // evita dibujar la status bar
 	reset_markup(); // just in case
@@ -315,7 +294,7 @@ void clear_console()
 	scroll = current_string;
 	reset_markup();
 	redraw();
-	restoreContext(0);
+	//TODO: ver qué se necesita para que todo funque bien
 }
 
 void scroll_if_out_of_bounds()
@@ -343,6 +322,13 @@ void scroll_if_out_of_bounds()
 	}
 }
 
+void add_char_to_stdin(char character){
+	// Escribir a console_in
+	if(!IS_ASCII(character)) return;
+
+	writeFifo(console_in, &character, 1);
+}
+
 // prints and saves to the buffer
 void add_char_to_stdout(char character)
 {
@@ -364,9 +350,7 @@ void add_char_to_stdout(char character)
 	if (result == -1)
 		return;
 
-	// print character to screen, if not in graphic mode
-	if(!graphics_mode)
-		syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
+	syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 }
 
 // prints and saves to the buffer
@@ -415,9 +399,28 @@ void add_number_to_stdout(uint64_t number)
 	}
 }
 
-static char arguments[STRING_SIZE];
-void execute_program(int input_line)
+
+void child_death_handler(Pid *pid)
 {
+	// if the pid is not the one of the running program, do nothing
+	if (pid != running_program_pid)
+		return;
+
+	running_programs--;
+	running_program_pid = 0; // reset the running program pid
+
+	// clear the console input
+	console_in = 0;
+	console_out = 0;
+
+	// print a new prompt
+	newPrompt();
+}
+
+
+void execute_program(int input_line){
+	static char arguments[STRING_SIZE];
+
 	// get the program name
 	char program_name[STRING_SIZE];
 	int i = 0;
@@ -432,7 +435,6 @@ void execute_program(int input_line)
 	}
 
 	// get the arguments
-
 	int j = 0;
 	for (; buffer[input_line][i] != 0; i++, j++)
 	{
@@ -441,100 +443,68 @@ void execute_program(int input_line)
 	arguments[j] = 0;
 
 
-	// Si el programa es el texto "async", se ejecuta forrestgump 2 veces para probar el manejo de procesos asíncronos
-	if (strcmp(program_name, "async") == 0)
-	{
-		add_str_to_stdout((char *)"Running two instances of Forrest Gump simultaneously\n");
-		running_program = 1;
-
-		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
-
-		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)arguments, 0, 0, 0);
-		syscall(RUN_PROGRAM_SYSCALL, (uint64_t)get_program_entry("forrestgump"), (uint64_t)logo_str, 0, 0, 0);
-		return;
-	} else if (strcmp(program_name, "clear") == 0)
-	{
-		// clear the console
-		clear_console();
-		return;
-	}
-
 	// get the program entry point
 	Program *program = get_program_entry(program_name);
+	int installed = installProgram(program); // install the program if it was not installed yet
 
 	// if the program is not found, print an error message
-	if (program == 0)
-	{
+	if (program == 0 || !installed) {
 		// "Command not found"
 		add_str_to_stdout((char *)command_not_found_msg);
 		newPrompt();
-	}
-	// if the program is found, execute it
-	else
-	{
-		// running_program = 1;
-
-		if (program->permissions & DRAWING_PERMISSION)
-		{
-			graphics_mode = 1;
-			// syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)ColorSchema->background, 0, 0, 0, 0);
-		}
-		if ((program->permissions & PLAY_AUDIO_PERMISSION) && background_audio_enabled)
-		{
-			// Si voy a ejecutar un programa con permisos de audio, y se estaba reproduciendo algo en segundo plano, guardo el estado
-			// E indico que luego de terminar la ejecución debe restaurarse el estado guardado
-			disableBackgroundAudio();
-			previousAudioState.restoring_audio = 1;
-			previousAudioState.playing = is_audio_playing();
-			pause_audio();
-			previousAudioState.state = get_audio_state();
-		}
-
+	} else {
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
-		Pid pid = getProcessGroupMain();
-		add_number_to_stdout(pid);
 
-		// uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 256, (FilePermissions){.writing_owner = pid, .writing_conditions = '*', .reading_owner = pid, .reading_conditions = '*'});
-		// uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 256, (FilePermissions){.writing_owner = pid, .writing_conditions = '*', .reading_owner = pid, .reading_conditions = '*'});
-		// uint64_t stderr = mkFile("stderr", FILE_TYPE_FIFO, 256, (FilePermissions){.writing_owner = pid, .writing_conditions = '*', .reading_owner = pid, .reading_conditions = '*'});
-		// IO_Files io_files = {
-		// 	.stdin = stdin,
-		// 	.stdout = stdout,
-		// 	.stderr = stderr,
-		// };
+		// Crea los archivos para la entrada y salida estándar del programa
+		uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 256);
+		uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 256);
+
+		// Stderror y stdout mapean al mismo archivo por ahora
+		IO_Files io_files = {
+			.stdin = stdin,
+			.stdout = stdout,
+			.stderr = stdout,
+		};
+
+		console_in = stdin;  // set the console input to the stdin of the program
+		console_out = stdout; // set the console output to the stdout of the program
 		
-		// // syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)arguments, 0, 0, 0);
-		installProgram(program); // install the program if it was not installed yet
-		runProgram(program, arguments, PRIORITY_NORMAL, 0, 0);
-
-		restoreContext(0); // restore the context to the shell
+		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, 0);
+		if (program_pid == 0) {
+			add_str_to_stdout((char *)">?Error running program\n");
+			newPrompt();
+		} else {
+			running_programs++;
+			running_program_pid = program_pid; // save the pid of the running program
+			add_char_to_stdout('\n');
+			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, (void *)program_pid); // subscribe to the process death event
+		}
 	}
 }
 
-
-void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4)
-{
-	switch (endpoint_id)
-	{
-	case CLEAR_SCREEN_ENDPOINT:
-		clear_console();
-		break;
-	case PRINT_STRING_ENDPOINT:
-		add_str_to_stdout((char *)arg1);
-		break;
-	case PRINT_CHAR_ENDPOINT:
-		add_char_to_stdout((char)arg1);
-		break;
-	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
-		background_audio_enabled = 1;
-		break;
-	case DISABLE_BACKGROUND_AUDIO_ENDPOINT:
-		background_audio_enabled = 0;
-		break;
-	default:
-		break;
-	}
-}
+// void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4)
+// {
+// 	switch (endpoint_id)
+// 	{
+// 	case CLEAR_SCREEN_ENDPOINT:
+// 		clear_console();
+// 		break;
+// 	case PRINT_STRING_ENDPOINT:
+// 		add_str_to_stdout((char *)arg1);
+// 		break;
+// 	case PRINT_CHAR_ENDPOINT:
+// 		add_char_to_stdout((char)arg1);
+// 		break;
+// 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
+// 		background_audio_enabled = 1;
+// 		break;
+// 	case DISABLE_BACKGROUND_AUDIO_ENDPOINT:
+// 		background_audio_enabled = 0;
+// 		break;
+// 	default:
+// 		break;
+// 	}
+// }
 
 // void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 void key_handler(KeyboardEvent * event)
@@ -547,14 +517,12 @@ void key_handler(KeyboardEvent * event)
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
-	// syscall(DRAW_HEX_SYSCALL, scan_code, ColorSchema->text, ColorSchema->background, 0, 0);  // For debugging
-	// return;
-
 
 	// --- HOLDING ESC FORCE QUITS THE CURRENT PROGRAM ---
-	if (ascii == ASCII_ESC && running_program && hold_times == 1)
+	if (ascii == ASCII_ESC && running_programs && hold_times == 1)
 	{
 		// syscall(QUIT_SYSCALL, 0, 0, 0, 0, 0);
+		killProcess(running_program_pid); // terminate the running program
 		return;
 	}
 	
@@ -574,7 +542,7 @@ void key_handler(KeyboardEvent * event)
 	}
 
 	// --- SCROLL WITH PAGE UP AND PAGE DOWN ---
-	if(!graphics_mode && (scan_code == 0x49 || scan_code == 0x51)) // page up or page down
+	if((scan_code == 0x49 || scan_code == 0x51)) // page up or page down
 	{
 		if((scan_code == 0x49 && event_type == 3))
 		{
@@ -594,7 +562,7 @@ void key_handler(KeyboardEvent * event)
 	}
 
 	// --- HANDLE SHELL KEYBOARD SHORTCUTS ---
-	if(is_ctrl_pressed && !graphics_mode)
+	if(is_ctrl_pressed)
 	{
 		// --- FONT SIZE ---
 		if (ascii == '+' && hold_times == 1)
@@ -627,7 +595,7 @@ void key_handler(KeyboardEvent * event)
 	}
 
 	// --- HANDLE ARROWS FOR PREVIOUS COMMANDS ---
-	if(scan_code == 0x48){
+	// if(scan_code == 0x48){
 		// WIP - ITERAR POR LOS COMANDOS RECIENTES
 		// print("UP\n");
 		// if(command_in_iteration != oldest_command){
@@ -636,22 +604,21 @@ void key_handler(KeyboardEvent * event)
 		// 	add_str_to_stdout(command_buffer[command_in_iteration]);
 		// 	DECREASE_INDEX(command_in_iteration, COMMAND_BUFFER_SIZE);
 		// }
-	}
+	// }
 
 	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
 	// 		El key repeat es configurable, 
 	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
 	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_BS)
 	{
-		// Solo guardo en el buffer de la terminal si estoy en modo CLI
-		if (!graphics_mode) add_char_to_stdout(ascii);
+		add_char_to_stdout(ascii);
 
 		// Si hay un programa corriendo y la entrada es ascii, se lo mando al programa por stdin
-		if (running_program && ascii)  add_char_to_stdin(ascii);
+		if (running_programs && ascii)  add_char_to_stdin(ascii);
 	}
 	
 	// --- ENTER TO EXECUTE ---
-	if (ascii == '\n' && !running_program) {
+	if (ascii == '\n' && !running_programs) {
 		// WIP - ITERAR POR LOS COMANDOS RECIENTES
 		// Al tocar enter se guarda la línea en el buffer de comandos
 		// strcpy(command_buffer[current_command], PREV_STRING);
@@ -671,6 +638,7 @@ void key_handler(KeyboardEvent * event)
 	}
 }
 
+
 void status_bar_handler(RTC_Time *time)
 {
 	time_str[0] = is_audio_playing() ? 128 : ' ';
@@ -682,225 +650,55 @@ void status_bar_handler(RTC_Time *time)
 	time_str[8] = time->seconds / 10 + '0';
 	time_str[9] = time->seconds % 10 + '0';
 
-	// char buffer[BUFFER_SIZE];
-    // char c;
-    // EtherPinkResponse response;
-	// buffer[0] = 'L';
-	// buffer[1] = 'O';
-	// buffer[2] = 'G';
-	// buffer[3] = ':';
-	// buffer[4] = ' ';
-
-	// // Print the time in the format HH:MM:SS (add to buffer after the LOG:, time_str)
-	// for (int i = 0; i < 8; i++)
-	// {
-	// 	c = time_str[i+2];
-	// 	buffer[i + 5] = c;
-	// }
-	// buffer[13] = '\n'; // null terminate the string
-	// buffer[14] = 0; // null terminate the string
-
-	
-	// make_ethereal_request(buffer, &response);
-	
 	draw_status_bar();
 }
 
-void draw_status_bar()
-{
-	// if (graphics_mode)
-	// 	return;
-
-	int screen_width = 0;
-	syscall(GET_SCREEN_WIDTH_SYSCALL, (uint64_t)&screen_width, 0, 0, 0, 0);
-	int char_width = getCharWidth();
-	time_position.x = getScreenWidth() - (11 * char_width);
-	logo_str[2] = 169;
-
-	drawRectangle(ColorSchema->status_bar_background, screen_width, char_width + 10, (Point){0, 0});
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)logo_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&logo_position, 0);
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)time_str, (uint64_t)ColorSchema->status_bar_text, (uint64_t)ColorSchema->status_bar_background, (uint64_t)&time_position, 0);
-}
-
-void exception_handler(int exception_id, BackupRegisters *backup_registers)
-{
-	stop_audio();
-	background_audio_enabled = 0;
-	running_program = 0;
-	graphics_mode = 0;
-
-	// TODO: capaz hacer función add_warning_to_stdout o algo así para no poner >! en todos lados
-
-	// TODO: Implementar Pantallazo Rosa
-	add_str_to_stdout((char *)">!Exception: ");
-	add_number_to_stdout(exception_id);
-	add_char_to_stdout('\n');
-
-	// print the backup registers
-	add_str_to_stdout((char *)">!rax: ");
-	add_number_to_stdout(backup_registers->registers.rax);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!rbx: ");
-	add_number_to_stdout(backup_registers->registers.rbx);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!rcx: ");
-	add_number_to_stdout(backup_registers->registers.rcx);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!rdx: ");
-	add_number_to_stdout(backup_registers->registers.rdx);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!rsi: ");
-	add_number_to_stdout(backup_registers->registers.rsi);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!rdi: ");
-	add_number_to_stdout(backup_registers->registers.rdi);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!rbp: ");
-	add_number_to_stdout(backup_registers->registers.rbp);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r8: ");
-	add_number_to_stdout(backup_registers->registers.r8);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r9: ");
-	add_number_to_stdout(backup_registers->registers.r9);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r10: ");
-	add_number_to_stdout(backup_registers->registers.r10);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r11: ");
-	add_number_to_stdout(backup_registers->registers.r11);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r12: ");
-	add_number_to_stdout(backup_registers->registers.r12);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r13: ");
-	add_number_to_stdout(backup_registers->registers.r13);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r14: ");
-	add_number_to_stdout(backup_registers->registers.r14);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!r15: ");
-	add_number_to_stdout(backup_registers->registers.r15);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!cri_rip: ");
-	add_number_to_stdout(backup_registers->cri_rip);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!cri_rsp: ");
-	add_number_to_stdout(backup_registers->cri_rsp);
-	add_char_to_stdout('\n');
-	add_str_to_stdout((char *)">!cri_rflags: ");
-	add_number_to_stdout(backup_registers->cri_rflags);
-	add_char_to_stdout('\n');
-}
-
-void registers_handler(BackupRegisters *backup_registers)
-{
-	RTC_Time time;
-	syscall(GET_RTC_TIME_SYSCALL, (uint64_t)&time, 0, 0, 0, 0);
-	add_str_to_stdout((char *)"Registers at time: ");
-	add_number_to_stdout((uint64_t)time.hours);
-	add_char_to_stdout((char)':');
-	add_number_to_stdout((uint64_t)time.minutes);
-	add_char_to_stdout((char)':');
-	add_number_to_stdout((uint64_t)time.seconds);
-	add_char_to_stdout((char)'\n');
-
-	// print the backup registers
-	add_str_to_stdout((char *)"rax: ");
-	add_number_to_stdout(backup_registers->registers.rax);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rbx: ");
-	add_number_to_stdout(backup_registers->registers.rbx);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rcx: ");
-	add_number_to_stdout(backup_registers->registers.rcx);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rdx: ");
-	add_number_to_stdout(backup_registers->registers.rdx);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rsi: ");
-	add_number_to_stdout(backup_registers->registers.rsi);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rdi: ");
-	add_number_to_stdout(backup_registers->registers.rdi);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rbp: ");
-	add_number_to_stdout(backup_registers->registers.rbp);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r8: ");
-	add_number_to_stdout(backup_registers->registers.r8);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r9: ");
-	add_number_to_stdout(backup_registers->registers.r9);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r10: ");
-	add_number_to_stdout(backup_registers->registers.r10);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r11: ");
-	add_number_to_stdout(backup_registers->registers.r11);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r12: ");
-	add_number_to_stdout(backup_registers->registers.r12);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r13: ");
-	add_number_to_stdout(backup_registers->registers.r13);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r14: ");
-	add_number_to_stdout(backup_registers->registers.r14);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"r15: ");
-	add_number_to_stdout(backup_registers->registers.r15);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rip: ");
-	add_number_to_stdout(backup_registers->cri_rip);
-	add_char_to_stdout((char)'\n');
-	add_str_to_stdout((char *)"rsp: ");
-	add_number_to_stdout(backup_registers->cri_rsp);
-	add_char_to_stdout((char)'\n');
-
-	if (!graphics_mode)
+void output_handler(){
+	while (1)
 	{
-		redraw();
-		if(!running_program) newPrompt();
-	}
-}
-
-// configures the current line as a prompt, and prints a graphical indicator of that
-void newPrompt()
-{
-	scroll_if_out_of_bounds();
-	is_input[current_string] = 1;
-	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
-	reset_markup();
-}
-
-int i = 0;
-void restoreContext(uint8_t was_graphic)
-{
-	running_program = 0;
-	if (was_graphic)
-	{
-		graphics_mode = 0;
-		redraw();
-	}
-	add_char_to_stdout('\n');
-	newPrompt();
-	clear_stdin();
-
-	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
-	// Si en el estado anterior a la ejecución del programa se estaba reproduciendo audio en segundo plano, continuar la reproducción
-	if (!background_audio_enabled){
-		stop_audio();
-		if(previousAudioState.restoring_audio){
-			enableBackgroundAudio();
-			load_audio_state(previousAudioState.state);
-			if(previousAudioState.playing) resume_audio();
+		if (console_out == 0) {
+			// setWaiting(getPID());
+			continue;
 		}
+		uint8_t character = 0;
+		int read = readFifo(console_out, &character, 1);
+		if (read == 1)
+		{	
+			add_char_to_stdout(character);
+		}
+		
 	}
-	previousAudioState.restoring_audio = 0;
-
-	idle((char *)"idle from restoreContext");
 }
+
+
+
+// int i = 0;
+// void restoreContext(uint8_t was_graphic)
+// {
+// 	running_programs = 0;
+// 	if (was_graphic)
+// 	{
+// 		graphics_mode = 0;
+// 		redraw();
+// 	}
+// 	add_char_to_stdout('\n');
+// 	newPrompt();
+// 	clear_stdin();
+
+// 	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
+// 	// Si en el estado anterior a la ejecución del programa se estaba reproduciendo audio en segundo plano, continuar la reproducción
+// 	if (!background_audio_enabled){
+// 		stop_audio();
+// 		if(previousAudioState.restoring_audio){
+// 			enableBackgroundAudio();
+// 			load_audio_state(previousAudioState.state);
+// 			if(previousAudioState.playing) resume_audio();
+// 		}
+// 	}
+// 	previousAudioState.restoring_audio = 0;
+
+// 	idle((char *)"idle from restoreContext");
+// }
 
 // message for debugging purposes
 void idle(char *message)
@@ -915,11 +713,11 @@ void idle(char *message)
 	}
 }
 
-void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
-{
-	show_home_screen = 0;
-	syscall(UNSUBSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, 0, 0, 0, 0);
-}
+// void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
+// {
+// 	show_home_screen = 0;
+// 	syscall(UNSUBSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, 0, 0, 0, 0);
+// }
 
 void home_screen()
 {
@@ -938,8 +736,8 @@ void home_screen()
 
 	drawBitmap((uint32_t *) mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
 
-	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
-	syscall(INC_FONT_SIZE_SYSCALL, 1, 0, 0, 0, 0);
+	incFontSize();
+	incFontSize();
 
 	// center the text
 	position.x = 0;
@@ -971,14 +769,13 @@ void shell_main(char *args)
 	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
 	// syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	log_to_serial("PinkOS shell started");
-	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma cuando se me canta el ogt ** lenguaje!! **)
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma en los comentarios cuando se me canta el ogt ** lenguaje!! **)
 
 	// installProgram(get_program_entry("francis"));
 	// runProgram(get_program_entry("francis"), (char *)"", PRIORITY_LOW, 0, 0);
 
 	home_screen();
 	redraw();
-
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
@@ -988,6 +785,8 @@ void shell_main(char *args)
 	subscribeToEvent(RTC_EVENT, (uint64_t)status_bar_handler, 0);
 	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
+
+	newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
 
 	current_text_color = ColorSchema->text;
 	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");

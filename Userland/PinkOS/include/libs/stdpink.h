@@ -81,7 +81,7 @@ void strcpy(char * dest, char * src);
  * @param io_files the IO files to use for the process
  * @param nohup if 1, the process runs in the background
  */
-Pid runProgram(Program * program, char * args, Priority priority, IO_Files * io_files, int nohup);
+Pid runProgram(char * program, char * args, Priority priority, IO_Files * io_files, int nohup);
 
 /**
  * Creates a new thread with the given entry point and arguments
@@ -207,7 +207,7 @@ Program * searchProgramByPrefix(char * command);
 /**
  * Installs a program in the system
  * @param program the program to install
- * @return 0 if the program was installed successfully, -1 otherwise
+ * @return 1 if the program was installed successfully, 0 if the program could not be installed 
 */
 int installProgram(Program * program);
 
@@ -275,14 +275,14 @@ void waitForEvent(int event_id, void * data, void * condition_data);
 
 // *** File System Management ***
 /**
- * Creates a file with the given path, type, size and permissions
+ * Creates a file with the given path, type and size 
+ * The permissions will be set to the current process, can be changed later with setFilePermissions
  * @param path the path of the file to create
  * @param type the type of the file to create
  * @param size the size of the file to create
- * @param permissions the permissions of the file to create
  * @return the ID of the created file, or 0 if the file could not be created
 */
-uint64_t mkFile(char * path, FileType type, uint32_t size, FilePermissions permissions);
+uint64_t mkFile(char * path, FileType type, uint32_t size);
 
 /**
  * Removes the file with the given path
@@ -370,11 +370,10 @@ File * getFileList(int * count);
 /**
  * Sets the permissions of the file with the given ID
  * @param id the ID of the file to set permissions for
- * @param pid the PID of the process that is setting the permissions
  * @param permissions the permissions to set for the file
- * @return 0 if the permissions were set successfully, -1 otherwise
+ * @return 0 if the permissions couldn't be set
 */
-int setFilePermissions(uint64_t id, Pid pid, FilePermissions permissions);
+int setFilePermissions(uint64_t id, FilePermissions permissions);
 
 /**
  * Gets the permissions of the file with the given ID
