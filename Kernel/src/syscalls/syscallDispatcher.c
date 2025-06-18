@@ -582,7 +582,8 @@ uint64_t pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t ar
     switch (syscall)
     {
         case SLEEP_SYSCALL:
-            sleep(arg1);
+            // sleep(arg1);
+            console_log("E: Si lees esto, estas usando un sleep deprecado");
             break;
         case GET_MILLIS_ELAPSED_SYSCALL:
             uint64_t millis = milliseconds_elapsed();

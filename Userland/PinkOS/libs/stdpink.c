@@ -1,5 +1,6 @@
 #include <libs/stdpink.h>
 #include <syscalls/syscall.h>
+#include <libs/events.h>
 
 #include <stdarg.h>
 #include <stdin.h>
@@ -498,7 +499,12 @@ void clear(){
 }
 
 void sleep(uint64_t millis){
-    syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
+    uint64_t millis_condition = getMillisElapsed() + millis;
+    SleepCondition condition = { .millis = millis_condition };
+    log_decimal("SLEEPING FOR: ", millis);
+    log_decimal("MILLIS CONDITION: ", millis_condition);
+    waitForEvent(SLEEP_EVENT, (void *)&condition, (void *)&condition);
+    // syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
 }
 
 uint64_t getMillisElapsed(){

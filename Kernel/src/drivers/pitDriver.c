@@ -4,6 +4,7 @@
 #include <drivers/audioDriver.h>
 #include <processManager/scheduler.h>
 #include <drivers/serialDriver.h>
+#include <eventManager/eventManager.h>
 
 // 18.2 Hz
 // #define MILLISECONDS_PER_TICK 54.9450549451
@@ -23,6 +24,7 @@ static uint64_t ticks = 0;
 void timer_handler() {
 	// log_to_serial("TICK");
 	ticks++;
+	handleSleep(milliseconds_elapsed()); // Handle sleep events based on the elapsed time
 	
 	// audioLoop(); // Call the audio driver main loop to update the audio stream
 	videoLoop(); // Call the video driver main loop to update the video buffer
