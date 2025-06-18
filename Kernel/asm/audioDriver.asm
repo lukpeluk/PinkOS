@@ -24,7 +24,7 @@ play_sound:
     or al, 3
     out 0x61, al
     
-    sti
+    ; sti
     mov rsp, rbp
     pop rbp
     ret

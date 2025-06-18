@@ -276,7 +276,7 @@ _irq05Handler:
 
 ;RTC
 _irq08Handler:
-	irqHandlerMaster 8
+	irqHandlerSlave 8
 
 ; Mouse
 _irq0CHandler:

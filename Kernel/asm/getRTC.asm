@@ -23,8 +23,8 @@ rtc_acknowledge_interrupt:
     in al, 0x71              ; Leer registro C y descartar el valor
     
     
-    mov al, 0x20
-	out 0xA0, al  ; EOI para el PIC esclavo
+    ; mov al, 0x20
+	; out 0xA0, al  ; EOI para el PIC esclavo
 
     ret
 
@@ -90,7 +90,7 @@ get_time_utc:
     in  al, 0x71
     mov [rdi + 6], al
 
-    sti  ; Habilitar interrupciones
+    ; sti  ; Habilitar interrupciones
     ret
 
 ; Subrutina para convertir BCD a binario
