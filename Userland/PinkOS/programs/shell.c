@@ -419,7 +419,7 @@ void child_death_handler(Pid *pid)
 	// console_out = 0;
 
 	log_to_serial("I: Child process finished: ");
-	log_decimal("PID: ", pid);
+	log_decimal("PID: ", *pid);
 	// print a new prompt
 	newPrompt();
 }
@@ -477,6 +477,20 @@ void execute_program(int input_line){
 		console_out = stdout; // set the console output to the stdout of the program
 		
 		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, 0);
+		FilePermissions stdin_permissions = {
+			.writing_owner = getPID(),
+			.writing_conditions = '.',
+			.reading_owner = program_pid,
+			.reading_conditions = '.'
+		};
+		FilePermissions stdout_permissions = {
+			.writing_owner = program_pid,
+			.writing_conditions = '.',
+			.reading_owner = getPID(),
+			.reading_conditions = '.'
+		};
+		setFilePermissions(stdin, stdin_permissions); // set the permissions for the stdin file
+		setFilePermissions(stdout, stdout_permissions); // set the permissions for the stdout file
 		// return;
 		if (program_pid == 0) {
 			add_str_to_stdout((char *)">?Error running program\n");
@@ -674,11 +688,12 @@ void output_handler(){
 		if (read == 1)
 		{	
 			add_char_to_stdout(character);
-		} else if (read == -1) {
+		} else if (read < 0) {
 			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
 			console_out = 0;
+			log_to_serial("I: EOF reached in console_out, waiting for new input");
 			setWaiting(getPID());
-		} else {
+		} else if (read != 0) {
 			log_to_serial("E: Error reading from console_out");
 		}
 	}
