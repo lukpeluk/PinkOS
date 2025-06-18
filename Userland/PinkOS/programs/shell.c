@@ -58,7 +58,7 @@ int highlighting_text = 0;	 // for highlighting text
 Pid running_program_pid = 0;
 uint64_t console_in = 0;     // file descriptors for stdin and stdout
 uint64_t console_out = 0;
-
+Pid threadcito = 0; // Pid of the thread that is running the shell, used to kill it when exiting
 
 // char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
 // int current_command = 0;
@@ -413,6 +413,8 @@ void child_death_handler(Pid *pid)
 	console_in = 0;
 	console_out = 0;
 
+	log_to_serial("I: Child process finished: ");
+	log_decimal("PID: ", pid);
 	// print a new prompt
 	newPrompt();
 }
@@ -470,14 +472,20 @@ void execute_program(int input_line){
 		console_out = stdout; // set the console output to the stdout of the program
 		
 		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, 0);
+		// return;
 		if (program_pid == 0) {
 			add_str_to_stdout((char *)">?Error running program\n");
+			console_in = 0; // reset the console input
+			console_out = 0; // reset the console output
 			newPrompt();
 		} else {
+			wakeProcess(threadcito);
 			running_programs++;
 			running_program_pid = program_pid; // save the pid of the running program
 			add_char_to_stdout('\n');
-			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, (void *)program_pid); // subscribe to the process death event
+			ProcessDeathCondition condition = { .pid = program_pid };
+			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &condition); // subscribe to the process death event
+			log_to_serial("I: Running program: ");
 		}
 	}
 }
@@ -657,8 +665,8 @@ void output_handler(){
 	while (1)
 	{
 		if (console_out == 0) {
-			// setWaiting(getPID());
-			continue;
+			setWaiting(getPID());
+			// continue;
 		}
 		uint8_t character = 0;
 		int read = readFifo(console_out, &character, 1);
@@ -786,7 +794,7 @@ void shell_main(char *args)
 	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
 	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
-	newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
+	threadcito = newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
 
 	current_text_color = ColorSchema->text;
 	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");

@@ -1,6 +1,7 @@
 
 #include <windowManager/windowManager.h>
 #include <drivers/videoDriver.h>
+#include <drivers/serialDriver.h>
 
 #define NULL 0
 
@@ -40,15 +41,20 @@ uint8_t * getFocusedBuffer(){
 uint8_t * getBufferByPID(Pid pid){
     WindowControlBlock *currentWindow = focusedWindow;
     Process parent;
+    // log_decimal("getBufferByPID: Buscando proceso con PID: ", pid);
+    // printProcessList(); // Imprimir la lista de procesos para depuración
     Process currentProcess = getProcess(pid);
     if (currentProcess.pid == 0) {
         return NULL; // Proceso no encontrado
     }
 
 
-
+    parent = getParent(pid);
+    if (parent.pid == 0) {
+        log_to_serial("E: getBufferByPID: Proceso no tiene padre");
+        log_decimal("E: getBufferByPID: PID: ", pid);
+    }
     while (currentWindow != NULL) {
-        parent = getParent(pid);
         if (currentWindow->pid == pid) {
             return currentWindow->buffer;
         } else if (currentProcess.type == PROCESS_TYPE_THREAD && parent.pid != 0 && parent.pid == currentWindow->pid) {  // Caso especial para que el thread use el buffer de su padre

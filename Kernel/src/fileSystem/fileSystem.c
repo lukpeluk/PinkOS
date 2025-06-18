@@ -88,7 +88,7 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
     log_decimal("convertToInternalPermissions: reading_conditions: ", permissions.reading_conditions);
 
     if(writing_owner_pid == 0 || reading_owner_pid == 0 || internalPermissions == NULL) {
-        log_to_serial("E: createFile: Error: owner invalido o referencia nula");
+        console_log("E: convertToInternalPermissions: Error al convertir permisos, PID invalido o internalPermissions NULL");
         return -1;
     }
     Process writing_owner_process = getProcess(writing_owner_pid);
@@ -102,6 +102,9 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
     internalPermissions->reading_owner = reading_owner_pid;
     internalPermissions->reading_owner_program = reading_owner_process.program;
     internalPermissions->reading_conditions = permissions.reading_conditions;
+
+    log_to_serial("convertToInternalPermissions: Permisos convertidos correctamente");
+    printProcessList(); // Para debug, imprimir la lista de procesos
 
     return 0;
 }
@@ -597,28 +600,42 @@ uint64_t * listFiles() {
 // Solo alguien del grupo del owner puede cambiar los permisos
 // Pid 0 se toma como modo kernel, o sea que puede setear permisos de cualquier archivo
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
+    console_log("setFilePermissions: Cambiando permisos del archivo");
+        printProcessList(); // Para debug, imprimir la lista de procesos
+
     InternalFilePermissions internalPermissions;
     if (convertToInternalPermissions(permissions, &internalPermissions) != 0) {
+        console_log("E: setFilePermissions: Error al convertir permisos a internos");
         return -1; // Error: permisos inválidos/mal formados
     }
+    console_log("setFilePermissions: Convertidos permisos a internos correctamente");
+    printProcessList(); // Para debug, imprimir la lista de procesos
 
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
+    console_log("setFilePermissions: Buscando archivo FIFO");
+        printProcessList(); // Para debug, imprimir la lista de procesos
+
     if (fifoFile != NULL) {
         if(pid && isSameProcessGroup(fifoFile->permissions.writing_owner, pid)) {
+            console_log("E: setFilePermissions: Error: sin permisos para cambiar los permisos");
             return -1; // Error: sin permisos para cambiar los permisos
         }
         fifoFile->permissions = internalPermissions;
+        console_log("setFilePermissions: Permisos cambiados correctamente, archivo FIFO encontrado");
+        printProcessList(); // Para debug, imprimir la lista de procesos
         return 0; // Éxito
     }
 
     RawFileControlBlock *rawFile = findRawFile(fileId);
     if (rawFile != NULL) {
         if(pid && isSameProcessGroup(rawFile->permissions.writing_owner, pid)) {
+            console_log("E: setFilePermissions: Error: sin permisos para cambiar los permisos");
             return -1; // Error: sin permisos para cambiar los permisos
         }
         rawFile->permissions = internalPermissions;
         return 0; // Éxito
     }
+    console_log("E: setFilePermissions: Error: archivo no encontrado");
 
     return -1; // Error: archivo no encontrado
 }

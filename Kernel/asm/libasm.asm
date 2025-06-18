@@ -1,6 +1,6 @@
 GLOBAL cpuVendor
 GLOBAL disable_ints, enable_ints, outportb, inportb, magic_recover, magic_recover_old, load_interrupt_frame, load_stack_int, push_to_custom_stack_pointer, get_stack_pointer, lightspeed_memcpy
-
+GLOBAL quitWrapper
 ; TODO: 
 ; 	- Ofrecer funciones para acceder a instrucciones como in y hlt
 
@@ -241,4 +241,9 @@ lightspeed_memcpy:
     rep movsb                ; [RDI] ← [RSI], RDI++, RSI++, RCX--
 
 .done:
+    ret
+
+quitWrapper:
+    mov rdi, 2
+    int 0x80
     ret

@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define HEAP_BASE_ADDRESS 0x900000  // Base del heap (diferente del stack)
-#define HEAP_SIZE 0x100000000          // Tamaño total del heap (1 MB)
+#define HEAP_BASE_ADDRESS 0x5000000  // Base del heap (diferente del stack)
+#define HEAP_SIZE 0x200000000          // Tamaño total del heap (1 MB)
 
 static uint64_t heapStart = HEAP_BASE_ADDRESS;
 static uint64_t heapCurrent = HEAP_BASE_ADDRESS;

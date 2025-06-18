@@ -397,7 +397,7 @@ void console_log(char* format, ...) {
     va_list args;
     va_start(args, format);
     
-    char buffer[1024]; // Buffer para construir el mensaje completo
+    char buffer[1024*2]; // Buffer para construir el mensaje completo
     char* buf_ptr = buffer;
     char* fmt_ptr = format;
     
