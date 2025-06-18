@@ -15,6 +15,6 @@ void exceptionDispatcher(int exception) {
 	// __asm__ volatile ("mov %%cs, %0" : "=r"(cs));
 	// uint8_t ring = cs & 0x3;
 	// console_log("Ring actual: %d\n", (int)ring);
-	// terminateProcess(getCurrentProcessPID());
+	terminateProcess(getCurrentProcessPID());
 }
 

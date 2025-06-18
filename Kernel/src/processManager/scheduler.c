@@ -8,7 +8,7 @@
 #include <fileSystem/fileSystem.h>
 #include <eventManager/eventManager.h>
 
-#define STACK_SIZE 0x1000       // Tamaño de cada stack (4 KB)
+#define STACK_SIZE 0x10000       // Tamaño de cada stack (4 KB)
 #define TICKS_TILL_SWITCH 1     // Cantidad de ticks hasta cambiar de proceso
 
 #define NULL 0
@@ -165,7 +165,7 @@ ProcessControlBlock * getProcessControlBlock(Pid pid){
     log_process_search = 0; // Resetear el log de búsqueda
 
     // log_to_serial("E: getProcessControlBlock: Proceso no encontrado");
-    console_log("E: getProcessControlBlock: Proceso con PID %d no encontrado tras %d iteraciones", pid, iterations);
+    // console_log("E: getProcessControlBlock: Proceso con PID %d no encontrado tras %d iteraciones", pid, iterations);
     return NULL; 
 }
 
@@ -550,9 +550,7 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         // log_decimal("newProcess: stdin permissions writing owner: ", stdin_permissions.writing_owner);
         // log_decimal("newProcess: stdin permissions writing conditions: ", stdin_permissions.writing_conditions);
         
-        log_process_search = 1; // Activar el log de búsqueda de procesos para depuración
-        // setFilePermissions(stdin, 0, stdin_permissions);
-        log_process_search = 0; // Desactivar el log de búsqueda de procesos
+        setFilePermissions(stdin, 0, stdin_permissions);
         newProcessBlock->stdin = stdin;
         
         log_to_serial("I: newProcess: stdin asignado al proceso");
@@ -570,16 +568,16 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         stdout_permissions.writing_owner = newProcessBlock->process.pid;
         stdout_permissions.writing_conditions = '.';
 
-        // log_to_serial("newProcess: stdout permissions set");
-        // log_decimal("newProcess: stdout permissions reading owner: ", stdout_permissions.reading_owner);
-        // log_decimal("newProcess: stdout permissions reading conditions: ", stdout_permissions.reading_conditions);
-        // log_decimal("newProcess: stdout permissions writing owner: ", stdout_permissions.writing_owner);
-        // log_decimal("newProcess: stdout permissions writing conditions: ", stdout_permissions.writing_conditions);
-
-        // setFilePermissions(stdout, 0, stdout_permissions);
+        
+        setFilePermissions(stdout, 0, stdout_permissions);
         newProcessBlock->stdout = stdout;
-
+        
         log_to_serial("I: newProcess: stdout asignado al proceso");
+        log_to_serial("newProcess: stdout permissions set");
+        log_decimal("newProcess: stdout permissions reading owner: ", stdout_permissions.reading_owner);
+        log_decimal("newProcess: stdout permissions reading conditions: ", stdout_permissions.reading_conditions);
+        log_decimal("newProcess: stdout permissions writing owner: ", stdout_permissions.writing_owner);
+        log_decimal("newProcess: stdout permissions writing conditions: ", stdout_permissions.writing_conditions);
     }
     if(stderr){
         // log_to_serial("W: newProcess: Asignando stderr al proceso");
@@ -593,17 +591,16 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         }
         stderr_permissions.writing_owner = newProcessBlock->process.pid;
         stderr_permissions.writing_conditions = '.';
-
-        // log_to_serial("newProcess: stderr permissions set");
-        // log_decimal("newProcess: stderr permissions reading owner: ", stderr_permissions.reading_owner);
-        // log_decimal("newProcess: stderr permissions reading conditions: ", stderr_permissions.reading_conditions);
-        // log_decimal("newProcess: stderr permissions writing owner: ", stderr_permissions.writing_owner);
-        // log_decimal("newProcess: stderr permissions writing conditions: ", stderr_permissions.writing_conditions);
-
-        // setFilePermissions(stderr, 0, stderr_permissions);
+        
+        setFilePermissions(stderr, 0, stderr_permissions);
         newProcessBlock->stderr = stderr;
-
+        
         log_to_serial("I: newProcess: stderr asignado al proceso");
+        log_to_serial("newProcess: stderr permissions set");
+        log_decimal("newProcess: stderr permissions reading owner: ", stderr_permissions.reading_owner);
+        log_decimal("newProcess: stderr permissions reading conditions: ", stderr_permissions.reading_conditions);
+        log_decimal("newProcess: stderr permissions writing owner: ", stderr_permissions.writing_owner);
+        log_decimal("newProcess: stderr permissions writing conditions: ", stderr_permissions.writing_conditions);
     }
 
     if (stdin || stdout || stderr) {
@@ -617,7 +614,7 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         // log_to_serial("newProcess: El proceso es grafico, creando ventana asociada");
         uint8_t *buffer = addWindow(newProcessBlock->process.pid);
         if (buffer == NULL) {
-            console_log("E: newProcess: No se pudo crear la ventana para el proceso con PID %d", newProcessBlock->process.pid);
+            // console_log("E: newProcess: No se pudo crear la ventana para el proceso con PID %d", newProcessBlock->process.pid);
             terminateProcess(newProcessBlock->process.pid); // Si no se pudo crear la ventana, eliminar el proceso (capaz es demasiado drástico, no sé, para pensar)
         }
     }
@@ -637,7 +634,7 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL){
-        console_log("E: newThread: Proceso padre no encontrado (PID %d), no se puede crear el thread", parent_pid); 
+        // console_log("E: newThread: Proceso padre no encontrado (PID %d), no se puede crear el thread", parent_pid); 
         return NULL;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
@@ -691,7 +688,7 @@ int terminateSingleProcess(uint32_t pid) {
     // Cerrar la escritura de todos los fifos del proceso
     closeAllFifosOfProcess(to_remove->process.pid);
 
-    console_log("W: terminateSingleProcess: Proceso con PID %d terminado", to_remove->process.pid);
+    // console_log("W: terminateSingleProcess: Proceso con PID %d terminado", to_remove->process.pid);
     // Emitir evento de muerte
     handleProcessDeath(to_remove->process.pid); 
 }
@@ -700,7 +697,7 @@ int terminateSingleProcess(uint32_t pid) {
 // Matar un proceso borra su ventana, avisa que murió con un evento, y lo marca como terminado para que el bucle del scheduler lo elimine
 // Es recursivo para así matar también a los hijos
 int terminateProcess(Pid pid) {
-    log_to_serial("E: terminateProcess: Terminando proceso");
+    // log_to_serial("E: terminateProcess: Terminando proceso");
     // printProcessList(); // Para debug, imprimir la lista de procesos antes de eliminar el proceso
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
@@ -721,7 +718,7 @@ int terminateProcess(Pid pid) {
     if(currentProcessBlock->process.state == PROCESS_STATE_TERMINATED) {
         scheduleNextProcess();
     }
-    console_log("E: xd");
+    // console_log("E: xd");
     return 0; // Proceso eliminado exitosamente
 }
 

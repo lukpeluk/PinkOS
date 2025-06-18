@@ -216,12 +216,12 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
     if (eventId < 0 || eventId >= MAX_EVENTS) {
         return; // Invalid event ID
     }
-    console_log("I: EventManager: Notifying event %d", eventId);
+    // console_log("I: EventManager: Notifying event %d", eventId);
 
     Listener* current = eventManager.events[eventId].listeners;
     Listener* previous = NULL;
     while (current != NULL) {
-        console_log("I: EventManager: Checking listener with PID %d for event %d", current->pid, eventId);
+        // console_log("I: EventManager: Checking listener with PID %d for event %d", current->pid, eventId);
         if (pid != NULL && !isSameProcessGroup(current->pid, pid)) {
             // If the PID does not match, skip this listener
             current = current->next;
@@ -230,7 +230,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
         }
         if (filter != NULL && !filter(current->condition_data, data)) {
             // If a filter is provided and it returns false, skip this listener
-            console_log("I: EventManager: Skipping listener with PID %d for event %d due to filter", current->pid, eventId);
+            // console_log("I: EventManager: Skipping listener with PID %d for event %d due to filter", current->pid, eventId);
             current = current->next;
             previous = current;
             continue;
@@ -239,7 +239,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             void *eventData = malloc(eventManager.events[eventId].data_size);
             if (!eventData) {
                 // Handle error: memory allocation failed
-                console_log("E: EventManager: Memory allocation failed for event data");
+                // console_log("E: EventManager: Memory allocation failed for event data");
                 continue;
             }  
             // Copy the data to the eventData buffer
@@ -249,11 +249,11 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             Pid pid = newThread(current->handler, eventData, PRIORITY_NORMAL, current->pid);
             if (pid == 0) {
                 // Handle error: could not create thread
-                console_log("E: EventManager: Could not create thread for event handler");
+                // console_log("E: EventManager: Could not create thread for event handler");
                 free(eventData); // Free the allocated memory for event data
                 
             } else {
-                console_log("I: EventManager: Created thread with PID %d to handle event %d, for process %d", pid, eventId, current->pid);
+                // console_log("I: EventManager: Created thread with PID %d to handle event %d, for process %d", pid, eventId, current->pid);
                 // Successfully created thread to handle the event
                 if (eventManager.events[eventId].one_time) {
                     // If the event is one-time, remove it from the list
@@ -313,13 +313,13 @@ int filterProcessDeathCondition(void* condition_data, void* data) {
     }
     ProcessDeathCondition condition = *(ProcessDeathCondition*)condition_data;
     Pid pid = *(Pid*)data;
-    console_log("I: EventManager: Filtering process death condition for PID: %d", pid);
-    console_log("I: EventManager: Condition PID: %d", condition.pid);
+    // console_log("I: EventManager: Filtering process death condition for PID: %d", pid);
+    // console_log("I: EventManager: Condition PID: %d", condition.pid);
     return (pid == condition.pid); // Filter by PID
 }
 
 void handleProcessDeath(Pid pid) {
-    console_log("Handling process death event for PID: %d", pid);
+    // console_log("Handling process death event for PID: %d", pid);
     // Remove all the listeners with the given PID from all events
     for (int i = 0; i < MAX_EVENTS; i++) {
         Listener* current = eventManager.events[i].listeners;
@@ -343,7 +343,7 @@ void handleProcessDeath(Pid pid) {
             }
         }
     }
-    console_log("I: EventManager: Notifying process death event for PID: %d", pid);
+    // console_log("I: EventManager: Notifying process death event for PID: %d", pid);
 
     notifyEvent(NULL, PROCESS_DEATH_EVENT, &pid, filterProcessDeathCondition);
 }

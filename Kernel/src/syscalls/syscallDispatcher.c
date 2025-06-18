@@ -91,7 +91,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             break;
         case QUIT_SYSCALL:
             // * sin args, no debería volverse de esta syscall
-            console_log("Quit syscall called, terminating current process with PID %d", getCurrentProcessPID());
+            // console_log("Quit syscall called, terminating current process with PID %d", getCurrentProcessPID());
             // Terminates the current process (no recibe nada)
             terminateProcess(getCurrentProcessPID());
             break;
@@ -204,7 +204,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * retrona: un signed int de 64 bits, con la cantidad de bytes que en efecto escribió, -1 si el archivo está cerrado para escritura, -2 si el archivo no existe
 
                 IO_Files IO_files = getIOFiles(getCurrentProcessPID());
-                console_log("Io files stdout: %d", IO_files.stdout);
+                // console_log("Io files stdout: %d", IO_files.stdout);
 
                 return writeFifo(IO_files.stdout, (void *)arg1, (uint32_t)arg2);
             }
@@ -293,7 +293,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
 
             VALIDATE_FILE_PERMISSIONS(arg1, FILE_READ);
             int a =  readFifo((uint64_t)arg1, (void *)arg2, (uint32_t)arg3);
-            console_log("readFifo returned: %d", a);
+            // console_log("readFifo returned: %d", a);
             return a;
             break;
         case WRITE_FIFO_FILE_SYSCALL:
@@ -450,7 +450,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
 // --- VIDEO DRIVER SYSCALLS ---
 uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     if (are_interrupts_enabled()) {
-        console_log("E: INTERRUPCIONES HABILITADAS EN EL VIDEO DRIVER SYSCALL\n");
+        // console_log("E: INTERRUPCIONES HABILITADAS EN EL VIDEO DRIVER SYSCALL\n");
     }
     uint8_t * videoBuffer = getBufferByPID(getCurrentProcessPID());
     switch (syscall)

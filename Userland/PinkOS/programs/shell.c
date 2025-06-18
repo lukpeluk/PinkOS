@@ -428,14 +428,24 @@ void child_death_handler(Pid *pid)
 void execute_program(int input_line){
 	static char arguments[STRING_SIZE];
 
+	int i = 0;
+	int nohup = 0; // if the program should run in the background (nohup)
+	if(buffer[input_line][0] == '&') {
+		log_decimal("I: Running program in background (nohup): ", input_line);
+		nohup = 1; // if the first character is &, run the program in the background
+		i++;
+	}
+
 	// get the program name
 	char program_name[STRING_SIZE];
-	int i = 0;
+
+
+	int program_i = 0;
 	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0; i++)
 	{
-		program_name[i] = buffer[input_line][i];
+		program_name[program_i++] = buffer[input_line][i];
 	}
-	program_name[i] = 0;
+	program_name[program_i] = 0;
 
 	if (buffer[input_line][i] == ' '){
 		i++;
@@ -449,6 +459,9 @@ void execute_program(int input_line){
 	}
 	arguments[j] = 0;
 
+	log_to_serial("I: Executing program: ");
+	log_to_serial(program_name);
+
 
 	// get the program entry point
 	Program *program = get_program_entry(program_name);
@@ -458,6 +471,18 @@ void execute_program(int input_line){
 	if (program == 0 || !installed) {
 		// "Command not found"
 		add_str_to_stdout((char *)command_not_found_msg);
+		newPrompt();
+	} else if (nohup) {
+		IO_Files io_files = {
+			.stdin = 0,
+			.stdout = 0,
+			.stderr = 0,
+		};
+
+		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, nohup);
+		if (program_pid == 0) {
+			add_str_to_stdout((char *)">?Error running program\n");
+		}
 		newPrompt();
 	} else {
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
@@ -477,21 +502,7 @@ void execute_program(int input_line){
 		console_out = stdout; // set the console output to the stdout of the program
 		
 		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, 0);
-		FilePermissions stdin_permissions = {
-			.writing_owner = getPID(),
-			.writing_conditions = '.',
-			.reading_owner = program_pid,
-			.reading_conditions = '.'
-		};
-		FilePermissions stdout_permissions = {
-			.writing_owner = program_pid,
-			.writing_conditions = '.',
-			.reading_owner = getPID(),
-			.reading_conditions = '.'
-		};
-		setFilePermissions(stdin, stdin_permissions); // set the permissions for the stdin file
-		setFilePermissions(stdout, stdout_permissions); // set the permissions for the stdout file
-		// return;
+
 		if (program_pid == 0) {
 			add_str_to_stdout((char *)">?Error running program\n");
 			console_in = 0; // reset the console input
