@@ -365,23 +365,22 @@ int64_t readFifo(uint64_t fileId, void *buffer, uint32_t size) {
         log_to_serial("E: readFifo: archivo no encontrado");
         return -2; // Error: archivo no encontrado
     }
+    if (FIFO_EMPTY(fileBlock) && fileBlock->closed_for_writing) {
+        log_to_serial("E: readFifo: EOF alcanzado");
+        removeFile(fileId); // Borra el archivo si se llegó al EOF
+        return -1; // EOF alcanzado
+    }
 
     uint32_t bytesRead = 0;
     uint8_t *buf = (uint8_t*)buffer;
-
+        
     // Leer hasta el tamaño solicitado o hasta que no haya más datos (el puntero de lectura alcance al de escritura, es circular)
     while (bytesRead < size && !FIFO_EMPTY(fileBlock)) {
         buf[bytesRead] = fileBlock->data[fileBlock->readPointer];
         ADVANCE_FIFO_POINTER(fileBlock->readPointer, fileBlock->file.size);
         fileBlock->writtenBytes--;
         bytesRead++;
-    }
-
-    if (FIFO_EMPTY(fileBlock) && fileBlock->closed_for_writing) {
-        log_to_serial("E: readFifo: EOF alcanzado");
-        removeFile(fileId); // Borra el archivo si se llegó al EOF
-        return -1; // EOF alcanzado
-    }
+    }    
 
     return bytesRead;
 }
