@@ -233,27 +233,19 @@ int closeFifoForWriting(uint64_t id) {
 }
 
 int readRaw(uint64_t id, void * buffer, uint32_t size, uint32_t offset) {
-    int result;
-    syscall(READ_RAW_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, (uint64_t)offset, (uint64_t)&result);
-    return result;
+    return syscall(READ_RAW_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, (uint64_t)offset, 0);
 }
 
 int writeRaw(uint64_t id, void * buffer, uint32_t size, uint32_t offset) {
-    int result;
-    syscall(WRITE_RAW_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, (uint64_t)offset, (uint64_t)&result);
-    return result;
+    return syscall(WRITE_RAW_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, (uint64_t)offset, 0);
 }
 
 int readFifo(uint64_t id, void * buffer, uint32_t size) {
-    int result;
-    syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, (uint64_t)&result, 0);
-    return result;
+    return syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, 0, 0);
 }
 
 int writeFifo(uint64_t id, void * buffer, uint32_t size) {
-    int result;
-    syscall(WRITE_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, (uint64_t)&result, 0);
-    return result;
+    return syscall(WRITE_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, 0, 0);
 }
 
 File getFileById(uint64_t id) {
@@ -354,7 +346,8 @@ char * num_to_string(int num) {
 
 
 void print(char * string){
-    writeStdout(string, strlen(string));
+    int a = writeStdout(string, strlen(string));
+    log_decimal("STDOUT: ", a);
 }
 
 void printf(char * format, ...) {

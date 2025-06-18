@@ -6,6 +6,16 @@
 #include <drivers/serialDriver.h>   
 #include <lib.h>
 
+#define ADVANCE_FIFO_POINTER(pointer, size) \
+    pointer = (pointer + 1) % size;
+
+#define FIFO_FULL(fileBlock) \
+    (fileBlock->writtenBytes == fileBlock->file.size)
+    
+#define FIFO_EMPTY(fileBlock) \
+    (fileBlock->writtenBytes == 0)
+
+
 typedef struct InternalFilePermissions{
     Pid writing_owner;
     Program writing_owner_program; // El programa del owner, para poder validar si es del mismo programa que el proceso que quiere acceder
@@ -31,8 +41,9 @@ typedef struct FifoFileControlBlock {
     File file;        // Información del archivo
     uint8_t *data;    // Puntero a los datos del archivo
     InternalFilePermissions permissions;
-    uint64_t readPointer;  // Puntero de lectura
-    uint64_t writePointer; // Puntero de escritura
+    uint64_t readPointer;   // Puntero de lectura
+    uint64_t writePointer;  // Puntero de escritura
+    uint32_t writtenBytes;  // Cantidad de bytes escritos (para distinguir buffer lleno de buffer vacío, problemita que teníamos...)
     int closed_for_writing; // Indica si el archivo se cerró para escritura (nunca más va a haber datos nuevos, así que llegar al final da un EOF y borra el archivo)
     struct FifoFileControlBlock *next;
 } FifoFileControlBlock;
@@ -66,10 +77,10 @@ void initFileSystem() {}
 // Deja el resultado en el puntero internalPermissions pasado por referencia
 int convertToInternalPermissions(FilePermissions permissions, InternalFilePermissions *internalPermissions) {
     // me traigo los owners, si existen, traigo el proceso, que sé que es válido y va a incluir el programa
-    // Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
-    // Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
-    Pid writing_owner_pid = permissions.writing_owner;
-    Pid reading_owner_pid = permissions.reading_owner;
+    Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
+    Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
+    // Pid writing_owner_pid = permissions.writing_owner;
+    // Pid reading_owner_pid = permissions.reading_owner;
     log_to_serial("convertToInternalPermissions: Validando owners de permisos");
     log_decimal("convertToInternalPermissions: writing_owner_pid: ", writing_owner_pid);
     log_decimal("convertToInternalPermissions: reading_owner_pid: ", reading_owner_pid);
@@ -129,6 +140,7 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
         newFile->file.size = size;
         newFile->readPointer = 0;
         newFile->writePointer = 0;
+        newFile->writtenBytes = 0;
         newFile->closed_for_writing = 0;
         newFile->permissions = internalPermissions;
         
@@ -198,7 +210,7 @@ int removeFile(const uint64_t fileId) {
             free(currentFifo);
             fifo_files_count--;
 
-            // TODO: emitir un evento de EOF para desbloquear a los procesos que estuvieran esperando en este FIFO
+            // TODO: emitir un evento de EOF para desbloquear a los procesos que estuvieran esperando en este FIFO (no es necesario por ahora ya que el evento no existe)
 
             return 0;
         }
@@ -223,7 +235,7 @@ int removeFile(const uint64_t fileId) {
             free(currentRaw);
             raw_files_count--;
 
-            // TODO: emitir un evento de EOF para desbloquear a los procesos que estuvieran esperando en este FIFO
+            // TODO: emitir un evento de EOF para desbloquear a los procesos que estuvieran esperando en este FIFO (no es necesario por ahora ya que el evento no existe)
 
             return 0;
         }
@@ -284,7 +296,7 @@ int closeFifoForWriting(uint64_t fileId){
     fifoFile->closed_for_writing = 1; // Marcar como cerrado para escritura
 
     // Si el puntero de lectura alcanzó al de escritura, borrar el archivo
-    if (fifoFile->readPointer == fifoFile->writePointer) {
+    if (FIFO_EMPTY(fifoFile)) {
         removeFile(fileId); // Esto libera la memoria y elimina el archivo de la lista emitiendo el evento EOF
     }
 
@@ -298,13 +310,7 @@ void closeAllFifosOfProcess(Pid pid){
         // Solo cierro los fifos que son del proceso en cuestión y donde los permisos no sean '*' ni 'p'.
         // Lo de '*' y 'p' es porque con esos permisos aunque el proceso owner muera otro proceso igual puede querer escribir. En este caso solo a mano se puede cerrar.
         if (currentFifo->permissions.writing_owner == pid && currentFifo->permissions.writing_conditions != '*' && currentFifo->permissions.writing_conditions != 'p') {
-
-            currentFifo->closed_for_writing = 1; // Marcar como cerrado para escritura
-
-            // Si el puntero de lectura alcanzó al de escritura, borrar el archivo
-            if (currentFifo->readPointer == currentFifo->writePointer) {
-                removeFile(currentFifo->file.id); // Esto libera la memoria y elimina el archivo de la lista emitiendo el evento EOF
-            }
+            closeFifoForWriting(currentFifo->file.id);
         }
         currentFifo = currentFifo->next;
     }
@@ -361,13 +367,14 @@ int64_t readFifo(uint64_t fileId, void *buffer, uint32_t size) {
     uint8_t *buf = (uint8_t*)buffer;
 
     // Leer hasta el tamaño solicitado o hasta que no haya más datos (el puntero de lectura alcance al de escritura, es circular)
-    while (bytesRead < size && fileBlock->readPointer != fileBlock->writePointer) {
+    while (bytesRead < size && !FIFO_EMPTY(fileBlock)) {
         buf[bytesRead] = fileBlock->data[fileBlock->readPointer];
-        fileBlock->readPointer = (fileBlock->readPointer + 1) % fileBlock->file.size; // Esto hace circular al buffer
+        ADVANCE_FIFO_POINTER(fileBlock->readPointer, fileBlock->file.size);
+        fileBlock->writtenBytes--;
         bytesRead++;
     }
 
-    if (fileBlock->readPointer == fileBlock->writePointer && fileBlock->closed_for_writing) {
+    if (FIFO_EMPTY(fileBlock) && fileBlock->closed_for_writing) {
         log_to_serial("E: readFifo: EOF alcanzado");
         removeFile(fileId); // Borra el archivo si se llegó al EOF
         return -1; // EOF alcanzado
@@ -391,9 +398,10 @@ int64_t writeFifo(uint64_t fileId, void *buffer, uint32_t size) {
     uint32_t bytesWritten = 0;
     uint8_t *buf = (uint8_t*)buffer;
 
-    while (bytesWritten < size && fileBlock->writePointer != fileBlock->readPointer) {
+    while (bytesWritten < size && !FIFO_FULL(fileBlock)) {
         fileBlock->data[fileBlock->writePointer] = buf[bytesWritten];
-        fileBlock->writePointer = (fileBlock->writePointer + 1) % fileBlock->file.size; // Esto hace circular al buffer
+        ADVANCE_FIFO_POINTER(fileBlock->writePointer, fileBlock->file.size);
+        fileBlock->writtenBytes++;
         bytesWritten++;
     }
 
