@@ -402,16 +402,21 @@ void add_number_to_stdout(uint64_t number)
 
 void child_death_handler(Pid *pid)
 {
+	log_decimal("I: -- USERSPACE HANDLER -- Child process death handler called for PID: ", *pid);
+
 	// if the pid is not the one of the running program, do nothing
-	if (pid != running_program_pid)
+	if (*pid != running_program_pid){
+		log_decimal("E: Handler llamado para PID: ", *pid);
 		return;
+	}
 
 	running_programs--;
 	running_program_pid = 0; // reset the running program pid
 
+
 	// clear the console input
 	console_in = 0;
-	console_out = 0;
+	// console_out = 0;
 
 	log_to_serial("I: Child process finished: ");
 	log_decimal("PID: ", pid);
@@ -484,8 +489,8 @@ void execute_program(int input_line){
 			running_program_pid = program_pid; // save the pid of the running program
 			add_char_to_stdout('\n');
 			ProcessDeathCondition condition = { .pid = program_pid };
-			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &condition); // subscribe to the process death event
-			log_to_serial("I: Running program: ");
+			subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition); // subscribe to the process death event
+			log_decimal("I: Running program with PID: ", program_pid);
 		}
 	}
 }
@@ -664,17 +669,18 @@ void status_bar_handler(RTC_Time *time)
 void output_handler(){
 	while (1)
 	{
-		if (console_out == 0) {
-			setWaiting(getPID());
-			// continue;
-		}
 		uint8_t character = 0;
 		int read = readFifo(console_out, &character, 1);
 		if (read == 1)
 		{	
 			add_char_to_stdout(character);
+		} else if (read == -1) {
+			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
+			console_out = 0;
+			setWaiting(getPID());
+		} else {
+			log_to_serial("E: Error reading from console_out");
 		}
-		
 	}
 }
 

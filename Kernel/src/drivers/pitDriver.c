@@ -21,8 +21,9 @@ static uint64_t ticks = 0;
 
 // Executes jobs that need to supervising something, like the main loop of the audio driver
 void timer_handler() {
-	ticks++;
 	// log_to_serial("TICK");
+	ticks++;
+	
 	// audioLoop(); // Call the audio driver main loop to update the audio stream
 	videoLoop(); // Call the video driver main loop to update the video buffer
 	schedulerLoop(); // Call the scheduler to switch processes if needed

@@ -221,6 +221,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
     Listener* current = eventManager.events[eventId].listeners;
     Listener* previous = NULL;
     while (current != NULL) {
+        console_log("I: EventManager: Checking listener with PID %d for event %d", current->pid, eventId);
         if (pid != NULL && !isSameProcessGroup(current->pid, pid)) {
             // If the PID does not match, skip this listener
             current = current->next;
