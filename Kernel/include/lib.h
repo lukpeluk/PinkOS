@@ -22,6 +22,8 @@ void strcpy(char *dest, const char *src);
 int strlen(const char *str);
 char* strdup(const char *str);
 
+int are_interrupts_enabled();
+
 char *cpuVendor(char *result);
 
 #endif

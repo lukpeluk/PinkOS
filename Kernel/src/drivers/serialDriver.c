@@ -1,5 +1,6 @@
 #include <drivers/serialDriver.h>
 #include <drivers/videoDriver.h>
+#include <stdarg.h>
 
 #define RAW_DATA_ADDRESS 0x600000
 #define MAX_RAW_DATA_ADDRESS 0xFFFFFF // para pensar
@@ -322,5 +323,203 @@ void mem_free_sector(uint64_t start_addr) {
 void mem_list_sectors() {
     // Enviar comando para listar todos los sectores registrados
     send_to_serial("MEMLIST");
+}
+
+// Enhanced logging functions
+
+// Función auxiliar que envía mensaje sin newline al final
+void send_to_serial_no_newline(char* message) {
+    if (!message) return;
+
+    while(*message) {
+        write_serial(*message);
+        message++;
+    }
+}
+
+// Función auxiliar para convertir número a string con base específica
+static void num_to_string(uint64_t num, char* buffer, int base, int uppercase, int width, char pad_char) {
+    char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+    char upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char* digit_set = uppercase ? upper_digits : digits;
+    
+    char temp[32];
+    int i = 0;
+    
+    if (num == 0) {
+        temp[i++] = '0';
+    } else {
+        while (num > 0) {
+            temp[i++] = digit_set[num % base];
+            num /= base;
+        }
+    }
+    
+    // Aplicar padding si es necesario
+    int len = i;
+    int padding = width - len;
+    if (padding > 0) {
+        for (int j = 0; j < padding; j++) {
+            buffer[j] = pad_char;
+        }
+        // Copiar dígitos en orden inverso después del padding
+        for (int j = 0; j < len; j++) {
+            buffer[padding + j] = temp[len - 1 - j];
+        }
+        buffer[padding + len] = '\0';
+    } else {
+        // Copiar dígitos en orden inverso sin padding
+        for (int j = 0; j < len; j++) {
+            buffer[j] = temp[len - 1 - j];
+        }
+        buffer[len] = '\0';
+    }
+}
+
+// Función auxiliar para convertir números con signo
+static void signed_num_to_string(int64_t num, char* buffer, int base, int width, char pad_char) {
+    if (num < 0) {
+        buffer[0] = '-';
+        num_to_string(-num, buffer + 1, base, 0, width > 1 ? width - 1 : 0, pad_char);
+    } else {
+        num_to_string(num, buffer, base, 0, width, pad_char);
+    }
+}
+
+/** console_log: 
+ * Advanced logging function with printf-like formatting capabilities
+ * Supports: %d (decimal), %x (hex), %X (uppercase hex), %s (string), %c (char), %p (pointer)
+ * Also supports width specifiers like %10d, %08x, etc.
+ */
+void console_log(char* format, ...) {
+    if (!format) return;
+    
+    va_list args;
+    va_start(args, format);
+    
+    char buffer[1024]; // Buffer para construir el mensaje completo
+    char* buf_ptr = buffer;
+    char* fmt_ptr = format;
+    
+    while (*fmt_ptr && (buf_ptr - buffer) < sizeof(buffer) - 1) {
+        if (*fmt_ptr == '%') {
+            fmt_ptr++; // Saltar el %
+            
+            // Parsear width specifier y padding
+            int width = 0;
+            char pad_char = ' ';
+            
+            // Detectar padding con ceros
+            if (*fmt_ptr == '0') {
+                pad_char = '0';
+                fmt_ptr++;
+            }
+            
+            // Parsear width
+            while (*fmt_ptr >= '0' && *fmt_ptr <= '9') {
+                width = width * 10 + (*fmt_ptr - '0');
+                fmt_ptr++;
+            }
+            
+            // Procesar el especificador de formato
+            switch (*fmt_ptr) {
+                case 'd': {
+                    int num = va_arg(args, int);
+                    char temp_buf[32];
+                    signed_num_to_string(num, temp_buf, 10, width, pad_char);
+                    
+                    char* temp_ptr = temp_buf;
+                    while (*temp_ptr && (buf_ptr - buffer) < sizeof(buffer) - 1) {
+                        *buf_ptr++ = *temp_ptr++;
+                    }
+                    break;
+                }
+                case 'x': {
+                    unsigned int num = va_arg(args, unsigned int);
+                    char temp_buf[32];
+                    num_to_string(num, temp_buf, 16, 0, width, pad_char);
+                    
+                    char* temp_ptr = temp_buf;
+                    while (*temp_ptr && (buf_ptr - buffer) < sizeof(buffer) - 1) {
+                        *buf_ptr++ = *temp_ptr++;
+                    }
+                    break;
+                }
+                case 'X': {
+                    unsigned int num = va_arg(args, unsigned int);
+                    char temp_buf[32];
+                    num_to_string(num, temp_buf, 16, 1, width, pad_char);
+                    
+                    char* temp_ptr = temp_buf;
+                    while (*temp_ptr && (buf_ptr - buffer) < sizeof(buffer) - 1) {
+                        *buf_ptr++ = *temp_ptr++;
+                    }
+                    break;
+                }
+                case 'p': {
+                    void* ptr = va_arg(args, void*);
+                    char temp_buf[32];
+                    
+                    // Agregar "0x" prefix para punteros
+                    *buf_ptr++ = '0';
+                    *buf_ptr++ = 'x';
+                    
+                    num_to_string((uint64_t)ptr, temp_buf, 16, 0, 0, '0');
+                    
+                    char* temp_ptr = temp_buf;
+                    while (*temp_ptr && (buf_ptr - buffer) < sizeof(buffer) - 1) {
+                        *buf_ptr++ = *temp_ptr++;
+                    }
+                    break;
+                }
+                case 's': {
+                    char* str = va_arg(args, char*);
+                    if (!str) str = "(null)";
+                    
+                    int str_len = 0;
+                    char* count_ptr = str;
+                    while (*count_ptr++) str_len++; // Calcular longitud
+                    
+                    // Aplicar padding si es necesario
+                    int padding = width - str_len;
+                    if (padding > 0) {
+                        for (int i = 0; i < padding && (buf_ptr - buffer) < sizeof(buffer) - 1; i++) {
+                            *buf_ptr++ = ' ';
+                        }
+                    }
+                    
+                    while (*str && (buf_ptr - buffer) < sizeof(buffer) - 1) {
+                        *buf_ptr++ = *str++;
+                    }
+                    break;
+                }
+                case 'c': {
+                    char c = (char)va_arg(args, int);
+                    *buf_ptr++ = c;
+                    break;
+                }
+                case '%': {
+                    *buf_ptr++ = '%';
+                    break;
+                }
+                default: {
+                    // Formato desconocido, copiar literalmente
+                    *buf_ptr++ = '%';
+                    *buf_ptr++ = *fmt_ptr;
+                    break;
+                }
+            }
+        } else {
+            *buf_ptr++ = *fmt_ptr;
+        }
+        fmt_ptr++;
+    }
+    
+    *buf_ptr = '\0'; // Terminar el string
+    
+    va_end(args);
+    
+    // Enviar el mensaje completo usando log_to_serial (que añade LOG: y \n)
+    log_to_serial(buffer);
 }
 

@@ -43,6 +43,24 @@ void log_decimal(char* prefix, uint64_t value);
 void log_string(char* prefix, char* str);
 void log_to_serial(char* message);
 
+// Enhanced logging functions
+void send_to_serial_no_newline(char* message);
+
+/** console_log: 
+ * Advanced logging function with printf-like formatting capabilities
+ * Supports: %d (decimal), %x (hex), %X (uppercase hex), %s (string), %c (char), %p (pointer)
+ * Also supports width specifiers like %10d, %08x, etc.
+ * 
+ * @param format Format string with placeholders
+ * @param ... Variable arguments matching the format placeholders
+ * 
+ * Examples:
+ *   console_log("Hello %s! Value: %d", "World", 42);
+ *   console_log("Address: %p, Hex: 0x%08x", ptr, value);
+ *   console_log("Debug: %10d %s", count, message);
+ */
+void console_log(char* format, ...);
+
 // Memory debugging functions
 void mem_register_sector(uint64_t start_addr, uint64_t end_addr, char* tag);
 void mem_log_address(uint64_t address, char* name);

@@ -126,3 +126,9 @@ char *strdup(const char *str) {
     strcpy(new, (char *)str);
     return new;
 }
+
+int are_interrupts_enabled() {
+    unsigned long flags;
+    __asm__ volatile("pushf; pop %0" : "=r"(flags));
+    return (flags & 0x200) != 0;
+}
