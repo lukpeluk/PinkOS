@@ -696,13 +696,13 @@ uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t
             make_ethereal_request((char *)arg1, (EtherPinkResponse *)arg2);
             break;
         case LOG_TO_SERIAL_SYSCALL:
-            // log_to_serial((char *)arg1);
+            log_to_serial((char *)arg1);
             break;
         case LOG_DECIMAL_TO_SERIAL_SYSCALL:
-            // log_decimal((char*)arg1, (int)arg2);
+            log_decimal((char*)arg1, (int)arg2);
             break;
         case LOG_HEX_TO_SERIAL_SYSCALL:
-            // log_hex((char*)arg1, (int)arg2);
+            log_hex((char*)arg1, (int)arg2);
             break;
         default:
             break;
