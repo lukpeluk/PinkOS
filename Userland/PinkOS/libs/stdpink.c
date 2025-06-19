@@ -331,6 +331,79 @@ char * num_to_string(int num) {
     return &buffer[i + 1];
 }
 
+// New number conversion functions
+
+// Convert int to string (wrapper for existing num_to_string for consistency)
+char * int_to_string(int num) {
+    return num_to_string(num);
+}
+
+// Convert uint64_t to string
+char * uint64_to_string(uint64_t num) {
+    static char buffer[21]; // Enough for max uint64_t (20 digits + null terminator)
+    buffer[20] = '\0';
+    int i = 19;
+
+    if (num == 0) {
+        buffer[i--] = '0';
+        return &buffer[i + 1];
+    }
+
+    while (num > 0) {
+        buffer[i--] = (num % 10) + '0';
+        num /= 10;
+    }
+
+    return &buffer[i + 1];
+}
+
+// Convert string to int (similar to atoi)
+int string_to_int(const char * str) {
+    int result = 0;
+    int sign = 1;
+    int i = 0;
+
+    // Skip leading whitespace
+    while (str[i] == ' ' || str[i] == '\t' || str[i] == '\n') {
+        i++;
+    }
+
+    // Handle sign
+    if (str[i] == '-') {
+        sign = -1;
+        i++;
+    } else if (str[i] == '+') {
+        i++;
+    }
+
+    // Convert digits
+    while (str[i] >= '0' && str[i] <= '9') {
+        result = result * 10 + (str[i] - '0');
+        i++;
+    }
+
+    return sign * result;
+}
+
+// Convert string to uint64_t
+uint64_t string_to_uint64(const char * str) {
+    uint64_t result = 0;
+    int i = 0;
+
+    // Skip leading whitespace
+    while (str[i] == ' ' || str[i] == '\t' || str[i] == '\n') {
+        i++;
+    }
+
+    // Convert digits
+    while (str[i] >= '0' && str[i] <= '9') {
+        result = result * 10 + (str[i] - '0');
+        i++;
+    }
+
+    return result;
+}
+
 //----------------------------------------------------------------------------------------------
 // LIBRARY FUNCTIONS
 //----------------------------------------------------------------------------------------------
@@ -392,7 +465,24 @@ void printf(char * format, ...) {
                             char space = ' ';
                             writeStdout(&space, 1);
                         }
-                    } else {
+                    } else if (*str == 'd') {
+                        int num = va_arg(args, int);
+                        char * num_str = num_to_string(num);
+                        int len = strlen(num_str);
+                        writeStdout(num_str, len);
+                        for (int i = 0; i < width - len; i++) {
+                            char space = ' ';
+                            writeStdout(&space, 1);
+                        }
+                    } else if (*str == 'c') {
+                        char c = (char)va_arg(args, int);
+                        writeStdout(&c, 1);
+                        for (int i = 0; i < width - 1; i++) {
+                            char space = ' ';
+                            writeStdout(&space, 1);
+                        }
+                    } 
+                    else {
                         writeStderr(invalid_format_message, strlen(invalid_format_message));
                         va_end(args);
                         return;
@@ -411,6 +501,112 @@ void printf(char * format, ...) {
     }
 
     va_end(args);
+}
+
+int sprintf(char * buffer, char * format, ...) {
+    va_list args;
+    va_start(args, format);
+    char *str = format;
+    char *buf_ptr = buffer;
+    int chars_written = 0;
+
+    while (*str) {
+        if (*str == '%') {
+            str++;
+            switch (*str) {
+                case 'd': {
+                    int num = va_arg(args, int);
+                    char * num_str = num_to_string(num);
+                    int len = strlen(num_str);
+                    memcpy(buf_ptr, num_str, len);
+                    buf_ptr += len;
+                    chars_written += len;
+                    break;
+                }
+                case 's': {
+                    char *string = va_arg(args, char *);
+                    int len = strlen(string);
+                    memcpy(buf_ptr, string, len);
+                    buf_ptr += len;
+                    chars_written += len;
+                    break;
+                }
+                case 'c': {
+                    char c = (char)va_arg(args, int);
+                    *buf_ptr++ = c;
+                    chars_written++;
+                    break;
+                }
+                case '0' ... '9': {
+                    int width = 0;
+                    while (*str >= '0' && *str <= '9') {
+                        width = width * 10 + (*str - '0');
+                        str++;
+                    }
+                    if (*str == 's') {
+                        char *string = va_arg(args, char *);
+                        int len = strlen(string);
+                        memcpy(buf_ptr, string, len);
+                        buf_ptr += len;
+                        chars_written += len;
+                        for (int i = 0; i < width - len; i++) {
+                            *buf_ptr++ = ' ';
+                            chars_written++;
+                        }
+                    } else if (*str == 'd') {
+                        int num = va_arg(args, int);
+                        char * num_str = num_to_string(num);
+                        int len = strlen(num_str);
+                        memcpy(buf_ptr, num_str, len);
+                        buf_ptr += len;
+                        chars_written += len;
+                        for (int i = 0; i < width - len; i++) {
+                            *buf_ptr++ = ' ';
+                            chars_written++;
+                        }
+                    } else if (*str == 'c') {
+                        char c = (char)va_arg(args, int);
+                        *buf_ptr++ = c;
+                        chars_written++;
+                        for (int i = 0; i < width - 1; i++) {
+                            *buf_ptr++ = ' ';
+                            chars_written++;
+                        }
+                    } 
+                    else {
+                        // Invalid format - copy error message to buffer
+                        char *error_msg = "Invalid format";
+                        int error_len = strlen(error_msg);
+                        memcpy(buf_ptr, error_msg, error_len);
+                        buf_ptr += error_len;
+                        chars_written += error_len;
+                        va_end(args);
+                        *buf_ptr = '\0';
+                        return chars_written;
+                    }
+                    break;
+                }
+                default:
+                    // Invalid format - copy error message to buffer
+                    char *error_msg = "Invalid format";
+                    int error_len = strlen(error_msg);
+                    memcpy(buf_ptr, error_msg, error_len);
+                    buf_ptr += error_len;
+                    chars_written += error_len;
+                    va_end(args);
+                    *buf_ptr = '\0';
+                    return chars_written;
+            }
+        } else {
+            *buf_ptr++ = *str;
+            chars_written++;
+        }
+        str++;
+    }
+
+    va_end(args);
+    *buf_ptr = '\0';  // Null terminate the buffer
+    return chars_written;
 }
 
 void putChar(char c){
@@ -434,43 +630,98 @@ char getChar(){
 // }
 
 
-//TODO: arreglar el scanf
+// Helper function to skip whitespace characters
+static void skip_whitespace() {
+    char c;
+    while ((c = getChar()) == ' ' || c == '\t' || c == '\n' || c == '\r') {
+        // Skip whitespace
+    }
+    // Put back the non-whitespace character
+    // Note: We need a way to unget a character, for now we'll work around this
+}
+
 void scanf(char * format, ...){
     va_list args;
     va_start(args, format);
     char *str = format;
+    char input_buffer[256]; // Buffer to read input line
+    int buffer_index = 0;
+    int input_index = 0;
+    int input_length = 0;
+    
+    // Read entire input line into buffer
+    char c;
+    while ((c = getChar()) != '\n' && buffer_index < 255) {
+        input_buffer[buffer_index++] = c;
+    }
+    input_buffer[buffer_index] = '\0';
+    input_length = buffer_index;
 
-    while (*str) {
+    while (*str && input_index < input_length) {
         if (*str == '%') {
             str++;
             switch (*str) {
                 case 'd': {
                     int *num = va_arg(args, int *);
-                    char c;
                     int sign = 1;
                     *num = 0;
-
-                    while ((c = getChar()) != '\n') {
-                        if (c == '-') {
-                            sign = -1;
-                        } else {
-                            *num = *num * 10 + c - '0';
-                        }
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input_buffer[input_index] == ' ' || input_buffer[input_index] == '\t')) {
+                        input_index++;
                     }
-
+                    
+                    // Handle sign
+                    if (input_index < input_length && input_buffer[input_index] == '-') {
+                        sign = -1;
+                        input_index++;
+                    } else if (input_index < input_length && input_buffer[input_index] == '+') {
+                        input_index++;
+                    }
+                    
+                    // Parse digits
+                    while (input_index < input_length && 
+                           input_buffer[input_index] >= '0' && input_buffer[input_index] <= '9') {
+                        *num = *num * 10 + (input_buffer[input_index] - '0');
+                        input_index++;
+                    }
+                    
                     *num *= sign;
                     break;
                 }
                 case 's': {
                     char *string = va_arg(args, char *);
-                    char c;
-                    int i = 0;
-
-                    while ((c = getChar()) != '\n') {
-                        string[i++] = c;
+                    int str_index = 0;
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input_buffer[input_index] == ' ' || input_buffer[input_index] == '\t')) {
+                        input_index++;
                     }
-
-                    string[i] = 0;
+                    
+                    // Read word until whitespace or end of input
+                    while (input_index < input_length && 
+                           input_buffer[input_index] != ' ' && input_buffer[input_index] != '\t') {
+                        string[str_index++] = input_buffer[input_index++];
+                    }
+                    
+                    string[str_index] = '\0';
+                    break;
+                }
+                case 'c': {
+                    char *character = va_arg(args, char *);
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input_buffer[input_index] == ' ' || input_buffer[input_index] == '\t')) {
+                        input_index++;
+                    }
+                    
+                    // Read single character
+                    if (input_index < input_length) {
+                        *character = input_buffer[input_index++];
+                    }
                     break;
                 }
                 default:
@@ -478,11 +729,222 @@ void scanf(char * format, ...){
                     va_end(args);
                     return;
             }
+        } else if (*str == ' ' || *str == '\t') {
+            // Skip whitespace in format string
+            while (*str == ' ' || *str == '\t') {
+                str++;
+            }
+            // Skip whitespace in input
+            while (input_index < input_length && 
+                   (input_buffer[input_index] == ' ' || input_buffer[input_index] == '\t')) {
+                input_index++;
+            }
+            continue;
+        } else {
+            // Match literal character
+            if (input_index < input_length && input_buffer[input_index] == *str) {
+                input_index++;
+            }
         }
         str++;
     }
 
     va_end(args);
+}
+
+// Helper function to allocate memory for string (simplified malloc)
+static char * allocate_string(int length) {
+    // For now, we'll use a static buffer approach since we don't have malloc
+    // In a real implementation, you'd use malloc
+    static char string_buffers[10][256]; // Support up to 10 strings of 256 chars each
+    static int current_buffer = 0;
+    
+    if (length >= 256) return 0; // String too long
+    
+    char * result = string_buffers[current_buffer];
+    current_buffer = (current_buffer + 1) % 10; // Circular buffer
+    return result;
+}
+
+// sscanf implementation
+int sscanf(const char * input, const char * format, ...) {
+    va_list args;
+    va_start(args, format);
+    
+    int input_index = 0;
+    int format_index = 0;
+    int parsed_items = 0;
+    int input_length = strlen(input);
+    int format_length = strlen(format);
+    
+    while (format_index < format_length && input_index < input_length) {
+        if (format[format_index] == '%') {
+            format_index++; // Skip '%'
+            
+            switch (format[format_index]) {
+                case 'd': { // Parse integer
+                    int *num_ptr = va_arg(args, int *);
+                    int sign = 1;
+                    int num = 0;
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input[input_index] == ' ' || input[input_index] == '\t')) {
+                        input_index++;
+                    }
+                    
+                    // Handle sign
+                    if (input_index < input_length && input[input_index] == '-') {
+                        sign = -1;
+                        input_index++;
+                    } else if (input_index < input_length && input[input_index] == '+') {
+                        input_index++;
+                    }
+                    
+                    // Parse digits
+                    int digit_found = 0;
+                    while (input_index < input_length && 
+                           input[input_index] >= '0' && input[input_index] <= '9') {
+                        num = num * 10 + (input[input_index] - '0');
+                        input_index++;
+                        digit_found = 1;
+                    }
+                    
+                    if (digit_found) {
+                        *num_ptr = num * sign;
+                        parsed_items++;
+                    }
+                    break;
+                }
+                
+                case 'u': { // Parse uint64_t
+                    uint64_t *num_ptr = va_arg(args, uint64_t *);
+                    uint64_t num = 0;
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input[input_index] == ' ' || input[input_index] == '\t')) {
+                        input_index++;
+                    }
+                    
+                    // Parse digits
+                    int digit_found = 0;
+                    while (input_index < input_length && 
+                           input[input_index] >= '0' && input[input_index] <= '9') {
+                        num = num * 10 + (input[input_index] - '0');
+                        input_index++;
+                        digit_found = 1;
+                    }
+                    
+                    if (digit_found) {
+                        *num_ptr = num;
+                        parsed_items++;
+                    }
+                    break;
+                }
+                
+                case 's': { // Parse string/word
+                    char **string_ptr = va_arg(args, char **);
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input[input_index] == ' ' || input[input_index] == '\t')) {
+                        input_index++;
+                    }
+                    
+                    // Check what character follows %s in format
+                    char next_char = 0;
+                    if (format_index + 1 < format_length) {
+                        next_char = format[format_index + 1];
+                    }
+                    
+                    // Count characters until whitespace, next format character, or end
+                    int start_index = input_index;
+                    int word_length = 0;
+                    while (input_index < input_length) {
+                        char current_char = input[input_index];
+                        
+                        // Stop at whitespace
+                        if (current_char == ' ' || current_char == '\t') {
+                            break;
+                        }
+                        
+                        // Stop if we find the next literal character from format
+                        if (next_char != 0 && current_char == next_char) {
+                            break;
+                        }
+                        
+                        word_length++;
+                        input_index++;
+                    }
+                    
+                    if (word_length > 0) {
+                        // Allocate memory for the string
+                        char * allocated_string = allocate_string(word_length + 1);
+                        if (allocated_string) {
+                            // Copy the word
+                            memcpy(allocated_string, &input[start_index], word_length);
+                            allocated_string[word_length] = '\0';
+                            *string_ptr = allocated_string;
+                            parsed_items++;
+                        }
+                    }
+                    break;
+                }
+                
+                case 'c': { // Parse character
+                    char *char_ptr = va_arg(args, char *);
+                    
+                    // Skip whitespace
+                    while (input_index < input_length && 
+                           (input[input_index] == ' ' || input[input_index] == '\t')) {
+                        input_index++;
+                    }
+                    
+                    // Read single character
+                    if (input_index < input_length) {
+                        *char_ptr = input[input_index];
+                        input_index++;
+                        parsed_items++;
+                    }
+                    break;
+                }
+                
+                default:
+                    // Unknown format specifier
+                    va_end(args);
+                    return parsed_items;
+            }
+            
+            format_index++; // Move past the format specifier
+            
+        } else if (format[format_index] == ' ' || format[format_index] == '\t') {
+            // Skip whitespace in format string
+            while (format_index < format_length && 
+                   (format[format_index] == ' ' || format[format_index] == '\t')) {
+                format_index++;
+            }
+            
+            // Skip whitespace in input
+            while (input_index < input_length && 
+                   (input[input_index] == ' ' || input[input_index] == '\t')) {
+                input_index++;
+            }
+            
+        } else {
+            // Match literal character
+            if (input_index < input_length && input[input_index] == format[format_index]) {
+                input_index++;
+                format_index++;
+            } else {
+                // Literal character doesn't match
+                break;
+            }
+        }
+    }
+    
+    va_end(args);
+    return parsed_items;
 }
 
 void enableBackgroundAudio(){

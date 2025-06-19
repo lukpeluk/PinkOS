@@ -56,7 +56,7 @@ typedef struct File{
 typedef void (*ProgramEntry)(char*);
 
 #define SMALL_TEXT_SIZE 64
-#define MEDIUM_TEXT_SIZE 56
+#define MEDIUM_TEXT_SIZE 256
 
 typedef struct IO_Files {
     uint64_t stdin;  // Entrada estándar del proceso
