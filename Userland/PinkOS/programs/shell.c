@@ -464,7 +464,7 @@ int parse_command(int input_line, int index, char * command, char * args){
 	}
 
 	int program_i = 0;
-	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0; i++)
+	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE; i++)
 	{
 		command[program_i++] = buffer[input_line][i];
 	}
@@ -475,7 +475,7 @@ int parse_command(int input_line, int index, char * command, char * args){
 	}
 
 	int j = 0;
-	for (; buffer[input_line][i] != 0; i++, j++)
+	for (; buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE; i++, j++)
 	{
 		args[j] = buffer[input_line][i];
 	}
