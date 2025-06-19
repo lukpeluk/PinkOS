@@ -221,8 +221,8 @@ uint64_t mkFile(char * path, FileType type, uint32_t size) {
     return syscall(MK_FILE_SYSCALL, (uint64_t)path, (uint64_t)type, (uint64_t)size, (uint64_t)&permissions, 0);
 }
 
-int rmFile(char * path) {
-    return (int)syscall(RM_FILE_SYSCALL, (uint64_t)path, 0, 0, 0, 0);
+int rmFile(uint64_t id) {
+    return (int)syscall(RM_FILE_SYSCALL, id, 0, 0, 0, 0);
 }
 
 uint64_t openFile(char * path, Pid pid, FileAction action, FileType type) {

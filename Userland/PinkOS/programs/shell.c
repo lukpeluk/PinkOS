@@ -41,7 +41,7 @@ static char time_str[10] = "  00:00:00";
 static Point time_position = {950, 5};
 static Point logo_position = {10, 5};
 
-static const char *command_not_found_msg = (const char *) ">?Command not found\n";
+static const char *command_not_found_msg = (const char *) ">?Command not found";
 static const char *default_prompt = (const char *)" > ";
 
 char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
@@ -54,10 +54,14 @@ int scroll = 0; // indica qué línea es la que está en la parte superior de la
 uint32_t current_text_color; // intended to be changed via markup
 int highlighting_text = 0;	 // for highlighting text
 
-Pid running_program_pid = 0;
+// El primero es el que tendrá el foco (recibe input), y si es el único también es el que manda el output a la consola, si hay dos es el segundo
+Pid running_program_pids[2] = {0, 0}; 
+
 uint64_t console_in = 0;     // file descriptors for stdin and stdout
 uint64_t console_out = 0;
-Pid threadcito = 0; // Pid of the thread that is running the shell, used to kill it when exiting
+uint64_t pipe = 0;
+
+Pid threadcito = 0; // Pid of the thread that is outputting the console, used to wake it up when a program is run
 
 void draw_status_bar();
 void newPrompt();
@@ -324,6 +328,24 @@ void add_char_to_stdin(char character){
 	writeFifo(console_in, &character, 1);
 }
 
+void rm_stdin() {
+	if(!console_in) return;
+	rmFile(console_in);
+	console_in = 0;
+}
+
+void rm_stdout() {
+	if(!console_out) return;
+	rmFile(console_out);
+	console_out = 0;
+}
+
+void rm_pipe() {
+	if(!pipe) return;
+	rmFile(pipe);
+	pipe = 0;
+}
+
 // prints and saves to the buffer
 void add_char_to_stdout(char character)
 {
@@ -400,89 +422,141 @@ void child_death_handler(Pid *pid)
 	log_decimal("I: -- USERSPACE HANDLER -- Child process death handler called for PID: ", *pid);
 
 	// if the pid is not the one of the running program, do nothing
-	if (*pid != running_program_pid){
+	if (*pid != running_program_pids[1] && *pid != running_program_pids[0]) {
 		log_decimal("E: Handler llamado para PID: ", *pid);
 		return;
 	}
 
 	running_programs--;
-	running_program_pid = 0; // reset the running program pid
 
-
-	// clear the console input
-	console_in = 0;
-	// console_out = 0;
+	// Stdout no se borra, porque puede que haya más cosas para leer de él. Lo borra el thread cuando hay EOF
+	if (running_program_pids[0] == *pid) {
+		// Si murió el primer programa, borramos el stdin
+		rm_stdin(); 
+		running_program_pids[0] = 0;
+	} else if (running_program_pids[1] == *pid) {
+		// Si murió el segundo programa, borramos el pipe
+		rm_pipe();
+		running_program_pids[1] = 0;
+	}
 
 	log_to_serial("I: Child process finished: ");
 	log_decimal("PID: ", *pid);
 
-	// print a new prompt (ahora lo hace el thread del output cuando recibe el EOF)
-	// newPrompt();
+	// Si ya no hay más programas corriendo, y tampoco hay cosas para leer de stdout, entonces volvemos al prompt y borramos el pipe
+	if (running_programs == 0 && console_out == 0){
+		newPrompt();
+	}
 }
 
 
-void execute_program(int input_line){
-	static char arguments[STRING_SIZE];
+// Devuelve en command el comando y en args los argumentos
+// Y retorna si es nohup o no
+int parse_command(int input_line, int index, char * command, char * args){
+	log_to_serial("I: Parsing command");
 
-	int i = 0;
+	int i = index;
 	int nohup = 0; // if the program should run in the background (nohup)
-	if(buffer[input_line][0] == '&') {
-		log_decimal("I: Running program in background (nohup): ", input_line);
+	if(buffer[input_line][i] == '&') {
+		log_to_serial("I: Detected nohup (&) at the beginning of the command");
 		nohup = 1; // if the first character is &, run the program in the background
 		i++;
 	}
 
-	// get the program name
-	char program_name[STRING_SIZE];
-
-
 	int program_i = 0;
 	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0; i++)
 	{
-		program_name[program_i++] = buffer[input_line][i];
+		command[program_i++] = buffer[input_line][i];
 	}
-	program_name[program_i] = 0;
+	command[program_i] = 0;
 
 	if (buffer[input_line][i] == ' '){
 		i++;
 	}
 
-	// get the arguments
 	int j = 0;
 	for (; buffer[input_line][i] != 0; i++, j++)
 	{
-		arguments[j] = buffer[input_line][i];
+		args[j] = buffer[input_line][i];
 	}
-	arguments[j] = 0;
+	args[j] = 0;
+}
 
-	log_to_serial("I: Executing program: ");
-	log_to_serial(program_name);
+// Te dice en qué índice está el siguiente comando si hay un pipe, 0 si no hay pipe
+int parse_pipe(int input_line, int index){
+	log_to_serial("I: Parsing pipe");
+
+	int i = index;
+	while (buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE) {
+		i++;
+	}
+
+	if (buffer[input_line][i] == 0) {
+		log_to_serial("I: No pipe found");
+		return 0; // no pipe found
+	}
+
+	return i; // return the index of the next command
+}
 
 
-	// get the program entry point
-	Program *program = get_program_entry(program_name);
-	int installed = installProgram(program); // install the program if it was not installed yet
+void execute_program(int input_line){
+	// Espacio para los programas y sus argumentos
+	char command1[STRING_SIZE];
+	char command2[STRING_SIZE];
+	static char args1[STRING_SIZE];
+	static char args2[STRING_SIZE];
+
+	int piped_program_index = parse_pipe(input_line, 0); // se fija si hay pipe y en qué índice
+
+	int nohup1 = parse_command(input_line, 0, command1, args1);
+
+	// Get the program entry point
+	Program *program1 = get_program_entry(command1);
+	int installed = installProgram(program1); // install the program if it was not installed yet
 
 	// if the program is not found, print an error message
-	if (program == 0 || !installed) {
+	if (program1 == 0 || !installed) {
 		// "Command not found"
 		add_str_to_stdout((char *)command_not_found_msg);
 		newPrompt();
-	} else if (nohup) {
+		return;
+	}
+	
+	// Caso hay pipe
+	if(piped_program_index){
+		int nohup2 = parse_command(input_line, piped_program_index, command2, args2);
+
+		Program * program2 = get_program_entry(command2);
+		installed = installProgram(program2); // install the program if it was not installed yet
+
+		if (program2 == 0 || !installed) {
+			add_str_to_stdout((char *)command_not_found_msg);
+			newPrompt();
+			return;
+		}
+		if(nohup1 || nohup2) {
+			add_str_to_stdout((char *)">?Error: Cannot run programs with pipes in the background (&)");
+			newPrompt();
+			return;
+		}
+	}
+	
+	// Caso un solo programa y nohup
+	if (nohup1) {
 		IO_Files io_files = {
 			.stdin = 0,
 			.stdout = 0,
 			.stderr = 0,
 		};
 
-		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, nohup);
+		Pid program_pid = runProgram(program1->command, args1, PRIORITY_NORMAL, &io_files, 1);
 		if (program_pid == 0) {
-			add_str_to_stdout((char *)">?Error running program\n");
+			add_str_to_stdout((char *)">?Error running program");
 		}
 		newPrompt();
-	} else {
-		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
-
+		return;
+	} else if (piped_program_index == 0) { // caso un solo programa sin pipe
 		// Crea los archivos para la entrada y salida estándar del programa
 		uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 1024);
 		uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 1024);
@@ -497,22 +571,80 @@ void execute_program(int input_line){
 		console_in = stdin;  // set the console input to the stdin of the program
 		console_out = stdout; // set the console output to the stdout of the program
 		
-		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, 0);
+		Pid program_pid = runProgram(program1->command, args1, PRIORITY_NORMAL, &io_files, 0);
 		log_decimal("I: Running program with PID: ", program_pid);
 
 		if (program_pid == 0) {
-			add_str_to_stdout((char *)">?Error running program\n");
-			console_in = 0; // reset the console input
-			console_out = 0; // reset the console output
+			add_str_to_stdout((char *)">?Error running program");
+			rm_stdin();
+			rm_stdout();
 			newPrompt();
 		} else {
 			running_programs++;
-			running_program_pid = program_pid; // save the pid of the running program
-			add_char_to_stdout('\n');
+			running_program_pids[0] = program_pid; // save the pid of the running program
 			ProcessDeathCondition condition = { .pid = program_pid };
 			subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition); // subscribe to the process death event
-			wakeProcess(threadcito);
+			wakeProcess(threadcito); // thread para el output
 		}
+		return;
+	} else { // caso con pipe
+		// Crea los archivos para la entrada y salida estándar del programa
+		uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 1024);
+		uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 1024);
+		pipe = mkFile("pipe", FILE_TYPE_FIFO, 1024); // pipe para la comunicación entre los dos programas
+
+		IO_Files io_files1 = {
+			.stdin = stdin,
+			.stdout = pipe,
+			.stderr = pipe,
+		};
+
+		IO_Files io_files2 = {
+			.stdin = pipe,
+			.stdout = stdout,
+			.stderr = stdout,
+		};
+
+		console_in = stdin;
+		console_out = stdout;
+
+		Pid program_pid1 = runProgram(command1, args1, PRIORITY_NORMAL, &io_files1, 0);
+		log_decimal("I: Running first program with PID: ", program_pid1);
+
+		if (program_pid1 == 0) {
+			add_str_to_stdout((char *)">?Error running first program");
+			rm_stdin();
+			rm_stdout();
+			rm_pipe();
+			newPrompt();
+			return;
+		}
+
+		Pid program_pid2 = runProgram(command2, args2, PRIORITY_NORMAL, &io_files2, 0);
+		log_decimal("I: Running second program with PID: ", program_pid2);
+
+		if (program_pid2 == 0) {
+			add_str_to_stdout((char *)">?Error running second program");
+			rm_stdin();
+			rm_stdout();
+			rm_pipe();
+			newPrompt();
+			return;
+		}
+
+		
+		running_programs += 2;
+		
+		running_program_pids[0] = program_pid1;
+		running_program_pids[1] = program_pid2;
+		
+		ProcessDeathCondition condition1 = { .pid = program_pid1 };
+		ProcessDeathCondition condition2 = { .pid = program_pid2 };
+		
+		subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition1);
+		subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition2);
+		wakeProcess(threadcito); // despertar el thread para el output
+		return;
 	}
 }
 
@@ -537,7 +669,7 @@ void key_handler(KeyboardEvent * event)
 	if ((ascii == ASCII_ESC || (is_ctrl_pressed && ascii == 'c')) && running_programs && hold_times == 1)
 	{
 		// syscall(QUIT_SYSCALL, 0, 0, 0, 0, 0);
-		killProcess(running_program_pid); // terminate the running program
+		killProcess(running_program_pids[0]); // terminate the running program
 		return;
 	}
 	
@@ -608,6 +740,7 @@ void key_handler(KeyboardEvent * event)
 	
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !running_programs) {
+		log_to_serial("I: Enter pressed, executing program");
 		redraw(); // redibuja para que se parsee el marcado
 		execute_program(PREV_STRING);
 	}
@@ -639,12 +772,12 @@ void output_handler(){
 			add_char_to_stdout(character);
 		} else if (read < 0) {
 			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
+			rm_stdout();
 
 			if(!running_programs){
-				newPrompt(); // si no hay un programa corriendo, muestro el prompt
+				newPrompt(); // si no hay programas corriendo, muestro el prompt
 			} 
 
-			console_out = 0;
 			setWaiting(getPID());
 		} else if (read != 0) {
 			log_to_serial("E: Error reading from console_out");
@@ -718,7 +851,8 @@ void shell_main(char *args)
 	current_text_color = ColorSchema->text;
 	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
 	add_str_to_stdout((char *)"\n >#* Type help for help\n");
-	newPrompt();
+
+	// newPrompt(); // No hace falta hacer la prompt acá porque el thread del output al ver que no corre ningún programa ya lo va a hacer 
 
 	wait: setWaiting(getPID());
 	goto wait; // por si a algún vivo se le ocurre despertar el proceso de la shell

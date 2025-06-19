@@ -289,7 +289,7 @@ uint64_t mkFile(char * path, FileType type, uint32_t size);
  * @param path the path of the file to remove
  * @return 0 if the file was removed successfully, -1 otherwise
 */
-int rmFile(char * path);
+int rmFile(uint64_t id);
 
 /**
  * Opens a file with the given path, PID, action and type
