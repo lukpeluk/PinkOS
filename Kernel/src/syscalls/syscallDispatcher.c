@@ -202,9 +202,12 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * orden syscall: buffer donde dejar lo leído, cantidad de bytes a leer
             // * retrona: un signed int de 64 bits, con la cantidad de bytes que en efecto leyó, < 0 si EOF
             // * -> si no tenés un stdin asignado, o se borró el archivo, devuelve EOF directamente (-1 si EOF normal, -2 si el archivo no existe)
+            //! como workarround a un problema raro con el retorno de las syscalls, también te deja en arg2 la cantidad de bytes leídos
 
                 IO_Files IO_files = getIOFiles(getCurrentProcessPID());
-                return readFifo(IO_files.stdin, (void *)arg1, (uint32_t)arg2);
+                uint64_t result = readFifo(IO_files.stdin, (void *)arg1, *(uint32_t*)arg2);
+                *(uint64_t*)arg2 = result;
+                return result;
             }
             break; 
 
@@ -299,10 +302,11 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * orden syscall: file ID, buffer donde dejar lo leído, cantidad de bytes a leer
             // * retrona: un signed int de 64 bits, con la cantidad de bytes que en efecto leyó, -1 si EOF, -2 si el archivo no existe
             // * -> si no tenés permisos te devuelve 0
+            //! como workarround a un problema raro con el retorno de las syscalls, también te deja en arg3 la cantidad de bytes leídos
 
             VALIDATE_FILE_PERMISSIONS(arg1, FILE_READ);
-            int a =  readFifo((uint64_t)arg1, (void *)arg2, (uint32_t)arg3);
-            // console_log("readFifo returned: %d", a);
+            int a =  readFifo((uint64_t)arg1, (void *)arg2, *(uint32_t*)arg3);
+            *(uint32_t*)arg3 = a; // Devolvemos la cantidad de bytes leídos
             return a;
             break;
         case WRITE_FIFO_FILE_SYSCALL:

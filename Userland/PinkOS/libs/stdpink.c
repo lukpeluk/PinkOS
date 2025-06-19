@@ -155,7 +155,9 @@ int uninstallProgramByCommand(const char * command) {
 // *** Process I/O ***
 
 int readStdin(void * buffer, uint32_t size) {
-    return (int)syscall(READ_STDIN, (uint64_t)buffer, (uint64_t)size, 0, 0, 0);
+    uint64_t result = size;
+    syscall(READ_STDIN, (uint64_t)buffer, &result, 0, 0, 0);
+    return result;
 }
 
 int writeStdout(const void * buffer, uint32_t size) {
@@ -244,7 +246,9 @@ int writeRaw(uint64_t id, void * buffer, uint32_t size, uint32_t offset) {
 }
 
 int readFifo(uint64_t id, void * buffer, uint32_t size) {
-    return syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)size, 0, 0);
+    uint64_t result = size;
+    syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, &result, 0, 0);
+    return result;
 }
 
 int writeFifo(uint64_t id, void * buffer, uint32_t size) {
