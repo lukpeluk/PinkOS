@@ -137,14 +137,14 @@ SECTION .text
 
 %macro irqHandlerMaster 1
 	makeBackup
-	pushState
-
-  	mov rdi, log_msg_int
-  	mov rsi, rax
-  	call log_decimal
-	call panic_if_ints_enabled
-
-	popState
+;	pushState
+;
+;  	mov rdi, log_msg_int
+;  	mov rsi, rax
+;  	call log_decimal
+;	call panic_if_ints_enabled
+;
+;	popState
 	pushState
 
 	call saveRegisters
@@ -297,14 +297,14 @@ _irq0CHandler:
 ;Syscall
 _irq80Handler:
 	makeBackup
-	pushState
-
-  	mov rdi, log_msg_syscall
-  	mov rsi, rax
-  	call log_decimal
-	call panic_if_ints_enabled
-
-	popState
+;	pushState
+;
+;  	mov rdi, log_msg_syscall
+;  	mov rsi, rax
+;  	call log_decimal
+;	call panic_if_ints_enabled
+;
+;	popState
 	pushState
 
 	call saveRegisters
@@ -323,13 +323,13 @@ _irq80Handler:
 	mov rax, rdi
 
 	popStateBesidesReturn
-	pushState
-
-  	mov rdi, log_msg_sys_ret
-  	mov rsi, rax
-  	call log_decimal
-
-	popState
+;	pushState
+;
+;  	mov rdi, log_msg_sys_ret
+;  	mov rsi, rax
+;  	call log_decimal
+;
+;	popState
 	iretq
 
 ;Zero Division Exception

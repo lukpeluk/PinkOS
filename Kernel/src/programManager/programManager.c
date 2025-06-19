@@ -142,8 +142,8 @@ int installProgram(Program* program) {
     // Add the new program
     programs[programs_count] = *program;
     programs_count++;
-    log_to_serial("I: Program installed: ");
-    log_to_serial(program->command);
+    // log_to_serial("I: Program installed: ");
+    // log_to_serial(program->command);
     return 1; // Success
 }
 

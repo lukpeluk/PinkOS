@@ -69,7 +69,7 @@ void load_idt() {
 	// picSlaveMask(0xFE);
   picSlaveMask(0xEE); 
 
-	_sti();
+	// _sti();
 }
 
 static void setup_IDT_entry (int index, uint64_t offset) {

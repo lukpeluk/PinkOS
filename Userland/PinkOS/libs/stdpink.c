@@ -80,7 +80,9 @@ uint64_t strlen(const char * s) {
 // *** Process Management ***
 
 Pid runProgram(char * program, char * args, Priority priority, IO_Files * io_files, int nohup) {
-    return (Pid)syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, (uint64_t)nohup);
+    uint64_t new_pid = (uint64_t) nohup;
+    syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, &new_pid);
+    return (Pid)new_pid;
 }
 
 Pid newThread(ProgramEntry entrypoint, char * args, Priority priority) {

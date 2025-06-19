@@ -8,7 +8,7 @@
     total_tests++; \
     if (condition) { \
         tests_passed++; \
-        log_to_serial("S: PASS: " test_name); \
+        // log_to_serial("S: PASS: " test_name); \
     } else { \
         tests_failed++; \
         log_to_serial("E: FAIL: " test_name); \
@@ -19,14 +19,14 @@
     total_tests++; \
     if ((expected) == (actual)) { \
         tests_passed++; \
-        log_to_serial("S: PASS: " test_name); \
+        // log_to_serial("S: PASS: " test_name); \
     } else { \
         tests_failed++; \
         log_to_serial("E: FAIL: " test_name); \
         log_to_serial("E:   Expected: "); \
-        log_decimal("", (uint64_t)(expected)); \
+        // log_decimal("", (uint64_t)(expected)); \
         log_to_serial("E:   Actual: "); \
-        log_decimal("", (uint64_t)(actual)); \
+        // log_decimal("", (uint64_t)(actual)); \
     } \
 } while(0)
 

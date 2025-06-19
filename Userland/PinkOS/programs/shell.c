@@ -414,8 +414,9 @@ void child_death_handler(Pid *pid)
 
 	log_to_serial("I: Child process finished: ");
 	log_decimal("PID: ", *pid);
-	// print a new prompt
-	newPrompt();
+
+	// print a new prompt (ahora lo hace el thread del output cuando recibe el EOF)
+	// newPrompt();
 }
 
 
@@ -504,12 +505,12 @@ void execute_program(int input_line){
 			console_out = 0; // reset the console output
 			newPrompt();
 		} else {
-			wakeProcess(threadcito);
 			running_programs++;
 			running_program_pid = program_pid; // save the pid of the running program
 			add_char_to_stdout('\n');
 			ProcessDeathCondition condition = { .pid = program_pid };
 			subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition); // subscribe to the process death event
+			wakeProcess(threadcito);
 		}
 	}
 }
@@ -695,8 +696,11 @@ void output_handler(){
 			add_char_to_stdout(character);
 		} else if (read < 0) {
 			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
-			console_out = 0;
 			log_to_serial("I: EOF reached in console_out, waiting for new input");
+
+			console_out = 0;
+
+			if(!running_programs) newPrompt(); // si no hay un programa corriendo, muestro el prompt
 			setWaiting(getPID());
 		} else if (read != 0) {
 			log_to_serial("E: Error reading from console_out");

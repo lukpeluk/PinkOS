@@ -58,15 +58,15 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
 
         // ----- PROCESS MANAGEMENT -----
         case RUN_PROGRAM_SYSCALL: {
-            // * Orden Syscall: Program, char * args, priority, I/O struct (stdin, stdout, stderr), int (bool) nohup
+            // * Orden Syscall: Program, char * args, priority, I/O struct (stdin, stdout, stderr), uint64_t (bool) nohup -> acá te devolvemos el PID del proceso creado
             // * retorna el pid del proceso creado, 0 si error
 
                 IO_Files io_files = {0};
                 if (arg4 != NULL) {
                     io_files = *(IO_Files *)arg4; // Si se pasa un struct de I/O, lo usamos
-                    log_to_serial("runProgram: Asignando I/O al nuevo proceso");
-                    log_decimal("runProgram: stdin file id: ", io_files.stdin);
-                    log_decimal("runProgram: stdout file id: ", io_files.stdout);
+                    // log_to_serial("runProgram: Asignando I/O al nuevo proceso");
+                    // log_decimal("runProgram: stdin file id: ", io_files.stdin);
+                    // log_decimal("runProgram: stdout file id: ", io_files.stdout);
                 }
                     
                 Program * program = getProgramByCommand(arg1);
@@ -77,8 +77,16 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
 
                 char * args = strdup((char *)arg2); //TODO: allocar a nombre del proceso
 
-                return newProcessWithIO(*program, args, arg3, arg5 ? 1 : getCurrentProcessPID(), 
+                Pid new_pid = newProcessWithIO(*program, args, arg3, *(uint64_t *)arg5 ? 1 : getCurrentProcessPID(), 
                                 io_files.stdin, io_files.stdout, io_files.stderr);
+
+                // log_decimal("I: runProgram: New process created with PID: ", new_pid);
+                if (new_pid == 0) {
+                    log_to_serial("E: syscallDispatcher: PROBLEMAS PROBLEMAS, ERROR CREANDO PROCESO");
+                }
+
+                *(uint64_t*)arg5 = new_pid;
+                return new_pid;
             }
             break;
         case NEW_THREAD_SYSCALL: {
@@ -684,13 +692,13 @@ uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t
             make_ethereal_request((char *)arg1, (EtherPinkResponse *)arg2);
             break;
         case LOG_TO_SERIAL_SYSCALL:
-            log_to_serial((char *)arg1);
+            // log_to_serial((char *)arg1);
             break;
         case LOG_DECIMAL_TO_SERIAL_SYSCALL:
-            log_decimal((char*)arg1, (int)arg2);
+            // log_decimal((char*)arg1, (int)arg2);
             break;
         case LOG_HEX_TO_SERIAL_SYSCALL:
-            log_hex((char*)arg1, (int)arg2);
+            // log_hex((char*)arg1, (int)arg2);
             break;
         default:
             break;

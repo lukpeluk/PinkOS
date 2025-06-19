@@ -39,6 +39,8 @@ typedef struct EventManager {
 } EventManager;
 
 static EventManager eventManager;
+int filterProcessDeathCondition(void* condition_data, void* data);
+
 
 void initEventManager() {
     // log_to_serial("Event Manager initialized");
@@ -132,6 +134,16 @@ void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)
     newListener->next = current;
     eventManager.events[eventId].listeners = newListener;       // Para que sea O(1) en vez de O(n) al agregar un listener (el señorito se quejaba de que era O(n))
 
+    // Si se registró para escuchar la muerte de un proceso, y este proceso no existe, se notifica inmediatamente
+    if(eventId == PROCESS_DEATH_EVENT) {
+        Process process_to_listen = getProcess(pid_to_notify);
+
+        if(process_to_listen.pid == 0) {
+            // El proceso no existe, notificar inmediatamente
+            log_to_serial("E: ##### EventManager: Notifying process death event immediately for PID");
+            notifyEvent(NULL, PROCESS_DEATH_EVENT, &process_to_listen.pid, filterProcessDeathCondition);
+        }
+    }
 }
 
 void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data) {
@@ -144,13 +156,13 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
         return; // Memory allocation failed
     }
 
-    log_to_serial("I: EventManager: Registering waiting event");
+    // log_to_serial("I: EventManager: Registering waiting event");
 
     newListener->pid = pid;
     newListener->handler = NULL; // No handler for waiting events
     newListener->data = data;
     if (condition_data != NULL){    
-        log_to_serial("I: EventManager: Has condition data");
+        // log_to_serial("I: EventManager: Has condition data");
 
         newListener->condition_data = malloc(eventManager.events[eventId].condition_data_size);
         if (!newListener->condition_data) {
@@ -170,8 +182,8 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
 
     // log_to_serial("W: ------ EventManager: Registering waiting event");
 
-    log_to_serial("I: EventManager: Setting process as waiting");
-    log_decimal("I: EventManager: PID: ", pid);
+    // log_to_serial("I: EventManager: Setting process as waiting");
+    // log_decimal("I: EventManager: PID: ", pid);
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 
     // log_to_serial("E: EventManager: Le chupo un webo el wait... no espero una chota");

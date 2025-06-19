@@ -62,7 +62,7 @@ void finish_request(uint16_t code){
 void make_ethereal_request(char * request, EtherPinkResponse * response){
     if(current || clientResponse){
         // si ya hay una request en curso, no se puede hacer otra
-        log_to_serial("ERROR: Ya hay una request en curso");
+        // log_to_serial("ERROR: Ya hay una request en curso");
         response->code = SERIAL_OCCUPIED;
         response->size = 0;
         return;
@@ -177,7 +177,7 @@ void log_hex(char* prefix, uint64_t value) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-    log_to_serial(buffer);
+    // log_to_serial(buffer);
 }
 
 void log_decimal(char* prefix, uint64_t value) {
@@ -200,7 +200,7 @@ void log_decimal(char* prefix, uint64_t value) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-    log_to_serial(buffer);
+    // log_to_serial(buffer);
 }
 
 void log_string(char* prefix, char* str) {
@@ -220,7 +220,7 @@ void log_string(char* prefix, char* str) {
     *p = '\0'; // Terminar el string
     
     // Enviar todo en una sola llamada
-    log_to_serial(buffer);
+    // log_to_serial(buffer);
 }
 
 // Memory debugging functions
@@ -520,6 +520,6 @@ void console_log(char* format, ...) {
     va_end(args);
     
     // Enviar el mensaje completo usando log_to_serial (que añade LOG: y \n)
-    log_to_serial(buffer);
+    // log_to_serial(buffer);
 }
 
