@@ -12,7 +12,7 @@ sampleDataModule:
 	./createSampleDataModule.sh
 clean:
 	cd PinkOS; make clean
-	rm -rf *.bin
+	rm -rf *.bin *.elf
 
 
 .PHONY: PinkOS all clean

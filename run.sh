@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Verificar si se pasó el argumento -d para debug
+DEBUG_MODE=false
+if [[ "$1" == "-d" ]]; then
+  DEBUG_MODE=true
+  echo "Modo debug activado - GDB habilitado"
+else
+  echo "Modo normal - GDB deshabilitado"
+fi
+
+# Configurar flags de debug para GDB
+if [[ "$DEBUG_MODE" == true ]]; then
+  GDB_FLAGS="-s -S"
+else
+  GDB_FLAGS=""
+fi
+
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   # Para Linux
   qemu-system-x86_64 \
@@ -7,7 +23,9 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     -m 2G \
     -audiodev pa,id=speaker \
     -machine pcspk-audiodev=speaker \
-    -serial tcp::4444,server
+    -serial tcp::4444,server \
+    -no-hpet \
+    $GDB_FLAGS
     # -rtc base=localtime \
 
     # -serial tcp::4444,server,nowait
@@ -18,7 +36,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     -m 512 \
     -audiodev coreaudio,id=speaker \
     -machine pcspk-audiodev=speaker \
-    -serial tcp::4444,server
+    -serial tcp::4444,server \
+    -no-hpet \
+    $GDB_FLAGS
 else
   echo "Sistema operativo no soportado"
   exit 1

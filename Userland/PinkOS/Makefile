@@ -16,6 +16,7 @@
 include ../Makefile.inc
 
 MODULE=0000-PinkOS.bin
+MODULE_ELF=0000-PinkOS.elf
 SOURCES=$(wildcard [^_]*.c)
 SOURCES_ASM=$(wildcard asm/*.asm)
 # PROGRAM_SOURCES=$(wildcard programs/*.c)
@@ -28,10 +29,13 @@ STATICCLIBS=
 
 # INCLUDES = -Iinclude -Iinclude/libs -Iinclude/syscalls
 INCLUDES = $(foreach dir,$(shell find . -type d),-I$(dir))
-all: $(MODULE)
+all: $(MODULE) $(MODULE_ELF)
 
 $(MODULE): _loader.c $(OBJECTS) $(SUB_OBJECTS) $(OBJECTS_ASM)
 	$(GCC) $(GCCFLAGS) -T PinkOS.ld -o ../$(MODULE) _loader.c $(OBJECTS) $(SUB_OBJECTS) $(OBJECTS_ASM) $(STATICLIBS) $(INCLUDES)
+
+$(MODULE_ELF): _loader.c $(OBJECTS) $(SUB_OBJECTS) $(OBJECTS_ASM)
+	$(GCC) $(GCCFLAGS) -T PinkOS_elf.ld -o ../$(MODULE_ELF) _loader.c $(OBJECTS) $(SUB_OBJECTS) $(OBJECTS_ASM) $(STATICLIBS) $(INCLUDES)
 
 %.o: %.c
 	$(GCC) $(GCCFLAGS) $(INCLUDES) -c $< -o $@
@@ -41,3 +45,4 @@ $(MODULE): _loader.c $(OBJECTS) $(SUB_OBJECTS) $(OBJECTS_ASM)
 
 clean:
 	find . -type f -name '*.o' -delete
+	find . -type f -name '*.elf' -delete
