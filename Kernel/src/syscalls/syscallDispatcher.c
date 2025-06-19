@@ -34,21 +34,21 @@ uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t
 
 uint64_t syscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
     if(syscall < 1000)
-        systemSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return systemSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1100)
-        videoDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return videoDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1200)
-        rtcDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return rtcDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1300)
-        pitDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return pitDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1400)
-        keyboardDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return keyboardDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1500)
-        audioDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return audioDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else if(syscall < 1600)
-        serialDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
+        return serialDriverSyscallDispatcher(syscall, arg1, arg2, arg3, arg4, arg5);
     else
-        return;
+        return 0;
 }
 
 
@@ -109,7 +109,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
 
             // Changes the priority of the process with the given PID, validates permissions
             VALIDATE_PROCESS_PERMISSIONS(arg1);
-            changePriority((Pid)arg1, (Priority)arg2) == 0;
+            return changePriority((Pid)arg1, (Priority)arg2) == 0;
             break;
         
         // SCHEDULING
@@ -131,7 +131,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * retorna 0 si error
 
             VALIDATE_PROCESS_PERMISSIONS(arg1);
-            wakeProcess((Pid)arg1);
+            return wakeProcess((Pid)arg1);
             break;
         
         // PROCESS INFO
@@ -150,6 +150,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                 Process process = getProcess((Pid)arg1);
                 *(Process*) arg2 = process;
             }
+            return 0;
             break;
         case GET_PROCESS_LIST_SYSCALL: {
             // * No recibe nada, devuelve una lista de todos los procesos en ejecución.
@@ -575,6 +576,7 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
         default:
             break;
     }
+    return 0;
 }
 
 // --- PIT DRIVER SYSCALLS ---
@@ -592,6 +594,7 @@ uint64_t pitDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t ar
         default:
             break;
     }
+    return 0;
 }
 
 // --- RTC DRIVER SYSCALLS ---
@@ -609,6 +612,7 @@ uint64_t rtcDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t ar
         default:
             break;
     }
+    return 0;
 }
 
 // --- KEYBOARD DRIVER SYSCALLS ---
@@ -629,6 +633,7 @@ uint64_t keyboardDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64
         default:
             break;
     }
+    return 0;
 }
 
 // --- AUDIO DRIVER SYSCALLS ---
@@ -667,6 +672,7 @@ uint64_t audioDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
         default:
             break;
     }
+    return 0;
 }
 
 // --- SERIAL DRIVER SYSCALLS ---
@@ -689,4 +695,5 @@ uint64_t serialDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t
         default:
             break;
     }
+    return 0;
 }

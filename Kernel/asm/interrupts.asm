@@ -58,6 +58,8 @@ EXTERN syscallDispatcher
 EXTERN exceptionDispatcher
 EXTERN saveRegisters
 EXTERN backupCurrentProcessRegisters
+EXTERN log_decimal
+EXTERN panic_if_ints_enabled
 
 SECTION .text
 
@@ -136,6 +138,15 @@ SECTION .text
 %macro irqHandlerMaster 1
 	makeBackup
 	pushState
+
+  	mov rdi, log_msg_int
+  	mov rsi, rax
+  	call log_decimal
+	call panic_if_ints_enabled
+
+	popState
+	pushState
+
 	call saveRegisters
 	call backupCurrentProcessRegisters
 
@@ -286,11 +297,20 @@ _irq0CHandler:
 ;Syscall
 _irq80Handler:
 	makeBackup
-	pushStateBesidesReturn
+	pushState
+
+  	mov rdi, log_msg_syscall
+  	mov rsi, rax
+  	call log_decimal
+	call panic_if_ints_enabled
+
+	popState
+	pushState
+
 	call saveRegisters
 	call backupCurrentProcessRegisters
 	
-	popStateBesidesReturn
+	popState
 	pushStateBesidesReturn
 
 	call syscallDispatcher
@@ -303,6 +323,13 @@ _irq80Handler:
 	mov rax, rdi
 
 	popStateBesidesReturn
+	pushState
+
+  	mov rdi, log_msg_sys_ret
+  	mov rsi, rax
+  	call log_decimal
+
+	popState
 	iretq
 
 ;Zero Division Exception
@@ -462,6 +489,11 @@ SECTION .data
 	cri_rip dq 0
 	cri_rflags dq 0
 	cri_rsp dq 0
+
+SECTION .data
+	log_msg_sys_ret db "Syscall returned: ", 0
+	log_msg_int db "IRQ Handler called with value: ", 0
+	log_msg_syscall db "Syscall Handler called with value: ", 0
 
 SECTION .bss
 	aux resq 1

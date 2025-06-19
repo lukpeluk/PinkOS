@@ -4,7 +4,6 @@
 #include <syscalls/syscallCodes.h>
 #include <programs.h>
 #include <permissions.h>
-#include <environmentApiEndpoints.h>
 #include <ascii.h>
 #include <libs/stdpink.h>
 #include <libs/graphicsLib.h>
@@ -59,11 +58,6 @@ Pid running_program_pid = 0;
 uint64_t console_in = 0;     // file descriptors for stdin and stdout
 uint64_t console_out = 0;
 Pid threadcito = 0; // Pid of the thread that is running the shell, used to kill it when exiting
-
-// char command_buffer[COMMAND_BUFFER_SIZE][STRING_SIZE] = {0};
-// int current_command = 0;
-// int oldest_command = 0;
-// int command_in_iteration = -1;
 
 void draw_status_bar();
 void newPrompt();
@@ -502,6 +496,7 @@ void execute_program(int input_line){
 		console_out = stdout; // set the console output to the stdout of the program
 		
 		Pid program_pid = runProgram(program->command, arguments, PRIORITY_NORMAL, &io_files, 0);
+		log_decimal("I: Running program with PID: ", program_pid);
 
 		if (program_pid == 0) {
 			add_str_to_stdout((char *)">?Error running program\n");
@@ -515,7 +510,6 @@ void execute_program(int input_line){
 			add_char_to_stdout('\n');
 			ProcessDeathCondition condition = { .pid = program_pid };
 			subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition); // subscribe to the process death event
-			log_decimal("I: Running program with PID: ", program_pid);
 		}
 	}
 }
@@ -711,35 +705,6 @@ void output_handler(){
 }
 
 
-
-// int i = 0;
-// void restoreContext(uint8_t was_graphic)
-// {
-// 	running_programs = 0;
-// 	if (was_graphic)
-// 	{
-// 		graphics_mode = 0;
-// 		redraw();
-// 	}
-// 	add_char_to_stdout('\n');
-// 	newPrompt();
-// 	clear_stdin();
-
-// 	// Si el programa no activó el audio en segundo plano, pauso el sonido que se haya dejado reproduciendo
-// 	// Si en el estado anterior a la ejecución del programa se estaba reproduciendo audio en segundo plano, continuar la reproducción
-// 	if (!background_audio_enabled){
-// 		stop_audio();
-// 		if(previousAudioState.restoring_audio){
-// 			enableBackgroundAudio();
-// 			load_audio_state(previousAudioState.state);
-// 			if(previousAudioState.playing) resume_audio();
-// 		}
-// 	}
-// 	previousAudioState.restoring_audio = 0;
-
-// 	idle((char *)"idle from restoreContext");
-// }
-
 // message for debugging purposes
 void idle(char *message)
 {
@@ -806,25 +771,15 @@ void home_screen()
 
 void shell_main(char *args)
 {
-	// Set userland stack base, to allways start programs here and to return here from exceptions or program termination
-	// syscall(SET_SYSTEM_STACK_BASE_SYSCALL, (uint64_t)get_stack_pointer(), 0, 0, 0, 0);
 	log_to_serial("PinkOS shell started");
-	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar (sí, cambio de idioma en los comentarios cuando se me canta el ogt ** lenguaje!! **)
-
-	// installProgram(get_program_entry("francis"));
-	// runProgram(get_program_entry("francis"), (char *)"", PRIORITY_LOW, 0, 0);
+	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 
 	home_screen();
 	redraw();
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
-	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)EXCEPTION_HANDLER, (uint64_t)exception_handler, 0, 0, 0);
-	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)REGISTERS_HANDLER, (uint64_t)registers_handler, 0, 0, 0);
-	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)key_handler, 0, 0, 0);
 	subscribeToEvent(KEY_EVENT, (uint64_t)key_handler, 0);
 	subscribeToEvent(RTC_EVENT, (uint64_t)status_bar_handler, 0);
-	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)RTC_EVENT, (uint64_t)status_bar_handler, 0, 0, 0);
-	// syscall(REGISTER_EVENT_SUSCRIPTION_SYSCALL, (uint64_t)RESTORE_CONTEXT_HANDLER, (uint64_t)restoreContext, 0, 0, 0);
 
 	threadcito = newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
 
@@ -833,6 +788,8 @@ void shell_main(char *args)
 	add_str_to_stdout((char *)"\n >#* Type help for help\n");
 	newPrompt();
 
-	idle((char *)"idle from main");
+	wait: setWaiting(getPID());
+	goto wait; // por si a algún vivo se le ocurre despertar el proceso de la shell
+
 	return 0;
 }

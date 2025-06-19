@@ -89,6 +89,8 @@ void callExceptionHandler(int exception_id, BackupRegisters * backup_registers) 
 }
 
 void callRegistersHandler(BackupRegisters * backup_registers) {
+    log_to_serial("E: Calling registers handler, DEPRECATED");
+    return;
     CALL_IF_IMPLEMENTED(registers_handler, backup_registers);
 }
 

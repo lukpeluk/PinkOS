@@ -726,9 +726,11 @@ int terminateProcess(Pid pid) {
 // -- Schedule next y scheduler loop -- //
 
 void scheduleNextProcess() {
-    // log_to_serial("I: scheduleNextProcess: Programando el siguiente proceso");
+    log_to_serial("I: ---> scheduleNextProcess: Programando el siguiente proceso");
 
     if (currentProcessBlock == NULL) return;
+
+    log_to_serial("I: ---> scheduleNextProcess: Hay procesos para switchear");
 
     currentProcessBlock->process.state = currentProcessBlock->process.state == PROCESS_STATE_RUNNING ? PROCESS_STATE_READY : currentProcessBlock->process.state; // Cambiar el estado del proceso actual a READY
 
@@ -804,7 +806,9 @@ void scheduleNextProcess() {
     // log_to_serial(">>>>>>>>>>>>>>>> scheduleNextProcess: YENDO A MAGIC RECOVER");
     ticksSinceLastSwitch = 0; // Reiniciar el contador de ticks desde el último cambio de proceso
 
-    // log_decimal("I: scheduleNextProcess: Proceso con PID ", currentProcessBlock->process.pid);
+    log_decimal("I: scheduleNextProcess: Proceso con PID ", currentProcessBlock->process.pid);
+    log_string("I: scheduleNextProcess: Proceso con nombre ", currentProcessBlock->process.program.name);
+    log_decimal("I: scheduleNextProcess: Proceso con registro rax ", currentProcessBlock->registers.rax);
     magic_recover(&currentProcessBlock->registers);
 }
 
@@ -831,6 +835,8 @@ void schedulerLoop() {
 void backupCurrentProcessRegisters() {
     // Guardar los registros del proceso actual en el backup
     if (currentProcessBlock == NULL || currentProcessBlock->process.state != PROCESS_STATE_RUNNING) return; // No hay proceso actual
+    log_decimal("I: backupCurrentProcessRegisters: Guardando registros del proceso de PID: ", currentProcessBlock->process.pid);
+    log_decimal("I: backupCurrentProcessRegisters: Registros rax: ", currentProcessBlock->registers.rax);
     BackupRegisters * backup = getBackupRegisters();
     currentProcessBlock->registers = backup->registers;
 }

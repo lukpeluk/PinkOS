@@ -43,6 +43,9 @@ uint64_t milliseconds_elapsed() {
 // pero hice la cuenta y eso tardaría 32.496.800.964 años, así que creo que estamos bien
 
 void sleep(uint64_t milis) {
+	log_to_serial("E: MAL MAL MAL, NO SE TIENE QUE USAR MAS ESTE SLEEP, DEPRECADISIMO");
+	return;
+
 	uint64_t start = milliseconds_elapsed();
 
 	while (milliseconds_elapsed() - start < milis){

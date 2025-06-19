@@ -86,27 +86,6 @@ void * initializeKernelBinary()
 	return stackBase;
 }
 
-// void testScreen(){
-// 	clearScreen(0x00df8090);
-
-// 	// draw a 7 by 3 px bitmap of a rainbow in the top left corner with 50 pixels of padding and a scale of 3
-// 	uint32_t rainbow[21] = {
-// 		0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3,
-// 		0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000,
-// 		0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFF0000, 0xFF7F00, 
-// 	};
-// 	drawBitmap(rainbow, 7, 3, &(Point){50, 50}, 10);
-
-// 	Point start = {50, 50};
-// 	Point end = {500, 500};
-// 	drawRectangleBoder(&start, &end, 5, 0x00000000);
-// 	start.x += 10;
-// 	start.y += 10;
-// 	end.x -= 10;
-// 	end.y -= 10;
-// 	drawRectangle(&start, &end, 0x00000000);
-// }
-
 
 // Ligature always 0 coz it's not supported by the previous format, manually choose notes to ligate
 Note * pinkPanther[] = {
@@ -294,51 +273,6 @@ void testAudio(){
 }
 
 
-void shell_main(char * args)
-{
-
-    // log_to_serial("schedulerTest: -------------------- PinkOS Shell started");
-    // log_to_serial("schedulerTest: args: ");
-    // log_to_serial(args);
-
-    // Aquí iría el código del shell, por ahora solo un bucle infinito
-    while (1)
-    {
-        // Esperar a que se reciba un comando
-        // Por ahora solo un bucle infinito
-        _hlt();
-    }
-}
-
-void testScheduler(){
-
-    // log_to_serial("schedulerTest: -------------------- Testing scheduler");
-
-    static Program shell = {
-		.command = "shell",
-		.name = "PinkOS Shell",
-		.entry = shell_main,
-		.permissions = 0xFFFFFFFF,
-		.help = "The PinkOS Shell",
-	};
-
-    // Test scheduler by creating a few processes and checking if they run
-    for (int i = 0; i < 5; i++) {
-        // Pid pid = runProgram(&shell, "Test process", 0, 0, 0, 0, 0);
-
-        Pid pid = newProcess(shell, "#################################################### Test process", 0, i);
-        Pid parent_pid = getParent(getCurrentProcessPID()).pid;
-
-        if (pid == 0) {
-            // log_to_serial("schedulerTest: Failed to create process");
-        } else {
-            // log_to_serial("schedulerTest: Process created successfully");
-            // log_decimal("schedulerTest: Process PID: ", pid);
-            // log_decimal("schedulerTest: Process Parent: ", parent_pid);
-        }
-    }
-}
-
 int main()
 {	
     // ncClear();
@@ -372,8 +306,6 @@ int main()
 
     log_to_serial("I: Kernel binary initialized, clearing BSS");
     // schedulingTest("Scheduler Test");    
-
-	// testScreen();
 
     // log_to_serial("I: Testing audio driver");
 	// testAudio();
