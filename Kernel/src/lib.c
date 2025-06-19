@@ -132,3 +132,9 @@ int are_interrupts_enabled() {
     __asm__ volatile("pushf; pop %0" : "=r"(flags));
     return (flags & 0x200) != 0;
 }
+
+void panic_if_ints_enabled() {
+    if(are_interrupts_enabled()) {
+        log_to_serial("E: PANIC CALLED WITH INTERRUPTS ENABLED! ");
+    }
+}

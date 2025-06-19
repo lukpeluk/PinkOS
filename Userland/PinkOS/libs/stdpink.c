@@ -1,5 +1,6 @@
 #include <libs/stdpink.h>
 #include <syscalls/syscall.h>
+#include <libs/events.h>
 
 #include <stdarg.h>
 #include <stdin.h>
@@ -79,7 +80,9 @@ uint64_t strlen(const char * s) {
 // *** Process Management ***
 
 Pid runProgram(char * program, char * args, Priority priority, IO_Files * io_files, int nohup) {
-    return (Pid)syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, (uint64_t)nohup);
+    uint64_t new_pid = (uint64_t) nohup;
+    syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, &new_pid);
+    return (Pid)new_pid;
 }
 
 Pid newThread(ProgramEntry entrypoint, char * args, Priority priority) {
@@ -960,7 +963,12 @@ void clear(){
 }
 
 void sleep(uint64_t millis){
-    syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
+    uint64_t millis_condition = getMillisElapsed() + millis;
+    SleepCondition condition = { .millis = millis_condition };
+    log_decimal("SLEEPING FOR: ", millis);
+    log_decimal("MILLIS CONDITION: ", millis_condition);
+    waitForEvent(SLEEP_EVENT, (void *)&condition, (void *)&condition);
+    // syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
 }
 
 uint64_t getMillisElapsed(){

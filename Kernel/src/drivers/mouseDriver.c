@@ -150,16 +150,16 @@ void mouse_handler() {
 	// Scroll hacia arriba: X=0x01, Y=0x08
 	// Scroll hacia abajo: X=0xFF, Y=0x08
 	if (x_movement == 0x01 && y_movement == 0x08) {
-		// log_to_serial("SCROLL UP detected");
-		simulateKeyPress(0xE0);
-		simulateKeyPress(0x49);  // Page Up press
-		simulateKeyPress(0xE0);
-		simulateKeyPress(0xC9);  // Page Up release
-	} else if (x_movement == 0xFF && y_movement == 0x08) {
 		// log_to_serial("SCROLL DOWN detected");
 		simulateKeyPress(0xE0);
 		simulateKeyPress(0x51);  // Page Down press
 		simulateKeyPress(0xE0);
 		simulateKeyPress(0xD1);  // Page Down release
+	} else if (x_movement == 0xFF && y_movement == 0x08) {
+		// log_to_serial("SCROLL UP detected");
+		simulateKeyPress(0xE0);
+		simulateKeyPress(0x49);  // Page Up press
+		simulateKeyPress(0xE0);
+		simulateKeyPress(0xC9);  // Page Up release
 	}
 }

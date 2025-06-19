@@ -553,7 +553,7 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         setFilePermissions(stdin, 0, stdin_permissions);
         newProcessBlock->stdin = stdin;
         
-        log_to_serial("I: newProcess: stdin asignado al proceso");
+        // log_to_serial("I: newProcess: stdin asignado al proceso");
     }
     if(stdout){
         // log_to_serial("W: newProcess: Asignando stdout al proceso");
@@ -572,12 +572,12 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         setFilePermissions(stdout, 0, stdout_permissions);
         newProcessBlock->stdout = stdout;
         
-        log_to_serial("I: newProcess: stdout asignado al proceso");
-        log_to_serial("newProcess: stdout permissions set");
-        log_decimal("newProcess: stdout permissions reading owner: ", stdout_permissions.reading_owner);
-        log_decimal("newProcess: stdout permissions reading conditions: ", stdout_permissions.reading_conditions);
-        log_decimal("newProcess: stdout permissions writing owner: ", stdout_permissions.writing_owner);
-        log_decimal("newProcess: stdout permissions writing conditions: ", stdout_permissions.writing_conditions);
+        // log_to_serial("I: newProcess: stdout asignado al proceso");
+        // log_to_serial("newProcess: stdout permissions set");
+        // log_decimal("newProcess: stdout permissions reading owner: ", stdout_permissions.reading_owner);
+        // log_decimal("newProcess: stdout permissions reading conditions: ", stdout_permissions.reading_conditions);
+        // log_decimal("newProcess: stdout permissions writing owner: ", stdout_permissions.writing_owner);
+        // log_decimal("newProcess: stdout permissions writing conditions: ", stdout_permissions.writing_conditions);
     }
     if(stderr){
         // log_to_serial("W: newProcess: Asignando stderr al proceso");
@@ -595,16 +595,16 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
         setFilePermissions(stderr, 0, stderr_permissions);
         newProcessBlock->stderr = stderr;
         
-        log_to_serial("I: newProcess: stderr asignado al proceso");
-        log_to_serial("newProcess: stderr permissions set");
-        log_decimal("newProcess: stderr permissions reading owner: ", stderr_permissions.reading_owner);
-        log_decimal("newProcess: stderr permissions reading conditions: ", stderr_permissions.reading_conditions);
-        log_decimal("newProcess: stderr permissions writing owner: ", stderr_permissions.writing_owner);
-        log_decimal("newProcess: stderr permissions writing conditions: ", stderr_permissions.writing_conditions);
+        // log_to_serial("I: newProcess: stderr asignado al proceso");
+        // log_to_serial("newProcess: stderr permissions set");
+        // log_decimal("newProcess: stderr permissions reading owner: ", stderr_permissions.reading_owner);
+        // log_decimal("newProcess: stderr permissions reading conditions: ", stderr_permissions.reading_conditions);
+        // log_decimal("newProcess: stderr permissions writing owner: ", stderr_permissions.writing_owner);
+        // log_decimal("newProcess: stderr permissions writing conditions: ", stderr_permissions.writing_conditions);
     }
 
     if (stdin || stdout || stderr) {
-        log_to_serial("newProcess: Descriptores de I/O asignados correctamente");
+        // log_to_serial("newProcess: Descriptores de I/O asignados correctamente");
     } else {
         // log_to_serial("newProcess: No se asignaron descriptores de I/O, el proceso no podrá leer ni escribir");
     }
@@ -726,9 +726,11 @@ int terminateProcess(Pid pid) {
 // -- Schedule next y scheduler loop -- //
 
 void scheduleNextProcess() {
-    // log_to_serial("I: scheduleNextProcess: Programando el siguiente proceso");
+    // log_to_serial("I: ---> scheduleNextProcess: Programando el siguiente proceso");
 
     if (currentProcessBlock == NULL) return;
+
+    // log_to_serial("I: ---> scheduleNextProcess: Hay procesos para switchear");
 
     currentProcessBlock->process.state = currentProcessBlock->process.state == PROCESS_STATE_RUNNING ? PROCESS_STATE_READY : currentProcessBlock->process.state; // Cambiar el estado del proceso actual a READY
 
@@ -805,6 +807,8 @@ void scheduleNextProcess() {
     ticksSinceLastSwitch = 0; // Reiniciar el contador de ticks desde el último cambio de proceso
 
     // log_decimal("I: scheduleNextProcess: Proceso con PID ", currentProcessBlock->process.pid);
+    // log_string("I: scheduleNextProcess: Proceso con nombre ", currentProcessBlock->process.program.name);
+    // log_decimal("I: scheduleNextProcess: Proceso con registro rax ", currentProcessBlock->registers.rax);
     magic_recover(&currentProcessBlock->registers);
 }
 
@@ -831,6 +835,8 @@ void schedulerLoop() {
 void backupCurrentProcessRegisters() {
     // Guardar los registros del proceso actual en el backup
     if (currentProcessBlock == NULL || currentProcessBlock->process.state != PROCESS_STATE_RUNNING) return; // No hay proceso actual
+    // log_decimal("I: backupCurrentProcessRegisters: Guardando registros del proceso de PID: ", currentProcessBlock->process.pid);
+    // log_decimal("I: backupCurrentProcessRegisters: Registros rax: ", currentProcessBlock->registers.rax);
     BackupRegisters * backup = getBackupRegisters();
     currentProcessBlock->registers = backup->registers;
 }
@@ -1011,11 +1017,11 @@ void sem_post(uint64_t id) {
 void printProcessList() {
     ProcessControlBlock *current = processList;
     if (current == NULL) {
-        log_to_serial("No hay procesos en la lista");
+        // log_to_serial("No hay procesos en la lista");
         return;
     }
 
-    log_to_serial(">>>>>>>>>>>>> Lista de procesos:");
+    // log_to_serial(">>>>>>>>>>>>> Lista de procesos:");
     do {
         // console_log("PID: %d, Name: %s, Type: %s, State: %s, Priority: %s, Parent PID: %d",
         //     current->process.pid,
@@ -1025,14 +1031,14 @@ void printProcessList() {
         //     getPriorityText(current->process.priority),
         //     current->parent ? current->parent->process.pid : -1
         // );
-        log_decimal("PID: ", current->process.pid);
-        log_to_serial(current->process.program.name);
-        log_to_serial(getProcessTypeText(current->process.type));
-        log_to_serial(getProcessStateText(current->process.state));
-        log_to_serial(getPriorityText(current->process.priority));
-        log_decimal("Parent PID: ", current->parent ? current->parent->process.pid : -1);
-        log_to_serial("================================");
+        // log_decimal("PID: ", current->process.pid);
+        // log_to_serial(current->process.program.name);
+        // log_to_serial(getProcessTypeText(current->process.type));
+        // log_to_serial(getProcessStateText(current->process.state));
+        // log_to_serial(getPriorityText(current->process.priority));
+        // log_decimal("Parent PID: ", current->parent ? current->parent->process.pid : -1);
+        // log_to_serial("================================");
         current = current->next;
     } while (current != processList);
-    log_to_serial("<<<<<<<<<<<<< Fin de la lista de procesos");
+    // log_to_serial("<<<<<<<<<<<<< Fin de la lista de procesos");
 }

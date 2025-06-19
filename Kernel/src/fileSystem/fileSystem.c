@@ -76,7 +76,7 @@ void initFileSystem() {}
 // Devuelve 0 si se pudo convertir correctamente, -1 si hubo error
 // Deja el resultado en el puntero internalPermissions pasado por referencia
 int convertToInternalPermissions(FilePermissions permissions, InternalFilePermissions *internalPermissions) {
-    console_log("W: ------> convertToInternalPermissions: Iniciando conversion de permisos");
+    // console_log("W: ------> convertToInternalPermissions: Iniciando conversion de permisos");
     printProcessList(); // Para debug, imprimir la lista de procesos
 
     // me traigo los owners, si existen, traigo el proceso, que sé que es válido y va a incluir el programa
@@ -84,11 +84,11 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
     Pid reading_owner_pid = getProcessGroupMain(permissions.reading_owner);
     // Pid writing_owner_pid = permissions.writing_owner;
     // Pid reading_owner_pid = permissions.reading_owner;
-    log_to_serial("convertToInternalPermissions: Validando owners de permisos");
-    log_decimal("convertToInternalPermissions: writing_owner_pid: ", writing_owner_pid);
-    log_decimal("convertToInternalPermissions: reading_owner_pid: ", reading_owner_pid);
-    log_decimal("convertToInternalPermissions: writing_conditions: ", permissions.writing_conditions);
-    log_decimal("convertToInternalPermissions: reading_conditions: ", permissions.reading_conditions);
+    // log_to_serial("convertToInternalPermissions: Validando owners de permisos");
+    // log_decimal("convertToInternalPermissions: writing_owner_pid: ", writing_owner_pid);
+    // log_decimal("convertToInternalPermissions: reading_owner_pid: ", reading_owner_pid);
+    // log_decimal("convertToInternalPermissions: writing_conditions: ", permissions.writing_conditions);
+    // log_decimal("convertToInternalPermissions: reading_conditions: ", permissions.reading_conditions);
 
     if(writing_owner_pid == 0 || reading_owner_pid == 0 || internalPermissions == NULL) {
         // console_log("E: convertToInternalPermissions: Error al convertir permisos, PID invalido o internalPermissions NULL");
@@ -106,7 +106,7 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
     internalPermissions->reading_owner_program = reading_owner_process.program;
     internalPermissions->reading_conditions = permissions.reading_conditions;
 
-    log_to_serial("convertToInternalPermissions: Permisos convertidos correctamente");
+    // log_to_serial("convertToInternalPermissions: Permisos convertidos correctamente");
     printProcessList(); // Para debug, imprimir la lista de procesos
 
     return 0;
@@ -119,12 +119,12 @@ uint64_t createFile(const char *path, FileType type, uint32_t size, FilePermissi
         return 0; // Error: path inválido
     }
 
-    log_to_serial("createFile: Creando archivo");
-    log_string("createFile: path: ", path);
-    log_decimal("createFile: size: ", size);
-    log_decimal("createFile: type: ", type);
-    log_decimal("createFile: writing_owner: ", permissions.writing_owner);
-    log_decimal("createFile: reading_owner: ", permissions.reading_owner);
+    // log_to_serial("createFile: Creando archivo");
+    // log_string("createFile: path: ", path);
+    // log_decimal("createFile: size: ", size);
+    // log_decimal("createFile: type: ", type);
+    // log_decimal("createFile: writing_owner: ", permissions.writing_owner);
+    // log_decimal("createFile: reading_owner: ", permissions.reading_owner);
 
     InternalFilePermissions internalPermissions;
     if (convertToInternalPermissions(permissions, &internalPermissions) != 0) {
@@ -602,7 +602,7 @@ uint64_t * listFiles() {
 // Solo alguien del grupo del owner puede cambiar los permisos
 // Pid 0 se toma como modo kernel, o sea que puede setear permisos de cualquier archivo
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
-    console_log("setFilePermissions: Cambiando permisos del archivo");
+    // console_log("setFilePermissions: Cambiando permisos del archivo");
     printProcessList(); // Para debug, imprimir la lista de procesos
 
     InternalFilePermissions internalPermissions;
