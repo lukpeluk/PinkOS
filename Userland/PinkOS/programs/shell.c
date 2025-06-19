@@ -222,6 +222,7 @@ void draw_status_bar()
 void newPrompt()
 {
 	scroll_if_out_of_bounds();
+	add_char_to_stdout('\n'); // new line before the prompt
 	is_input[current_string] = 1;
 	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 	reset_markup();
@@ -515,30 +516,6 @@ void execute_program(int input_line){
 	}
 }
 
-// void api_handler(uint64_t endpoint_id, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4)
-// {
-// 	switch (endpoint_id)
-// 	{
-// 	case CLEAR_SCREEN_ENDPOINT:
-// 		clear_console();
-// 		break;
-// 	case PRINT_STRING_ENDPOINT:
-// 		add_str_to_stdout((char *)arg1);
-// 		break;
-// 	case PRINT_CHAR_ENDPOINT:
-// 		add_char_to_stdout((char)arg1);
-// 		break;
-// 	case ENABLE_BACKGROUND_AUDIO_ENDPOINT:
-// 		background_audio_enabled = 1;
-// 		break;
-// 	case DISABLE_BACKGROUND_AUDIO_ENDPOINT:
-// 		background_audio_enabled = 0;
-// 		break;
-// 	default:
-// 		break;
-// 	}
-// }
-
 // void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 void key_handler(KeyboardEvent * event)
 {
@@ -550,29 +527,20 @@ void key_handler(KeyboardEvent * event)
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
+	int is_ctrl_pressed, is_shift_pressed = 0;
 
-	// --- HOLDING ESC FORCE QUITS THE CURRENT PROGRAM ---
-	if (ascii == ASCII_ESC && running_programs && hold_times == 1)
+	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, (uint64_t)&is_ctrl_pressed, 0, 0);
+	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, (uint64_t)&is_shift_pressed, 0, 0);
+
+
+	// --- HOLDING ESC (or pressing ctrl + c) FORCE QUITS THE CURRENT PROGRAM ---
+	if ((ascii == ASCII_ESC || (is_ctrl_pressed && ascii == 'c')) && running_programs && hold_times == 1)
 	{
 		// syscall(QUIT_SYSCALL, 0, 0, 0, 0, 0);
 		killProcess(running_program_pid); // terminate the running program
 		return;
 	}
 	
-	int is_ctrl_pressed, is_shift_pressed = 0;
-	int is_a_pressed = 0;
-
-	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, (uint64_t)&is_ctrl_pressed, 0, 0);
-	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, (uint64_t)&is_shift_pressed, 0, 0);
-	syscall(IS_KEY_PRESSED_SYSCALL, 0x1E, 0, (uint64_t)&is_a_pressed, 0, 0);
-
-	// si toco a y b hago clear (pintó para demostrar que es super genérico nuestro manejo de teclas/eventos, control o shift no son especiales)
-	if (is_a_pressed && ascii == 'b')
-	{
-		scroll = current_string;
-		redraw();
-		return;
-	}
 
 	// --- SCROLL WITH PAGE UP AND PAGE DOWN ---
 	if((scan_code == 0x49 || scan_code == 0x51)) // page up or page down
@@ -603,7 +571,7 @@ void key_handler(KeyboardEvent * event)
 		else if (ascii == '-' && hold_times == 1)
 			syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);  // If ctrl + '-' is pressed, zoom out
 
-		// --- SCROLL ---
+		// --- SCROLL --- 
 		else if((scan_code == 0x48 && event_type == 3))
 		{
 			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
@@ -627,18 +595,6 @@ void key_handler(KeyboardEvent * event)
 		return;
 	}
 
-	// --- HANDLE ARROWS FOR PREVIOUS COMMANDS ---
-	// if(scan_code == 0x48){
-		// WIP - ITERAR POR LOS COMANDOS RECIENTES
-		// print("UP\n");
-		// if(command_in_iteration != oldest_command){
-		// 	command_in_iteration = current_command ? current_command - 1 : COMMAND_BUFFER_SIZE - 1;
-		// 	buffer[current_string][0] = 0;
-		// 	add_str_to_stdout(command_buffer[command_in_iteration]);
-		// 	DECREASE_INDEX(command_in_iteration, COMMAND_BUFFER_SIZE);
-		// }
-	// }
-
 	// --- MANEJA LA ENTRADA ESTÁNDAR Y EL BUFFER DE LA TERMINAL ---
 	// 		El key repeat es configurable, 
 	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
@@ -652,21 +608,7 @@ void key_handler(KeyboardEvent * event)
 	
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !running_programs) {
-		// WIP - ITERAR POR LOS COMANDOS RECIENTES
-		// Al tocar enter se guarda la línea en el buffer de comandos
-		// strcpy(command_buffer[current_command], PREV_STRING);
-		// ADVANCE_INDEX(current_command, COMMAND_BUFFER_SIZE);
-		// if(current_command == oldest_command){
-		// 	ADVANCE_INDEX(oldest_command, COMMAND_BUFFER_SIZE);
-		// }
-
-		// // Si se está iterando por los comandos anteriores, se ejecuta el comando actual
-		// if(command_in_iteration != -1){
-		// 	command_in_iteration = -1;
-		// 	execute_program(command_buffer[command_in_iteration]);
-		// }
-
-		redraw(); // redibuja para que se parsee el marcado, TODO: tratar que solo redibuje la linea actual en vez de toda la pantalla
+		redraw(); // redibuja para que se parsee el marcado
 		execute_program(PREV_STRING);
 	}
 }
@@ -686,21 +628,23 @@ void status_bar_handler(RTC_Time *time)
 	draw_status_bar();
 }
 
+// Thread que se encarga de leer de la salida estándar del programa que se está ejecutando
 void output_handler(){
 	while (1)
 	{
 		uint8_t character = 0;
 		int read = readFifo(console_out, &character, 1);
-		if (read == 1)
-		{	
+
+		if (read == 1) {	
 			add_char_to_stdout(character);
 		} else if (read < 0) {
 			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
-			log_to_serial("I: EOF reached in console_out, waiting for new input");
+
+			if(!running_programs){
+				newPrompt(); // si no hay un programa corriendo, muestro el prompt
+			} 
 
 			console_out = 0;
-
-			if(!running_programs) newPrompt(); // si no hay un programa corriendo, muestro el prompt
 			setWaiting(getPID());
 		} else if (read != 0) {
 			log_to_serial("E: Error reading from console_out");
@@ -712,27 +656,14 @@ void output_handler(){
 // message for debugging purposes
 void idle(char *message)
 {
-	while (1)
-	{
-		// if (message != 0){
-		// 	syscall(DRAW_STRING_SYSCALL, message, ColorSchema->text, ColorSchema->background, 0, 0);
-		// }
-		// redraw();
+	while (1) 
 		_hlt();
-	}
 }
-
-// void home_screen_exit_handler(char event_type, int hold_times, char ascii, char scan_code)
-// {
-// 	show_home_screen = 0;
-// 	syscall(UNSUBSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, 0, 0, 0, 0);
-// }
 
 void home_screen()
 {
-	// syscall(SUSCRIBE_TO_EVENT_SYSCALL, (uint64_t)KEY_EVENT, (uint64_t)home_screen_exit_handler, 0, 0, 0);
 	KeyboardCondition condition = {
-		.ascii = ' ', // Exit the home screen with ESC
+		.ascii = ' ',   // Condición para que solo espacio te saque de la home screen
 	};
 	Point position = {0};
 	int scale = 12;
@@ -766,10 +697,6 @@ void home_screen()
 	KeyboardEvent event;
 	
 	waitForEvent(KEY_EVENT, (uint64_t)&event, (uint64_t)&condition);
-	// while (show_home_screen)
-	// {
-	// 	_hlt();
-	// }
 }
 
 
