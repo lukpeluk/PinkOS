@@ -282,12 +282,12 @@ int main()
 
     // sleep(1000);
 
-    // log_to_serial("I: Usa ':I' adelante de los mensajes para que el sea informativo");
-    // log_to_serial("W: Usa ':W' adelante de los mensajes para que el sea de advertencia");
-    log_to_serial("E: Usa ':E' adelante de los mensajes para que el sea un error");
-    // log_to_serial("S: Usa ':S' adelante de los mensajes para que el sea de acierto");
+    log_to_serial("I: Usa 'I:' adelante de los mensajes para que el sea informativo");
+    log_to_serial("W: Usa 'W:' adelante de los mensajes para que el sea de advertencia");
+    log_to_serial("E: Usa 'E:' adelante de los mensajes para que el sea un error");
+    log_to_serial("S: Usa 'S:' adelante de los mensajes para que el sea de acierto");
 
-    // log_to_serial("I: PinkOS Kernel started");
+    log_to_serial("I: PinkOS Kernel started");
 
     ncPrint((const char *)"se llego al main\n");
     // log_to_serial("En el main de kernel\n");
