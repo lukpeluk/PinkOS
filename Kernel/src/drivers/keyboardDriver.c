@@ -207,7 +207,7 @@ char base_layer[256] = {
     'l',              // 0x26
     '�',              // 0x27
     '{',              // 0x28
-    '<',              // 0x29
+    '|',              // 0x29
     ASCII_NUL,        // 0x2A (Shift izquierdo)
     '}',              // 0x2B
     'z',              // 0x2C
@@ -300,7 +300,7 @@ char shift_layer[256] = {
     'L',               // 0x26
     '�',               // 0x27
     '[',               // 0x28
-    '>',               // 0x29
+    '°',               // 0x29
     ASCII_NUL,          // 0x2A
     ']',               // 0x2B
     'Z',               // 0x2C
