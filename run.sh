@@ -37,7 +37,6 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     -audiodev coreaudio,id=speaker \
     -machine pcspk-audiodev=speaker \
     -serial tcp::4444,server \
-    # -no-hpet \
     $GDB_FLAGS
 else
   echo "Sistema operativo no soportado"
