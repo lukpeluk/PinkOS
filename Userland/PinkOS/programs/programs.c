@@ -89,7 +89,7 @@ static Program programs[] = {
         "ps",
         "PS",
         ps_main,
-        0,
+        MANAGE_PROCESSES_PERMISSION,
         "Prints the list of running processes",
         "usage: ps \nPS v1 \n Prints the list of running processes"
     },
@@ -212,7 +212,47 @@ static Program programs[] = {
         0,
         "Toggle between the default and mockup color themes",
         "usage: chagetheme \nChangeTheme v1 \n Use this command to change the color theme."
-    }
+    },
+    {
+        "wc",
+        "Word Count",
+        wc_main,
+        0,
+        "Counts the number of words in a file",
+        "usage: wc \nWord Count v1 \n Use this program to count the number of words in a file."
+    },
+    {
+        "kill",
+        "Kill",
+        kill_main,
+        MANAGE_PROCESSES_PERMISSION,
+        "Kill a process",
+        "usage: kill <pid> \nKill v1 \n Use this program to kill a process by its PID."
+    },
+    {
+        "nice",
+        "Nice",
+        nice_main,
+        MANAGE_PROCESSES_PERMISSION,
+        "Change the priority of a process",
+        "usage: nice <pid> <new_priority>\nNice v1"
+    },
+    {
+        "block",
+        "Block",
+        block_main,
+        MANAGE_PROCESSES_PERMISSION,
+        "Block a process",
+        "usage: block <pid> \nBlock v1 \n Use this program to block a process by its PID. The process will not be able to run until it is unblocked."
+    },
+    {
+        "cat",
+        "Cat",
+        cat_main,
+        0,
+        "Concatenate and print files",
+        "usage: cat <file> \nCat v1 \n Use this program to concatenate and print files to the console."
+    },
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},

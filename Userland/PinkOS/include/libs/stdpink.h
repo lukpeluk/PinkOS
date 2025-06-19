@@ -438,6 +438,15 @@ void print(char * string);
 void printf(char * format, ...);
 
 /*
+ * Formats a string with the given format and stores it in a buffer
+ * @param buffer the buffer to store the formatted string
+ * @param format the format of the string
+ * @param ... the arguments to replace in the format
+ * @return the number of characters written to the buffer
+*/
+int sprintf(char * buffer, char * format, ...);
+
+/*
  * Prints a single character to the console
  * @param c the character to print
  * @return void
@@ -464,6 +473,14 @@ void clearStdinBuffer();
 */
 void scanf(char * format, ...);
 
+/*
+ * Parses a string with a given format and extracts values into variables
+ * @param input the input string to parse
+ * @param format the format string (%s for strings, %d for int, %u for uint64_t, %c for char)
+ * @param ... pointers to the variables to store the extracted values
+ * @return the number of successfully parsed items
+*/
+int sscanf(const char * input, const char * format, ...);
 
 void seedRandom(uint64_t seed);
 
@@ -485,6 +502,35 @@ void sleep(uint64_t millis);
 
 uint64_t getMillisElapsed();
 
+// ====== Number Conversion Functions ======
+
+/**
+ * Converts an integer to a string
+ * @param num the integer to convert
+ * @return pointer to the string representation
+*/
+char * int_to_string(int num);
+
+/**
+ * Converts an unsigned 64-bit integer to a string
+ * @param num the unsigned 64-bit integer to convert
+ * @return pointer to the string representation
+*/
+char * uint64_to_string(uint64_t num);
+
+/**
+ * Converts a string to an integer
+ * @param str the string to convert
+ * @return the integer value
+*/
+int string_to_int(const char * str);
+
+/**
+ * Converts a string to an unsigned 64-bit integer
+ * @param str the string to convert
+ * @return the unsigned 64-bit integer value
+*/
+uint64_t string_to_uint64(const char * str);
 
 
 #endif

@@ -484,8 +484,8 @@ void execute_program(int input_line){
 		syscall(CLEAR_KEYBOARD_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 
 		// Crea los archivos para la entrada y salida estándar del programa
-		uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 256);
-		uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 256);
+		uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 1024);
+		uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 1024);
 
 		// Stderror y stdout mapean al mismo archivo por ahora
 		IO_Files io_files = {
@@ -648,6 +648,7 @@ void output_handler(){
 			setWaiting(getPID());
 		} else if (read != 0) {
 			log_to_serial("E: Error reading from console_out");
+			log_decimal("Read returned: ", read);
 		}
 	}
 }
