@@ -247,7 +247,7 @@ int writeRaw(uint64_t id, void * buffer, uint32_t size, uint32_t offset) {
 
 int readFifo(uint64_t id, void * buffer, uint32_t size) {
     uint64_t result = size;
-    syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, &result, 0, 0);
+    syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, &result, 0, 0);   // Mario bros cloud vibes
     return result;
 }
 

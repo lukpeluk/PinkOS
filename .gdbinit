@@ -37,8 +37,9 @@ directory Userland/src \
             Userland/PinkOS/asm
 
 # Prints
-echo "Cargando kernel y userland..."
+echo "Cargando kernel y userland...\n"
 
 # Configurar puntos de interrupción iniciales
-break kernel.c:383
-break interrupts.asm:137
+# break kernel.c:316
+break shell.c:503
+# break interrupts.asm:137

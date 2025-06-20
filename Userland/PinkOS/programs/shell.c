@@ -203,6 +203,12 @@ int process_markup(char *string)
 	else if(*string == '>' && *(string + 1) == '#')
 		current_text_color = ColorSchema->info;
 	
+	else if(*string == '<' && *(string + 1) == '3'){
+		*string = 32;
+		*(string + 1) = 169;  
+		markup_chars = 0;
+	}
+
 	else markup_chars = 0;
 
 	return markup_chars;
@@ -779,11 +785,11 @@ void status_bar_handler(RTC_Time *time)
 void output_handler(){
 	while (1)
 	{
-		uint8_t character = 0;
-		int read = readFifo(console_out, &character, 1);
+		char buffer[STRING_SIZE] = {0};
+		int read = readFifo(console_out, buffer, STRING_SIZE);
 
-		if (read == 1) {	
-			add_char_to_stdout(character);
+		if (read > 0) {	
+			add_str_to_stdout(buffer);
 		} else if (read < 0) {
 			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
 			rm_stdout();

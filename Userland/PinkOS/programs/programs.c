@@ -3,16 +3,8 @@
 #include <permissions.h>
 #include <libs/stdpink.h>
 
-
+// RUNNABLE PROGRAMS
 static Program programs[] = {
-    {
-        "shell", 
-        "PinkOS Shell", 
-        shell_main, 
-        0xFFFFFFFF, 
-        "The PinkOS Shell",
-        "Starts the PinkOS shell"
-    },
     {
         "echo", 
         "echo", 
@@ -43,7 +35,7 @@ static Program programs[] = {
         mona_lisa_main,
         DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
         "Draws the Mona Lisa",
-        "usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the Mona Lisa on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
+        "usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the ==Mona Lisa== on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
     },
     {
         "date",
@@ -75,7 +67,7 @@ static Program programs[] = {
         man_main,
         0,
         "Prints the manual of a program",
-        "Omg, you're reading the manual of the manual.\nThis is a bit meta, don't you think?"
+        "==Omg==, you're reading the manual of the manual.\nThis is a bit meta, don't you think?"
     },
     {
         "test",
@@ -106,7 +98,7 @@ static Program programs[] = {
         "Spotify",
         spotify_main,
         PLAY_AUDIO_PERMISSION,
-        "Plays a song",
+        "Plays a song ",
         "Usage: spotify [-b] <song name>\nSpotify v2.0\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t * Pink Panther theme\n\t* Super Mario Bros theme\n\t* Fur Elise\n\t* Never Gonna Give You Up\n\nIf not in background mode, you can use space to pause/resume the song.\n"
     },
     {
