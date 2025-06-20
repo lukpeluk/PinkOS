@@ -775,6 +775,35 @@ void key_handler(KeyboardEvent * event)
 			add_char_to_stdout(ascii);
 		}
 	}
+	// If tab pressed, autocomplete the command
+	if (ascii == ASCII_HT && !running_programs)
+	{
+		log_to_serial("I: Tab pressed, autocompleting command");
+		char command[STRING_SIZE] = {0};
+		char args[STRING_SIZE] = {0};
+		int nohup = parse_command(current_string, 0, command, args);
+		
+		if (command[0] == 0) {
+			// add_str_to_stdout((char *)">?No command to autocomplete");
+			return;
+		}
+
+		// Autocompletar el comando
+		Program *autocomplete = searchProgramByPrefix(command);
+
+		if (autocomplete != NULL) {
+			// Borra el comando actual
+			current_position = 0;
+			add_str_to_stdout(autocomplete->command);
+			redraw(); // redraw to show the new command
+			// free(autocomplete);
+		} else {
+			// add_str_to_stdout((char *)">?Command not found");
+		}		
+		return;
+	}
+
+	
 	
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !running_programs) {

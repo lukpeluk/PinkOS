@@ -430,8 +430,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                     // Program not found, return 0
                     return 0;
                 }
-                // Return the PID of the program
-                return program->entry;
+                return program;
             }
             break;
         case INSTALL_PROGRAM_SYSCALL:
