@@ -26,8 +26,6 @@
 extern void syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5);
 extern void _hlt();
 
-int running_programs = 0; // amount of programs running as child of the shell
-
 Colors* ColorSchema = &PinkOSMockupColors;
 
 #define BUFFER_SIZE 500
@@ -44,6 +42,8 @@ static Point logo_position = {10, 5};
 static const char *command_not_found_msg = (const char *) ">?Command not found";
 static const char *default_prompt = (const char *)" > ";
 
+
+
 char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
 uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's an output
 int current_string = 0;
@@ -53,6 +53,8 @@ int scroll = 0; // indica qué línea es la que está en la parte superior de la
 
 uint32_t current_text_color; // intended to be changed via markup
 int highlighting_text = 0;	 // for highlighting text
+
+int running_programs = 0; // amount of programs running as child of the shell
 
 // El primero es el que tendrá el foco (recibe input), y si es el único también es el que manda el output a la consola, si hay dos es el segundo
 Pid running_program_pids[2] = {0, 0}; 
@@ -775,16 +777,15 @@ void key_handler(KeyboardEvent * event)
 			add_char_to_stdout(ascii);
 		}
 	}
+
 	// If tab pressed, autocomplete the command
 	if (ascii == ASCII_HT && !running_programs)
 	{
-		log_to_serial("I: Tab pressed, autocompleting command");
 		char command[STRING_SIZE] = {0};
 		char args[STRING_SIZE] = {0};
 		int nohup = parse_command(current_string, 0, command, args);
 		
 		if (command[0] == 0) {
-			// add_str_to_stdout((char *)">?No command to autocomplete");
 			return;
 		}
 
@@ -795,15 +796,12 @@ void key_handler(KeyboardEvent * event)
 			// Borra el comando actual
 			current_position = 0;
 			add_str_to_stdout(autocomplete->command);
+			add_char_to_stdout(' ');
 			redraw(); // redraw to show the new command
-			// free(autocomplete);
-		} else {
-			// add_str_to_stdout((char *)">?Command not found");
-		}		
+		}
+
 		return;
 	}
-
-	
 	
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !running_programs) {
