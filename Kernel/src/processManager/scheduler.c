@@ -683,7 +683,6 @@ int terminateSingleProcess(uint32_t pid) {
 
     // Marcarlo como terminado para que el scheduler lo elimine
     to_remove->process.state = PROCESS_STATE_TERMINATED;
-    processCount--;
 
     // Cerrar la escritura de todos los fifos del proceso
     closeAllFifosOfProcess(to_remove->process.pid);
@@ -757,6 +756,8 @@ void scheduleNextProcess() {
             free(current->stackBase); // Liberar el stack del proceso actual
             // mem_free_sector(current->stackBase - STACK_SIZE); // Liberar el sector de memoria del stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
+            processCount--;
+
 
             prev->next = nextProcess; // Eliminar el proceso actual de la lista
             current = nextProcess;
@@ -1017,28 +1018,28 @@ void sem_post(uint64_t id) {
 void printProcessList() {
     ProcessControlBlock *current = processList;
     if (current == NULL) {
-        // log_to_serial("No hay procesos en la lista");
+        log_to_serial("No hay procesos en la lista");
         return;
     }
 
-    // log_to_serial(">>>>>>>>>>>>> Lista de procesos:");
+    log_to_serial(">>>>>>>>>>>>> Lista de procesos:");
     do {
-        // console_log("PID: %d, Name: %s, Type: %s, State: %s, Priority: %s, Parent PID: %d",
-        //     current->process.pid,
-        //     current->process.program.name,
-        //     getProcessTypeText(current->process.type),
-        //     getProcessStateText(current->process.state),
-        //     getPriorityText(current->process.priority),
-        //     current->parent ? current->parent->process.pid : -1
-        // );
-        // log_decimal("PID: ", current->process.pid);
-        // log_to_serial(current->process.program.name);
-        // log_to_serial(getProcessTypeText(current->process.type));
-        // log_to_serial(getProcessStateText(current->process.state));
-        // log_to_serial(getPriorityText(current->process.priority));
-        // log_decimal("Parent PID: ", current->parent ? current->parent->process.pid : -1);
-        // log_to_serial("================================");
+        console_log("PID: %d, Name: %s, Type: %s, State: %s, Priority: %s, Parent PID: %d",
+            current->process.pid,
+            current->process.program.name,
+            getProcessTypeText(current->process.type),
+            getProcessStateText(current->process.state),
+            getPriorityText(current->process.priority),
+            current->parent ? current->parent->process.pid : -1
+        );
+        log_decimal("PID: ", current->process.pid);
+        log_to_serial(current->process.program.name);
+        log_to_serial(getProcessTypeText(current->process.type));
+        log_to_serial(getProcessStateText(current->process.state));
+        log_to_serial(getPriorityText(current->process.priority));
+        log_decimal("Parent PID: ", current->parent ? current->parent->process.pid : -1);
+        log_to_serial("================================");
         current = current->next;
     } while (current != processList);
-    // log_to_serial("<<<<<<<<<<<<< Fin de la lista de procesos");
+    log_to_serial("<<<<<<<<<<<<< Fin de la lista de procesos");
 }

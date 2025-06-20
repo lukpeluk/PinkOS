@@ -77,7 +77,6 @@ void initFileSystem() {}
 // Deja el resultado en el puntero internalPermissions pasado por referencia
 int convertToInternalPermissions(FilePermissions permissions, InternalFilePermissions *internalPermissions) {
     // console_log("W: ------> convertToInternalPermissions: Iniciando conversion de permisos");
-    printProcessList(); // Para debug, imprimir la lista de procesos
 
     // me traigo los owners, si existen, traigo el proceso, que sé que es válido y va a incluir el programa
     Pid writing_owner_pid = getProcessGroupMain(permissions.writing_owner);
@@ -107,7 +106,6 @@ int convertToInternalPermissions(FilePermissions permissions, InternalFilePermis
     internalPermissions->reading_conditions = permissions.reading_conditions;
 
     // log_to_serial("convertToInternalPermissions: Permisos convertidos correctamente");
-    printProcessList(); // Para debug, imprimir la lista de procesos
 
     return 0;
 }
@@ -603,7 +601,6 @@ uint64_t * listFiles() {
 // Pid 0 se toma como modo kernel, o sea que puede setear permisos de cualquier archivo
 int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
     // console_log("setFilePermissions: Cambiando permisos del archivo");
-    printProcessList(); // Para debug, imprimir la lista de procesos
 
     InternalFilePermissions internalPermissions;
     if (convertToInternalPermissions(permissions, &internalPermissions) != 0) {
@@ -611,11 +608,9 @@ int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
         return -1; // Error: permisos inválidos/mal formados
     }
     // console_log("setFilePermissions: Convertidos permisos a internos correctamente");
-    printProcessList(); // Para debug, imprimir la lista de procesos
 
     FifoFileControlBlock *fifoFile = findFifoFile(fileId);
     // console_log("setFilePermissions: Buscando archivo FIFO");
-        printProcessList(); // Para debug, imprimir la lista de procesos
 
     if (fifoFile != NULL) {
         if(pid && isSameProcessGroup(fifoFile->permissions.writing_owner, pid)) {
@@ -624,7 +619,6 @@ int setFilePermissions(uint64_t fileId, Pid pid, FilePermissions permissions) {
         }
         fifoFile->permissions = internalPermissions;
         // console_log("setFilePermissions: Permisos cambiados correctamente, archivo FIFO encontrado");
-        printProcessList(); // Para debug, imprimir la lista de procesos
         return 0; // Éxito
     }
 
