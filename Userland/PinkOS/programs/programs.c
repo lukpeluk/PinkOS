@@ -70,14 +70,6 @@ static Program programs[] = {
         "==Omg==, you're reading the manual of the manual.\nThis is a bit meta, don't you think?"
     },
     {
-        "test",
-        "Test",
-        test_main,
-        0,
-        "Test program",
-        "usage: test <args> \nTest v1 \n Use this program to test the exception handling"
-    },
-    {
         "ps",
         "PS",
         ps_main,
@@ -253,6 +245,22 @@ static Program programs[] = {
         "Runs a program in a loop",
         "usage: loop <program> \nLoop v1 \n Use this program to run a program in a loop until it is killed."
     },
+    {
+        "test",
+        "Test",
+        test_main,
+        0,
+        "Test exception handling",
+        "usage: test <args> \nTest v1 \n Use this program to test the exception handling"
+    },
+    {
+        "test_prio",
+        "Test Priority",
+        test_priority_main,
+        ROOT_PERMISSIONS & ~DRAWING_PERMISSION, // ROOT_PERMISSIONS without DRAWING_PERMISSION
+        "Test the priority system",
+        "usage: test_prio \nTest Priority v1 \n Use this program to test the priority system of PinkOS. It creates 3 processes with different priorities and tests the priority system."
+    }
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
