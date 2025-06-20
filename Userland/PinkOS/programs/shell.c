@@ -685,11 +685,15 @@ void key_handler(KeyboardEvent * event)
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, (uint64_t)&is_shift_pressed, 0, 0);
 
 
-	// --- HOLDING ESC (or pressing ctrl + c) FORCE QUITS THE CURRENT PROGRAM ---
-	if ((ascii == ASCII_ESC || (is_ctrl_pressed && ascii == 'c')) && running_programs && hold_times == 1)
+	// --- HOLDING ESC (or pressing ctrl + C) FORCE QUITS ALL RUNNING PROGRAMS (both of them if pipe) ---
+	if (((ascii == ASCII_ESC && hold_times == 2) || (is_ctrl_pressed && ascii == 'C')) && running_programs)
 	{
-		// syscall(QUIT_SYSCALL, 0, 0, 0, 0, 0);
-		killProcess(running_program_pids[0]); // terminate the running program
+		killProcess(running_program_pids[0]);
+		killProcess(running_program_pids[1]);
+		return;
+	} else if (is_ctrl_pressed && ascii == 'c' && running_programs)
+	{
+		killProcess(running_program_pids[0]);
 		return;
 	}
 
