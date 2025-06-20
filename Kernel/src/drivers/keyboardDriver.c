@@ -396,7 +396,7 @@ char caps_lock_layer[256] = {
 char altgr_layer[256] = {
     ASCII_NUL, // 0x00
     ASCII_NUL, // 0x01
-    ASCII_NUL, // 0x02
+    '|', // 0x02
     '@', // 0x03
     [0x04 ... 0x0F] = ASCII_NUL,
     '@', // 0x10
