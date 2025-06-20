@@ -15,7 +15,7 @@ void wc_main(char *args) {
                 line_count++;
             }
             if (buffer[i] == ' ' || buffer[i] == '\n' || buffer[i] == '\t') {
-                if (i > 0 && (buffer[i-1] != ' ' && buffer[i-1] != '\n' && buffer[i-1] != '\t')) {
+                if (char_count > 0 && (last_char != ' ' && last_char != '\n' && last_char != '\t')) {
                     word_count++;
                 }
             }

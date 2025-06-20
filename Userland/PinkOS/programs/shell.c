@@ -759,10 +759,17 @@ void key_handler(KeyboardEvent * event)
 	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
 	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_BS)
 	{
-		add_char_to_stdout(ascii);
-
-		// Si hay un programa corriendo y la entrada es ascii, se lo mando al programa por stdin
-		if (running_programs && ascii)  add_char_to_stdin(ascii);
+		if (running_programs){
+			if (ascii != ASCII_BS){
+				add_char_to_stdout(ascii);
+	
+				// Si hay un programa corriendo y la entrada es ascii, se lo mando al programa por stdin
+				if (ascii)  add_char_to_stdin(ascii);
+			}
+		}
+		else{
+			add_char_to_stdout(ascii);
+		}
 	}
 	
 	// --- ENTER TO EXECUTE ---
