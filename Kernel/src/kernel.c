@@ -19,6 +19,7 @@
 #include <eventManager/eventManager.h>
 #include <processManager/scheduler.h>
 #include <programManager/programManager.h>
+#include <memoryManager/memoryManager.h>
 
 #include <tests/tests.h>
 
@@ -294,6 +295,7 @@ int main()
     
 	initProcessState();
     initScheduler();
+    initMemoryManager();
     initVideoDriver();
     initWindowManager();
     initEventManager();
