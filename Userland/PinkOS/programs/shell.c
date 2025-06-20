@@ -692,6 +692,13 @@ void key_handler(KeyboardEvent * event)
 		killProcess(running_program_pids[0]); // terminate the running program
 		return;
 	}
+
+	// Enviar EOF
+	if(is_ctrl_pressed && ascii == 'd')
+	{
+		closeFifoForWriting(console_in);
+		return;
+	}
 	
 
 	// --- SCROLL WITH PAGE UP AND PAGE DOWN ---
