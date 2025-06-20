@@ -253,6 +253,14 @@ static Program programs[] = {
         "Concatenate and print files",
         "usage: cat <file> \nCat v1 \n Use this program to concatenate and print files to the console."
     },
+    {
+        "loop",
+        "Loop",
+        loop_main,
+        0,
+        "Runs a program in a loop",
+        "usage: loop <program> \nLoop v1 \n Use this program to run a program in a loop until it is killed."
+    },
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
