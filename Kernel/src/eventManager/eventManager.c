@@ -367,7 +367,7 @@ int filterSleepCondition(void* condition_data, void* data) {
     }
     SleepCondition* condition = (SleepCondition*)condition_data;
     uint64_t* millis = (uint64_t*)data;
-    return (*millis == condition->millis); // Filter by milliseconds
+    return (*millis >= condition->millis); // Filter by milliseconds
 }
 
 void handleSleep(uint64_t millis) {

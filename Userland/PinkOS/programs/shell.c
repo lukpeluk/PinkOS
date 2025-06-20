@@ -473,13 +473,24 @@ int parse_command(int input_line, int index, char * command, char * args){
 	if (buffer[input_line][i] == ' '){
 		i++;
 	}
-
+	// Si no hay argumentos, args queda vacío
+	if (buffer[input_line][i] == PIPE){
+		args[0] = 0;
+		return nohup;
+	}
+	
 	int j = 0;
-	for (; buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE; i++, j++)
+	while (buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE)
 	{
-		args[j] = buffer[input_line][i];
+		args[j++] = buffer[input_line][i++];
+	}
+
+	if (buffer[input_line][i] == PIPE && buffer[input_line][i-1] == ' '){
+		j--;
 	}
 	args[j] = 0;
+
+	return nohup;
 }
 
 // Te dice en qué índice está el siguiente comando si hay un pipe, 0 si no hay pipe
@@ -490,12 +501,15 @@ int parse_pipe(int input_line, int index){
 	while (buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE) {
 		i++;
 	}
-
+	if (buffer[input_line][i+1] == ' '){
+		i++;
+	}
+	
 	if (buffer[input_line][i] == 0) {
 		log_to_serial("I: No pipe found");
 		return 0; // no pipe found
 	}
-
+	
 	return i; // return the index of the next command
 }
 
@@ -504,8 +518,8 @@ void execute_program(int input_line){
 	// Espacio para los programas y sus argumentos
 	char command1[STRING_SIZE];
 	char command2[STRING_SIZE];
-	static char args1[STRING_SIZE];
-	static char args2[STRING_SIZE];
+	char args1[STRING_SIZE];
+	char args2[STRING_SIZE];
 
 	int piped_program_index = parse_pipe(input_line, 0); // se fija si hay pipe y en qué índice
 
@@ -525,7 +539,7 @@ void execute_program(int input_line){
 	
 	// Caso hay pipe
 	if(piped_program_index){
-		int nohup2 = parse_command(input_line, piped_program_index, command2, args2);
+		int nohup2 = parse_command(input_line, piped_program_index+1, command2, args2);
 
 		Program * program2 = get_program_entry(command2);
 		installed = installProgram(program2); // install the program if it was not installed yet
