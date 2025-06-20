@@ -411,6 +411,23 @@ uint64_t string_to_uint64(const char * str) {
     return result;
 }
 
+char * concatenate_strings(const char * str1, const char * str2) {
+    uint64_t len1 = strlen(str1);
+    uint64_t len2 = strlen(str2);
+    char * result = (char *)malloc(len1 + len2 + 1); // +1 for null terminator
+
+    if (result == NULL) {
+        return NULL; // Memory allocation failed
+    }
+
+    memcpy(result, str1, len1);
+    memcpy(result + len1, str2, len2);
+    result[len1 + len2] = '\0'; // Null-terminate the string
+
+    return result;
+}
+
+
 //----------------------------------------------------------------------------------------------
 // LIBRARY FUNCTIONS
 //----------------------------------------------------------------------------------------------

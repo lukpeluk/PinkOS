@@ -532,5 +532,13 @@ int string_to_int(const char * str);
 */
 uint64_t string_to_uint64(const char * str);
 
+/**
+ * Concatenates two strings into a new dynamically allocated string (you must free it)
+ * @param str1 the first string
+ * @param str2 the second string
+ * @return pointer to the concatenated string, or NULL if memory allocation fails
+*/
+char * concatenate_strings(const char * str1, const char * str2);
+
 
 #endif
