@@ -25,9 +25,11 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     -machine pcspk-audiodev=speaker \
     -serial tcp::4444,server \
     -no-hpet \
+    -smp cores=4 \
+    -enable-kvm \
+    -cpu host \
     $GDB_FLAGS
     # -rtc base=localtime \
-
     # -serial tcp::4444,server,nowait
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Para Mac
