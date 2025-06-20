@@ -35,10 +35,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
   # Para Mac
   qemu-system-x86_64 \
     -hda Image/x64BareBonesImage.qcow2 \
-    -m 512 \
+    -m 2G \
     -audiodev coreaudio,id=speaker \
     -machine pcspk-audiodev=speaker \
     -serial tcp::4444,server \
+    -smp cores=4 \
     $GDB_FLAGS
 else
   echo "Sistema operativo no soportado"
