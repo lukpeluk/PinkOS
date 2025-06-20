@@ -800,7 +800,7 @@ void output_handler(){
 	while (1)
 	{
 		char buffer[STRING_SIZE] = {0};
-		int read = readFifo(console_out, buffer, STRING_SIZE);
+		int read = readFifo(console_out, buffer, STRING_SIZE-1);
 
 		if (read > 0) {	
 			add_str_to_stdout(buffer);
