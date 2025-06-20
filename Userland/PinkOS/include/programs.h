@@ -56,5 +56,6 @@ void block_main(char *args);
 void cat_main(char *args);
 void loop_main(char *args);
 void test_priority_main(char *args);
+void test_processes_main(char *args);
 
 #endif
