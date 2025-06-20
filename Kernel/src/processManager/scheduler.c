@@ -854,8 +854,9 @@ void backupCurrentProcessRegisters() {
 // En caso de exito, devuelve 0, en caso de error -1
 int setWaiting(Pid pid) {
     ProcessControlBlock *current = processList;
-    if (current == NULL) {
-        return -1; // Error: no hay procesos en la lista
+    if (current == NULL || pid == 1) {
+        log_to_serial("E: setWaiting: No hay procesos en la lista o estás intentando poner en espera el init (ilegal)");
+        return -1; // Error: no hay procesos en la lista o estás modificando el init (ilegal)
     }
 
     do {
