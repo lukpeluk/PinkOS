@@ -474,6 +474,12 @@ void printf(char * format, ...) {
                     writeStdout(num_str, strlen(num_str));
                     break;
                 }
+                case 'u': {
+                    uint64_t num = va_arg(args, uint64_t);
+                    char * num_str = uint64_to_string(num);
+                    writeStdout(num_str, strlen(num_str));
+                    break;
+                }
                 case 's': {
                     char *string = va_arg(args, char *);
                     writeStdout(string, strlen(string));
