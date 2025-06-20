@@ -356,7 +356,9 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * orden syscall: cantidad de memoria a alocar, alignment
             // * malloc de toda la vida, devuelve un puntero a la memoria alocada o NULL si no se pudo alocar
 
-            return malloc((uint64_t)arg1);
+            arg2 = 0;
+            arg2 = malloc((uint64_t)arg1);
+            return 0;
             break;
         // case REALLOCATE_MEMORY_SYSCALL:
         //     return reallocateMemory((uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3);

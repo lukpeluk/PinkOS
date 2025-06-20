@@ -68,8 +68,16 @@ uint64_t strlen(const char * s);
  * @param src the source string
  * @return void
 */
-void strcpy(char * dest, char * src);
+void strcpy(char * dest, const char * src);
 
+/**
+ * Concatenates two null-terminated strings into a new dynamically allocated string
+ * @param str1 the first string
+ * @param str2 the second string  
+ * @return pointer to newly allocated concatenated string, or NULL if allocation fails
+ * @note The caller is responsible for freeing the returned memory
+*/
+char * concat(const char * str1, const char * str2);
 
 // ====== System Functions ======
 // *** Process Management ***

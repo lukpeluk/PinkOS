@@ -49,33 +49,18 @@ void * memset(void * s, int c, uint64_t n) {
     return s;
 }
 
-// ====== String Functions ======
-
-int strcmp(const char * s1, const char * s2) {
-    while (*s1 && *s2 && *s1 == *s2) {
-        s1++;
-        s2++;
-    }
-    return *s1 - *s2;
-}
-
-int strncmp(const char * s1, const char * s2, uint64_t n) {
-    while (n-- && *s1 && *s2 && *s1 == *s2) {
-        s1++;
-        s2++;
-    }
-    return n == (uint64_t)-1 ? 0 : *s1 - *s2;
-}
-
-uint64_t strlen(const char * s) {
-    uint64_t len = 0;
-    while (*s++) {
-        len++;
-    }
-    return len;
-}
-
 // ====== System Functions ======
+
+// *** Memory Management ***
+uint64_t malloc(uint64_t size) {
+    void * ptr;
+    syscall(ALLOCATE_MEMORY_SYSCALL, size, (uint64_t)&ptr, 0, 0, 0);
+    return ptr;
+}
+
+void free(void * ptr) {
+    syscall(FREE_MEMORY_SYSCALL, (uint64_t)ptr, 0, 0, 0, 0);
+}
 
 // *** Process Management ***
 
@@ -306,7 +291,65 @@ int isFocusedWindow(Pid pid) {
     syscall(IS_FOCUSED_WINDOW_SYSCALL, (uint64_t)pid, (uint64_t)&result, 0, 0, 0);
     return result;
 }
+// ====== String Functions ======
 
+int strcmp(const char * s1, const char * s2) {
+    while (*s1 && *s2 && *s1 == *s2) {
+        s1++;
+        s2++;
+    }
+    return *s1 - *s2;
+}
+
+int strncmp(const char * s1, const char * s2, uint64_t n) {
+    while (n-- && *s1 && *s2 && *s1 == *s2) {
+        s1++;
+        s2++;
+    }
+    return n == (uint64_t)-1 ? 0 : *s1 - *s2;
+}
+
+uint64_t strlen(const char * s) {
+    uint64_t len = 0;
+    while (*s++) {
+        len++;
+    }
+    return len;
+}
+
+void strcpy(char * dest, const char * src) {
+    while (*src) {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+}
+
+char * concat(const char * str1, const char * str2) {
+    if (!str1 || !str2) {
+        return 0;
+    }
+    
+    uint64_t len1 = strlen(str1);
+    uint64_t len2 = strlen(str2);
+    uint64_t total_len = len1 + len2 + 1;
+    
+    // Simple malloc using syscall - assuming you have one available
+    char * result = (char *)malloc(total_len);
+    if (!result) {
+        return 0;
+    }
+    
+    // Copy first string
+    strcpy(result, str1);
+    
+    // Append second string
+    char * dest_end = result + len1;
+    strcpy(dest_end, str2);
+    
+    return result;
+}
 // End new functions
 
 

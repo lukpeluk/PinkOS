@@ -261,6 +261,14 @@ static Program programs[] = {
         "Runs a program in a loop",
         "usage: loop <program> \nLoop v1 \n Use this program to run a program in a loop until it is killed."
     },
+    {
+        "phylo",
+        "Philosophers",
+        phylo_main,
+        MANAGE_PROCESSES_PERMISSION | MAKE_ETHEREAL_REQUEST_PERMISSION,
+        "Dining Philosophers Problem",
+        "usage: phylo <number_of_philosophers>\nPhylo v1 \n Use this program to simulate the dining philosophers problem. \n You can specify the number of philosophers (default is 5, max is 20)."
+    }
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},

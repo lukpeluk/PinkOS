@@ -55,5 +55,6 @@ void nice_main(char *args);
 void block_main(char *args);
 void cat_main(char *args);
 void loop_main(char *args);
+void phylo_main(char *args);
 
 #endif
