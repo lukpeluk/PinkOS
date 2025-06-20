@@ -5,13 +5,6 @@
 // objeto que representa la linked list de windows
 // una window tiene un pid asociado, un buffer, 
 
-typedef struct WindowControlBlock {
-    uint32_t pid;                   
-    uint8_t *buffer;                     // Puntero al buffer de la ventana
-    struct WindowControlBlock *next;  // Siguiente ventana (lista donde el primer elemento es el foco actual, y el último es el más antiguo y apunta a NULL)
-                                      // Si no hay ventanas, debería mostrar algún fondo de pantalla o algo, después lo pensamos
-} WindowControlBlock;
-
 void initWindowManager();
 
 /** getFocusedWindow: 
@@ -52,5 +45,7 @@ int switchToWindow(Pid pid);
 
 // Devuelve los pids de las ventanas abiertas, null terminated, iterando por esto y buscando el nombre del programa asociado al proceso implementás alt+tab
 Pid * getWindows();
+
+void setRedrawFlag(Pid pid, int redraw);
 
 

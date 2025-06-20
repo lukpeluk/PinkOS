@@ -568,6 +568,19 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
             clearScreen(videoBuffer, arg1);
             break;
 
+        case DISABLE_REDRAW_SYSCALL:
+            // * orden syscall: no recibe nada
+            // * deshabilita el redraw de la pantalla, para evitar que se redibuje mientras se hacen cambios (si no el scroll parpadeaba mucho)
+
+            setRedrawFlag(getCurrentProcessPID(), 0);
+            break;
+        case ENABLE_REDRAW_SYSCALL:
+            // * orden syscall: no recibe nada
+            // * habilita el redraw de la pantalla
+
+            setRedrawFlag(getCurrentProcessPID(), 1);
+            break;
+
         case SET_FONT_SIZE_SYSCALL:
             VALIDATE_PERMISSIONS(CHANGE_FONT_SIZE_PERMISSION);
             setFontSize(arg1);

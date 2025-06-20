@@ -32,6 +32,15 @@ void clearScreen(uint32_t color){
     syscall(CLEAR_SCREEN_SYSCALL, (uint64_t)color, 0, 0, 0, 0);
 }
 
+void disableRedraw(){
+    syscall(DISABLE_REDRAW_SYSCALL, 0, 0, 0, 0, 0);
+}
+
+void enableRedraw(){
+    syscall(ENABLE_REDRAW_SYSCALL, 0, 0, 0, 0, 0);
+}
+
+
 void drawPixel(uint32_t color, Point position){
     syscall(DRAW_PIXEL_SYSCALL, (uint64_t)color, (uint64_t)position.x, (uint64_t)position.y, 0, 0);
 }

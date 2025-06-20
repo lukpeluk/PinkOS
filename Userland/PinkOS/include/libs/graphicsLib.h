@@ -29,5 +29,7 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point positi
 // void drawBitmapTransparent(uint32_t * bitmap, uint64_t width, uint64_t height, Point position, uint32_t scale, uint32_t transparentColor);
 
 void clearScreen(uint32_t color);
+void disableRedraw();
+void enableRedraw();
 
 #endif

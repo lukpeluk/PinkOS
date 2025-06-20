@@ -5,6 +5,14 @@
 
 #define NULL 0
 
+typedef struct WindowControlBlock {
+    uint32_t pid;
+    int redraw;
+    uint8_t *buffer;                     // Puntero al buffer de la ventana
+    struct WindowControlBlock *next;  // Siguiente ventana (lista donde el primer elemento es el foco actual, y el último es el más antiguo y apunta a NULL)
+                                      // Si no hay ventanas, debería mostrar algún fondo de pantalla o algo, después lo pensamos
+} WindowControlBlock;
+
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
 // static uint8_t *overlayBuffer;   
 
@@ -28,7 +36,7 @@ int isFocusedWindow(Pid pid){
 }
 
 uint8_t * getFocusedBuffer(){
-    if (focusedWindow == NULL) {
+    if (focusedWindow == NULL || !focusedWindow->redraw) {
         return NULL; 
     }
     return focusedWindow->buffer;
@@ -38,16 +46,14 @@ uint8_t * getFocusedBuffer(){
 //     return overlayBuffer;
 // }
 
-uint8_t * getBufferByPID(Pid pid){
+WindowControlBlock * getWindowBlock(Pid pid){
     WindowControlBlock *currentWindow = focusedWindow;
     Process parent;
-    // log_decimal("getBufferByPID: Buscando proceso con PID: ", pid);
-    // printProcessList(); // Imprimir la lista de procesos para depuración
+
     Process currentProcess = getProcess(pid);
     if (currentProcess.pid == 0) {
         return NULL; // Proceso no encontrado
     }
-
 
     parent = getParent(pid);
     if (parent.pid == 0) {
@@ -56,14 +62,24 @@ uint8_t * getBufferByPID(Pid pid){
     }
     while (currentWindow != NULL) {
         if (currentWindow->pid == pid) {
-            return currentWindow->buffer;
+            return currentWindow;
         } else if (currentProcess.type == PROCESS_TYPE_THREAD && parent.pid != 0 && parent.pid == currentWindow->pid) {  // Caso especial para que el thread use el buffer de su padre
-            return currentWindow->buffer;
+            return currentWindow;
         }
         currentWindow = currentWindow->next;
     }
     return NULL; // No se encontró la ventana con el PID especificado
 }
+
+
+uint8_t * getBufferByPID(Pid pid){
+    WindowControlBlock *currentWindow = getWindowBlock(pid);
+    if (currentWindow == NULL) {
+        return NULL; // No se encontró la ventana con el PID especificado
+    }
+    return currentWindow->buffer;
+}
+
 
 // TODO: capaz permitir elegir si focusear la ventana o si ponerla como segunda
 uint8_t * addWindow(Pid pid){
@@ -73,6 +89,7 @@ uint8_t * addWindow(Pid pid){
         return NULL; // No se pudo allocar memoria
     }
     newWindow->pid = pid;
+    newWindow->redraw = 1; // Por defecto, la ventana necesita ser redibujada
     newWindow->buffer = createVideoBuffer(); // el video driver se encarga de allocar memoria para el buffer con la resolución adecuada
 
     if (newWindow->buffer == NULL) {
@@ -179,4 +196,13 @@ Pid * getWindows(){
     pids[count] = 0; // NULL al final para indicar el final de la lista
 
     return pids;
+}
+
+void setRedrawFlag(Pid pid, int redraw){
+    WindowControlBlock *windowBlock = getWindowBlock(pid);
+    if (windowBlock == NULL) {
+        log_to_serial("E: setRedrawFlag: No se encontro la ventana con el PID especificado");
+        return; // No se encontró la ventana con el PID especificado
+    }
+    windowBlock->redraw = redraw; // Actualizar el flag de redibujado
 }
