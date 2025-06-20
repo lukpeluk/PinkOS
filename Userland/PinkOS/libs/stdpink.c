@@ -307,6 +307,18 @@ int isFocusedWindow(Pid pid) {
     return result;
 }
 
+
+void * malloc(uint64_t size) {
+    void * ptr;
+    syscall(ALLOCATE_MEMORY_SYSCALL, size, (uint64_t)&ptr, 0, 0, 0);
+    return ptr;
+}
+
+void free(void * ptr) {
+    syscall(FREE_MEMORY_SYSCALL, (uint64_t)ptr, 0, 0, 0, 0);
+}
+
+
 // End new functions
 
 

@@ -180,9 +180,10 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
         // ----- SEMAPHORES -----
         case SEM_INIT_SYSCALL:
             // * Inicializa un semáforo con el valor dado. Tarea del proceso liberarlo con sem destroy cuando no se use más
-            // * retorna el id del semáforo creado, 0 si hubo error
+            // * retorna el id del semáforo creado, 0 si hubo error (retorna en el 2do arg)
 
-            return sem_init((int)arg1);
+            *(uint64_t*)arg2 = sem_init((int)arg1);
+            return *(uint64_t*)arg2;
             break;
         case SEM_DESTROY_SYSCALL:
             // * Borra el semáforo con el id dado y libera la memoria. No se puede destruir si hay procesos esperandolo.
@@ -353,14 +354,16 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
 
         // TODO: MEMORY MANAGER que guarde quién registró cada cosa
         case ALLOCATE_MEMORY_SYSCALL:
-            // * orden syscall: cantidad de memoria a alocar, alignment
+            // * orden syscall: cantidad de memoria a alocar, puntero donde dejar el puntero a la memoria alocada
             // * malloc de toda la vida, devuelve un puntero a la memoria alocada o NULL si no se pudo alocar
 
-            return malloc((uint64_t)arg1);
-            break;
+            *(uint64_t*)arg2 = malloc((uint64_t)arg1);
+            return *(uint64_t*)arg2;
+
         // case REALLOCATE_MEMORY_SYSCALL:
         //     return reallocateMemory((uint64_t)arg1, (uint64_t)arg2, (uint64_t)arg3);
         //     break;
+
         case FREE_MEMORY_SYSCALL:
             // * orden syscall: puntero a la memoria a liberar
             // * libera la memoria alocada por malloc, no hace nada si el puntero es NULL

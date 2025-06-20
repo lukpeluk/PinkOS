@@ -420,6 +420,21 @@ Pid getFocusedWindow();
 */
 int isFocusedWindow(Pid pid);
 
+/**
+ * Alocates memory of the given size
+ * @param size the size of the memory to allocate
+ * @return a pointer to the allocated memory, or NULL if the allocation failed
+*/
+void * malloc(uint64_t size);
+
+/**
+ * Frees the memory pointed to by the given pointer
+ * @param ptr the pointer to the memory to free (can be null, no problem)
+ * @return void
+*/
+void free(void * ptr);
+
+
 // ===== HERE =====
 
 /*
