@@ -15,10 +15,10 @@ typedef struct WindowControlBlock {
 } WindowControlBlock;
 
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
-// static uint8_t *overlayBuffer;   
+static uint8_t *overlayBuffer;   
 
 void initWindowManager(){
-    // overlayBuffer = createVideoBuffer();
+    overlayBuffer = createVideoBuffer();
     // drawRectangle(overlayBuffer, (Point *) {50, 50}, (Point *) {90, 90}, 0x000000); 
 };
 
@@ -43,9 +43,9 @@ uint8_t * getFocusedBuffer(){
     return focusedWindow->buffer;
 }
 
-// uint8_t * getOverlayBuffer(){
-//     return overlayBuffer;
-// }
+uint8_t * getOverlayBuffer(){
+    return overlayBuffer;
+}
 
 WindowControlBlock * getWindowBlock(Pid pid){
     WindowControlBlock *currentWindow = focusedWindow;

@@ -55,11 +55,32 @@ static int font_size = 2;
 #define FRAME_RATE 15 // frames per second
 
 static int last_frame_time = 0; // last time the video buffer was updated, in milliseconds
-
+static uint8_t * staging_buffer = NULL;
 
 void initVideoDriver() {
-	// Nothing to do here, yet...
+	staging_buffer = createVideoBuffer();
+
+	if(staging_buffer == NULL) {
+		log_to_serial("initVideoDriver: Error al allocar memoria para el staging buffer");
+		return;
+	}
 }
+
+void overlayTest(uint8_t * overlay_buffer) {
+	static Point position = {0, 0}; // Cursor position in the video buffer
+	position.x += 5; // Reset position to the start of the buffer
+	position.y += 5;
+
+	if(position.x >= VBE_mode_info->width) {
+		position.x = 0;
+		position.y = 0;
+	}
+
+	// Vacío el overlay buffer y escribo el mensajito de aprecio a francis
+	memset(overlay_buffer, 0, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	drawStringAt(overlay_buffer, "Francis te AMO <3", 0xFF0000, 0x00000000, &position);
+}
+
 
 void videoLoop() {
 	// This function is intended to be called every timer tick to update the video buffer.
@@ -67,18 +88,38 @@ void videoLoop() {
 	if (milliseconds_elapsed() - last_frame_time < (1000 / FRAME_RATE)) {
 		return; // Not enough time has passed since the last frame, skip this update
 	}
-	void * focusedBuffer = getFocusedBuffer();
-	if(focusedBuffer == NULL)
+	uint8_t * focused_buffer = getFocusedBuffer();
+	uint8_t * overlay_buffer = getOverlayBuffer();
+
+	if(focused_buffer == NULL || overlay_buffer == NULL || staging_buffer == NULL) {
+		log_to_serial("E: videoLoop: No focused buffer or staging buffer available");
+		console_log("Values of the pointers: focused_buffer: %p, overlay_buffer: %p, staging_buffer: %p", focused_buffer, overlay_buffer, staging_buffer);
 		return; // No focused window, nothing to do
+	}
+
+	overlayTest(overlay_buffer);
 	
 	last_frame_time = milliseconds_elapsed();
-	lightspeed_memcpy((void *)(uintptr_t)VBE_mode_info->framebuffer, focusedBuffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	lightspeed_memcpy(staging_buffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 
+	// Copia el overlay buffer pero ignora los píxeles negros (0x00000000), que son tomados como transparentes
+	// TODO: ver si esto puede tener problemas al usar 24 bytes por píxel (al compararlo casteado a 32) parece funcar bien igual
+	for(uint64_t i = 0; i < VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8); i += (VBE_mode_info->bpp / 8)) {
+		uint32_t pixel = *(uint32_t *)(overlay_buffer + i);
+		if(pixel != 0x00000000) {
+			*(uint32_t *)(staging_buffer + i) = pixel;
+		}
+	}
+
+	lightspeed_memcpy((void*)VBE_mode_info->framebuffer, staging_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 }
 
 uint8_t * createVideoBuffer() {
 	uint8_t * buffer = malloc(VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	console_log("Creating video buffer with %d bytes per pixel", (int)(VBE_mode_info->bpp / 8));
+
 	if(buffer == NULL) {
+		log_to_serial("E: createVideoBuffer: Failed to allocate memory for video buffer");
 		return NULL; // Memory allocation failed
 	}
 	// Clear the buffer to black
