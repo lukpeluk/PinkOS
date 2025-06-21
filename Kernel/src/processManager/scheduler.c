@@ -1005,7 +1005,7 @@ void sem_post(uint64_t id) {
         // Desencolo un proceso que estaba esperando este semáforo
         ProcessControlBlock *current = processList;
         do {
-            if (current->waiting_for == sem) {
+            if (current->waiting_for != NULL && current->waiting_for->id == sem->id) {
                 // Despertar el proceso
                 current->process.state = PROCESS_STATE_READY;
                 current->waiting_for = NULL; // Limpiar el semáforo que estaba esperando

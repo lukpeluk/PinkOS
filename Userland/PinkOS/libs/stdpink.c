@@ -1002,11 +1002,13 @@ void clear(){
 }
 
 void sleep(uint64_t millis){
-    uint64_t millis_condition = getMillisElapsed() + millis;
+    // uint64_t millis_elapsed = getMillisElapsed();
+    uint64_t millis_condition = millis;
     SleepCondition condition = { .millis = millis_condition };
-    log_decimal("SLEEPING FOR: ", millis);
-    log_decimal("MILLIS CONDITION: ", millis_condition);
-    waitForEvent(SLEEP_EVENT, (void *)&condition, (void *)&condition);
+    // log_decimal("MILLIS ELAPSED: ", millis_elapsed);
+    // log_decimal("SLEEPING FOR: ", millis);
+    // log_decimal("MILLIS CONDITION: ", millis_condition);
+    waitForEvent(SLEEP_EVENT, NULL, (void *)&condition);
     // syscall(SLEEP_SYSCALL, millis, 0, 0, 0, 0);
 }
 

@@ -169,6 +169,10 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
             free(newListener); // Free the listener if condition data allocation fails
             return; // Memory allocation failed
         }
+        if (eventId == SLEEP_EVENT){
+            SleepCondition* sleep_condition = (SleepCondition*) condition_data;
+            sleep_condition->millis += milliseconds_elapsed(); // Add the current time to the sleep condition
+        }
         memcpy(newListener->condition_data, condition_data, eventManager.events[eventId].condition_data_size);
     } else {
         newListener->condition_data = NULL; // No condition data for waiting events
