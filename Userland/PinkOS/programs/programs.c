@@ -37,14 +37,14 @@ static Program programs[] = {
     //     "Like echo but for user input via stdin",
     //     "usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
     // },
-    {
-        "monalisa",
-        "Mona Lisa",
-        mona_lisa_main,
-        DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
-        "Draws the Mona Lisa",
-        "usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the ==Mona Lisa== on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
-    },
+    // {
+    //     "monalisa",
+    //     "Mona Lisa",
+    //     mona_lisa_main,
+    //     DRAWING_PERMISSION | PLAY_AUDIO_PERMISSION,
+    //     "Draws the Mona Lisa",
+    //     "usage: monalisa <scale (range 1-15)>\nMona Lisa v2 \n Draws the ==Mona Lisa== on the screen, animating it to the desired scale passed as argument (range 1-15). \nAlso plays the chromatic scale at 120 bpm whole notes coz it's fancy."
+    // },
     {
         "date",
         "Date",
@@ -93,30 +93,30 @@ static Program programs[] = {
         "Snake game",
         "usage: snake <players> \nSnake v3.9 \n Use this program to play the snake game. \n You can play with 1 or 2 players. \n Player 1 controls: WASD \n Player 2 controls: IJKL \n Press ESC to exit the game. \n Have fun!"
     },
-    {
-        "spotify",
-        "Spotify",
-        spotify_main,
-        PLAY_AUDIO_PERMISSION,
-        "Plays a song ",
-        "Usage: spotify [-b] <song name>\nSpotify v2.0\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t * Pink Panther theme\n\t* Super Mario Bros theme\n\t* Fur Elise\n\t* Never Gonna Give You Up\n\nIf not in background mode, you can use space to pause/resume the song.\n"
-    },
-    {
-        "pause",
-        "Pause",
-        pause_main,
-        PLAY_AUDIO_PERMISSION,
-        "Pauses the current song",
-        "usage: pause \nPause v1 \n Pauses the current song"
-    },
-    {
-        "resume",
-        "Resume",
-        resume_main,
-        PLAY_AUDIO_PERMISSION,
-        "Resumes the current song",
-        "usage: resume \nResume v1 \n Resumes the current song"
-    },
+    // {
+    //     "spotify",
+    //     "Spotify",
+    //     spotify_main,
+    //     PLAY_AUDIO_PERMISSION,
+    //     "Plays a song ",
+    //     "Usage: spotify [-b] <song name>\nSpotify v2.0\n\nOptions:\n-b for playing the song in loop in the backgound while you go on with your life.\n\nAvailable songs:\n\t * Pink Panther theme\n\t* Super Mario Bros theme\n\t* Fur Elise\n\t* Never Gonna Give You Up\n\nIf not in background mode, you can use space to pause/resume the song.\n"
+    // },
+    // {
+    //     "pause",
+    //     "Pause",
+    //     pause_main,
+    //     PLAY_AUDIO_PERMISSION,
+    //     "Pauses the current song",
+    //     "usage: pause \nPause v1 \n Pauses the current song"
+    // },
+    // {
+    //     "resume",
+    //     "Resume",
+    //     resume_main,
+    //     PLAY_AUDIO_PERMISSION,
+    //     "Resumes the current song",
+    //     "usage: resume \nResume v1 \n Resumes the current song"
+    // },
     // {
     //     "clear",
     //     "Clear",
