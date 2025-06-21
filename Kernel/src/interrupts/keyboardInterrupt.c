@@ -25,6 +25,16 @@ extern char getKeyCode();
 static int index = 0;
 static special_key_pressed = 0; // Variable to track if ctrl is pressed
 
+
+void simulateKeyCode(unsigned char scan_code) {
+	KeyboardEvent e = processScancode(scan_code);
+
+	if(e.event_type != 0) {
+		handleKeyEvent(e);
+	}
+}
+
+
 // assumes scan code set is 1
 void int_21() {
 	KeyboardEvent event = processKeyPress();
@@ -59,6 +69,9 @@ void int_21() {
 
 		switchToWindow(windows[index]); // Switch to the other window (assuming PIDs 1 and 2 are the two windows)
 		index = 0; // Reset index on key release
+
+		simulateKeyCode(0x3F);  // F5 press
+		simulateKeyCode(0xBF);  // F5 release
 	}
 
 

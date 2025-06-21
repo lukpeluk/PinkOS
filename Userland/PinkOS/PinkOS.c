@@ -5,20 +5,14 @@
 #include <permissions.h>
 #include <libs/events.h>
 
+
+
 int init_main()
 {
-	Program shell = {
-        "shell", 
-        "PinkOS Shell", 
-        shell_main, 
-        0xFFFFFFFF, 
-        "The PinkOS Shell",
-        "Starts the PinkOS shell"
-    };
-	installProgram(&shell);
+	installProgram(get_program_entry("shell"));
 	
 	while(1){
-		Pid shell_pid = runProgram(&shell, "", PRIORITY_NORMAL, 0, 1);
+		Pid shell_pid = runProgram("shell", "", PRIORITY_NORMAL, 0, 1);
 
 		// ProcessDeathCondition shell_pid_condition = { .pid = shell_pid};
 		log_to_serial("PinkOS: Shell started with PID: ");

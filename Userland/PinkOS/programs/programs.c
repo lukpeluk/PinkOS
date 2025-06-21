@@ -6,6 +6,14 @@
 // RUNNABLE PROGRAMS
 static Program programs[] = {
     {
+        "shell", 
+        "PinkOS Shell", 
+        shell_main, 
+        0xFFFFFFFF, 
+        "The PinkOS Shell",
+        "Starts the PinkOS shell"
+    },
+    {
         "echo", 
         "echo", 
         echo_main, 

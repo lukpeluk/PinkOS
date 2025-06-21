@@ -299,7 +299,7 @@ int rmFile(uint64_t id);
  * @param type the type of the file to open
  * @return the ID of the opened file, or 0 if the file could not be opened
 */
-uint64_t openFile(char * path, Pid pid, FileAction action, FileType type);
+uint64_t openFile(char * path, FileAction action, FileType type);
 
 /**
  * Closes the file with the given ID

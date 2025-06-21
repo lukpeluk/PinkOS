@@ -14,7 +14,7 @@
 #include <libs/events.h>
 #include <libs/serialLib.h>
 
-#define PREV_STRING current_string > 0 ? current_string - 1 : BUFFER_SIZE - 1
+#define PREV_STRING shell_context->current_string > 0 ? shell_context->current_string - 1 : BUFFER_SIZE - 1
 #define ADVANCE_INDEX(index, array_size) index = (index + 1) % array_size;
 #define DECREASE_INDEX(index, array_size) index = index ? (index - 1) : array_size - 1;
 
@@ -43,27 +43,56 @@ static const char *command_not_found_msg = (const char *) ">?Command not found";
 static const char *default_prompt = (const char *)" > ";
 
 
+// STRUCT PARA LOS DATOS DE LA CONSOLA, PARA QUE DISTINTAS INSTANCIAS TENGAN CADA UNO SU PROPIO CONTEXTO
+typedef struct ShellContext {
+	char buffer[BUFFER_SIZE][STRING_SIZE];  // Buffer circular para los strings de la consola
+	uint8_t is_input[BUFFER_SIZE]; 			// Mascara que indica qué líneas del buffer son input del usuario y cuáles output del programa
 
-char buffer[BUFFER_SIZE][STRING_SIZE] = {0};
-uint8_t is_input[BUFFER_SIZE] = {0}; // 1 if the string is an input, 0 if it's an output
-int current_string = 0;
-int current_position = 0;
-int oldest_string = 0;
-int scroll = 0; // indica qué línea es la que está en la parte superior de la pantalla
+	int current_string;		// índice de la línea actual del buffer
+	int current_position; 	// índice de la posición del cursor en la línea actual
+	int oldest_string; 		// índice de la línea más vieja del buffer (para poder scrollear hasta arriba y ver dónde termina el buffer circular)
+	int scroll; 			// indica qué línea es la que está en la parte superior de la pantalla
 
-uint32_t current_text_color; // intended to be changed via markup
-int highlighting_text = 0;	 // for highlighting text
+	uint32_t current_text_color;   // Lo cambia el marcado
+	int highlighting_text;	       // indica si el texto es resaltado (por el marcado)
 
-int running_programs = 0; // amount of programs running as child of the shell
 
-// El primero es el que tendrá el foco (recibe input), y si es el único también es el que manda el output a la consola, si hay dos es el segundo
-Pid running_program_pids[2] = {0, 0}; 
+	// El primero es el que tendrá el foco (recibe input), y si es el único también es el que manda el output a la consola, si hay dos es el segundo
+	Pid running_program_pids[2]; 
+	int running_programs; 	// cantidad de programas corriendo (0, 1 o 2 por ahora porque no permitimos pipear más de dos programas)
+	uint64_t console_in;    // file descriptors for stdin and stdout
+	uint64_t console_out;
+	uint64_t pipe;
 
-uint64_t console_in = 0;     // file descriptors for stdin and stdout
-uint64_t console_out = 0;
-uint64_t pipe = 0;
+	Pid threadcito; // Pid of the thread that is outputting the console, used to wake it up when a program is run
+} ShellContext;
 
-Pid threadcito = 0; // Pid of the thread that is outputting the console, used to wake it up when a program is run
+
+// ShellContext *shell_context = NULL; // Contexto de la consola, para que cada instancia tenga su propio contexto
+
+ShellContext *getShellContext()
+{
+	char * pid_str = uint64_to_string(getProcessGroupMain());
+
+	ShellContext *context;
+	uint64_t fileId = openFile(pid_str, FILE_READ, FILE_TYPE_RAW_DATA);
+	free(pid_str); 
+
+	if(fileId == 0){
+		log_to_serial("E: getShellContext: Error opening shell context file");
+		return NULL; // Error opening the file, return NULL
+	}
+
+	uint32_t bytes_read = readRaw(fileId, (void *)&context, sizeof(uint64_t), 0);
+	if(bytes_read != sizeof(uint64_t) || context == NULL)
+	{
+		log_to_serial("E: getShellContext: Error reading shell context file");
+		return NULL;
+	}
+
+	return context;
+}
+
 
 void draw_status_bar();
 void newPrompt();
@@ -89,49 +118,51 @@ void idle(char *message);
 // (obviamnte también al leer tengo que hacer un wrap around cuando llego al final del buffer)
 int save_char_to_buffer(char key)
 {
+	ShellContext *shell_context = getShellContext();
+
 	// if enter key is pressed, move to the next string
 	if (key == '\n')
 	{
-		ADVANCE_INDEX(current_string, BUFFER_SIZE) // move to the next string
+		ADVANCE_INDEX(shell_context->current_string, BUFFER_SIZE) // move to the next string
 
 		// if the buffer is full, the oldest string gets overwritten, move the oldest string index to the next string
 		// and automatically scroll if a visible line is overwritten
-		if (current_string == oldest_string)
+		if (shell_context->current_string == shell_context->oldest_string)
 		{
-			ADVANCE_INDEX(oldest_string, BUFFER_SIZE)
+			ADVANCE_INDEX(shell_context->oldest_string, BUFFER_SIZE)
 
 			// TODO: ver si este código está bien acá o es más prolijo abstraer la lógica del scroll
 			// igual la única forma de que esto pase es que el buffer sea más chico que la pantalla
-			if (oldest_string == scroll)
+			if (shell_context->oldest_string == shell_context->scroll)
 			{
-				ADVANCE_INDEX(scroll, BUFFER_SIZE)
+				ADVANCE_INDEX(shell_context->scroll, BUFFER_SIZE)
 			}
 		}
 
 		// reset the current position and terminate the string with 0
-		current_position = 0;
-		buffer[current_string][current_position] = 0;
-		is_input[current_string] = 0; // lines are not input until assigned as such by newPrompt()
+		shell_context->current_position = 0;
+		shell_context->buffer[shell_context->current_string][shell_context->current_position] = 0;
+		shell_context->is_input[shell_context->current_string] = 0; // lines are not input until assigned as such by newPrompt()
 	}
 	// backspace
 	else if (key == 8)
 	{
-		if (current_position > 0)
+		if (shell_context->current_position > 0)
 		{
-			current_position--;
-			buffer[current_string][current_position] = 0;
+			shell_context->current_position--;
+			shell_context->buffer[shell_context->current_string][shell_context->current_position] = 0;
 		}
 	}
 	else if (IS_PRINTABLE_CHAR(key))
 	{
 		// checks if the buffer is full, if it is, key presses are ignored
-		if (current_position == STRING_SIZE - 1)
+		if (shell_context->current_position == STRING_SIZE - 1)
 			return -1;
 
 		// save key to buffer
-		buffer[current_string][current_position] = key;
-		current_position++;
-		buffer[current_string][current_position] = 0;
+		shell_context->buffer[shell_context->current_string][shell_context->current_position] = key;
+		shell_context->current_position++;
+		shell_context->buffer[shell_context->current_string][shell_context->current_position] = 0;
 	}
 	else
 	{
@@ -161,7 +192,7 @@ int save_number_to_buffer(uint64_t number)
 	}
 	else
 	{
-		while (number > 0)
+		while (number > 0 && i < 11)
 		{
 			buffer[i++] = number % 10 + '0';
 			number /= 10;
@@ -177,8 +208,10 @@ int save_number_to_buffer(uint64_t number)
 }
 
 void reset_markup(){
-	current_text_color = ColorSchema->text;
-	highlighting_text = 0;
+	ShellContext *shell_context = getShellContext();
+
+	shell_context->current_text_color = ColorSchema->text;
+	shell_context->highlighting_text = 0;
 }
 
 
@@ -186,24 +219,26 @@ void reset_markup(){
 // returns the amount of markup chars detected, to avoid printing them
 int process_markup(char *string)
 {
+	ShellContext *shell_context = getShellContext();
+
 	int markup_chars = 2; // 2 is the default amount of markup characters
 
 	if(*string == '=' && *(string + 1) == '=')
-		highlighting_text = !highlighting_text;
+		shell_context->highlighting_text = !shell_context->highlighting_text;
 
 	else if(*string == '>' && *(string + 1) == '!')
-		current_text_color = ColorSchema->error;
+		shell_context->current_text_color = ColorSchema->error;
 
 	else if(*string == '>' && *(string + 1) == '?')
-		current_text_color = ColorSchema->warning;
+		shell_context->current_text_color = ColorSchema->warning;
 
 	else if(*string == '>' && *(string + 1) == '+')
-		current_text_color = ColorSchema->success;
+		shell_context->current_text_color = ColorSchema->success;
 
 	else if(*string == '>' && *(string + 1) == '.')
-		current_text_color = ColorSchema->text;
+		shell_context->current_text_color = ColorSchema->text;
 	else if(*string == '>' && *(string + 1) == '#')
-		current_text_color = ColorSchema->info;
+		shell_context->current_text_color = ColorSchema->info;
 	
 	else if(*string == '<' && *(string + 1) == '3'){
 		*string = 32;
@@ -233,9 +268,11 @@ void draw_status_bar()
 // configures the current line as a prompt, and prints a graphical indicator of that
 void newPrompt()
 {
+	ShellContext *shell_context = getShellContext();
+
 	scroll_if_out_of_bounds();
 	add_char_to_stdout('\n'); // new line before the prompt
-	is_input[current_string] = 1;
+	shell_context->is_input[shell_context->current_string] = 1;
 	syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 	reset_markup();
 }
@@ -243,6 +280,8 @@ void newPrompt()
 
 void redraw()
 {
+	ShellContext *shell_context = getShellContext();
+
 	// clear screen
 	clearScreen(ColorSchema->background);
 	
@@ -252,53 +291,57 @@ void redraw()
 
 	// print the buffer from the scroll position to the current string
 
-	int i = scroll ? scroll - 1 : BUFFER_SIZE - 1;
+	int i = shell_context->scroll ? shell_context->scroll - 1 : BUFFER_SIZE - 1;
 	do
 	{
 		ADVANCE_INDEX(i, BUFFER_SIZE)
 
-		if (is_input[i] == 1)
+		if (shell_context->is_input[i] == 1)
 		{
 			syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 		}
 		int j = 0;
 		int markup_chars = 0;
-		for (; buffer[i][j] != 0; j++)
+		for (; shell_context->buffer[i][j] != 0; j++)
 		{
-			if(!(i == current_string))
-				markup_chars = process_markup(buffer[i] + j) ; // updates current color and highlighting state if the string contains markup in the current position
+			if(!(i == shell_context->current_string))
+				markup_chars = process_markup(shell_context->buffer[i] + j) ; // updates current color and highlighting state if the string contains markup in the current position
 
 			if(markup_chars)
 				j += markup_chars-1; // updates the index to avoid printing the markup characters
 			else
-				syscall(DRAW_CHAR_SYSCALL, (uint64_t)buffer[i][j], (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
+				syscall(DRAW_CHAR_SYSCALL, (uint64_t)shell_context->buffer[i][j], (uint64_t)shell_context->current_text_color, (uint64_t)(shell_context->highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 		}
 		reset_markup(); // resets the styles in case it was not reset manually
 
 		// print a new line (except in the last string)
-		if (i != current_string)
-			syscall(DRAW_CHAR_SYSCALL, (uint64_t)'\n', (uint64_t)current_text_color, (uint64_t)ColorSchema->background, 1, 0);
+		if (i != shell_context->current_string)
+			syscall(DRAW_CHAR_SYSCALL, (uint64_t)'\n', (uint64_t)shell_context->current_text_color, (uint64_t)ColorSchema->background, 1, 0);
 
-	} while (i != current_string);
+	} while (i != shell_context->current_string);
 }
 
 void clear_buffer()
 {
+	ShellContext *shell_context = getShellContext();
+
 	// clear the buffer
 	for (int i = 0; i < BUFFER_SIZE; i++)
 	{
-		buffer[i][0] = 0;
+		shell_context->buffer[i][0] = 0;
 	}
-	current_position = 0;
-	current_string = 0;
-	oldest_string = 0;
-	scroll = 0;
+	shell_context->current_position = 0;
+	shell_context->current_string = 0;
+	shell_context->oldest_string = 0;
+	shell_context->scroll = 0;
 	reset_markup();
 }
 
 void clear_console()
 {
-	scroll = current_string;
+	ShellContext *shell_context = getShellContext();
+
+	shell_context->scroll = shell_context->current_string;
 	reset_markup();
 	redraw();
 	//TODO: ver qué se necesita para que todo funque bien
@@ -306,6 +349,8 @@ void clear_console()
 
 void scroll_if_out_of_bounds()
 {	
+	ShellContext *shell_context = getShellContext();
+
 	// --- AUTO SCROLL ---
 
 	int is_in_boundaries = -1;
@@ -318,7 +363,7 @@ void scroll_if_out_of_bounds()
 		syscall(IS_CURSOR_IN_BOUNDARIES_SYSCALL, cursor_line, cursor_col + 1, (uint64_t)&is_in_boundaries, 0, 0);
 
 		if(!is_in_boundaries){
-			ADVANCE_INDEX(scroll, BUFFER_SIZE);
+			ADVANCE_INDEX(shell_context->scroll, BUFFER_SIZE);
 			needs_redraw = 1;
 			syscall(SET_CURSOR_LINE_SYSCALL, cursor_line - 1, 0, 0, 0, 0);
 		}
@@ -330,37 +375,46 @@ void scroll_if_out_of_bounds()
 }
 
 void add_char_to_stdin(char character){
+	ShellContext *shell_context = getShellContext();
+
 	// Escribir a console_in
 	if(!IS_ASCII(character)) return;
 
-	writeFifo(console_in, &character, 1);
+	writeFifo(shell_context->console_in, &character, 1);
 }
 
 void rm_stdin() {
-	if(!console_in) return;
-	rmFile(console_in);
-	console_in = 0;
+	ShellContext *shell_context = getShellContext();
+
+	if(!shell_context->console_in) return;
+	rmFile(shell_context->console_in);
+	shell_context->console_in = 0;
 }
 
 void rm_stdout() {
-	if(!console_out) return;
-	rmFile(console_out);
-	console_out = 0;
+	ShellContext *shell_context = getShellContext();
+
+	if(!shell_context->console_out) return;
+	rmFile(shell_context->console_out);
+	shell_context->console_out = 0;
 }
 
 void rm_pipe() {
-	if(!pipe) return;
-	rmFile(pipe);
-	pipe = 0;
+	ShellContext *shell_context = getShellContext();
+
+	if(!shell_context->pipe) return;
+	rmFile(shell_context->pipe);
+	shell_context->pipe = 0;
 }
 
 // prints and saves to the buffer
-void add_char_to_stdout(char character)
-{
+void add_char_to_stdout(char character){
+	ShellContext *shell_context = getShellContext();
+
 	if(!IS_ASCII(character)) return;
 
 	// presionar delete en la primera posición no hace nada
-	if (character == '\b' && current_position == 0)
+	if (character == '\b' && shell_context->current_position == 0)
 		return;
 
 	// a new line allways resets the markup
@@ -375,7 +429,7 @@ void add_char_to_stdout(char character)
 	if (result == -1)
 		return;
 
-	syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)current_text_color, (uint64_t)(highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
+	syscall(DRAW_CHAR_SYSCALL, (uint64_t)character, (uint64_t)shell_context->current_text_color, (uint64_t)(shell_context->highlighting_text ? ColorSchema->highlighted_text_background : ColorSchema->background), 1, 0);
 }
 
 // prints and saves to the buffer
@@ -410,7 +464,7 @@ void add_number_to_stdout(uint64_t number)
 	}
 	else
 	{
-		while (number > 0)
+		while (number > 0 && i < 11)
 		{
 			buffer[i++] = number % 10 + '0';
 			number /= 10;
@@ -427,32 +481,34 @@ void add_number_to_stdout(uint64_t number)
 
 void child_death_handler(Pid *pid)
 {
+	ShellContext *shell_context = getShellContext();
+
 	log_decimal("I: -- USERSPACE HANDLER -- Child process death handler called for PID: ", *pid);
 
 	// if the pid is not the one of the running program, do nothing
-	if (*pid != running_program_pids[1] && *pid != running_program_pids[0]) {
+	if (*pid != shell_context->running_program_pids[1] && *pid != shell_context->running_program_pids[0]) {
 		log_decimal("E: Handler llamado para PID: ", *pid);
 		return;
 	}
 
-	running_programs--;
+	shell_context->running_programs--;
 
 	// Stdout no se borra, porque puede que haya más cosas para leer de él. Lo borra el thread cuando hay EOF
-	if (running_program_pids[0] == *pid) {
+	if (shell_context->running_program_pids[0] == *pid) {
 		// Si murió el primer programa, borramos el stdin
 		rm_stdin(); 
-		running_program_pids[0] = 0;
-	} else if (running_program_pids[1] == *pid) {
+		shell_context->running_program_pids[0] = 0;
+	} else if (shell_context->running_program_pids[1] == *pid) {
 		// Si murió el segundo programa, borramos el pipe
 		rm_pipe();
-		running_program_pids[1] = 0;
+		shell_context->running_program_pids[1] = 0;
 	}
 
 	log_to_serial("I: Child process finished: ");
 	log_decimal("PID: ", *pid);
 
 	// Si ya no hay más programas corriendo, y tampoco hay cosas para leer de stdout, entonces volvemos al prompt y borramos el pipe
-	if (running_programs == 0 && console_out == 0){
+	if (shell_context->running_programs == 0 && shell_context->console_out == 0){
 		newPrompt();
 	}
 }
@@ -463,37 +519,39 @@ void child_death_handler(Pid *pid)
 int parse_command(int input_line, int index, char * command, char * args){
 	log_to_serial("I: Parsing command");
 
+	ShellContext *shell_context = getShellContext();
+
 	int i = index;
 	int nohup = 0; // if the program should run in the background (nohup)
-	if(buffer[input_line][i] == '&') {
+	if(shell_context->buffer[input_line][i] == '&') {
 		log_to_serial("I: Detected nohup (&) at the beginning of the command");
 		nohup = 1; // if the first character is &, run the program in the background
 		i++;
 	}
 
 	int program_i = 0;
-	for (; buffer[input_line][i] != ' ' && buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE; i++)
+	for (; shell_context->buffer[input_line][i] != ' ' && shell_context->buffer[input_line][i] != 0 && shell_context->buffer[input_line][i] != PIPE; i++)
 	{
-		command[program_i++] = buffer[input_line][i];
+		command[program_i++] = shell_context->buffer[input_line][i];
 	}
 	command[program_i] = 0;
 
-	if (buffer[input_line][i] == ' '){
+	if (shell_context->buffer[input_line][i] == ' '){
 		i++;
 	}
 	// Si no hay argumentos, args queda vacío
-	if (buffer[input_line][i] == PIPE){
+	if (shell_context->buffer[input_line][i] == PIPE){
 		args[0] = 0;
 		return nohup;
 	}
 	
 	int j = 0;
-	while (buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE)
+	while (shell_context->buffer[input_line][i] != 0 && shell_context->buffer[input_line][i] != PIPE)
 	{
-		args[j++] = buffer[input_line][i++];
+		args[j++] = shell_context->buffer[input_line][i++];
 	}
 
-	if (buffer[input_line][i] == PIPE && buffer[input_line][i-1] == ' '){
+	if (shell_context->buffer[input_line][i] == PIPE && shell_context->buffer[input_line][i-1] == ' '){
 		j--;
 	}
 	args[j] = 0;
@@ -505,15 +563,17 @@ int parse_command(int input_line, int index, char * command, char * args){
 int parse_pipe(int input_line, int index){
 	log_to_serial("I: Parsing pipe");
 
+	ShellContext *shell_context = getShellContext();
+
 	int i = index;
-	while (buffer[input_line][i] != 0 && buffer[input_line][i] != PIPE) {
+	while (shell_context->buffer[input_line][i] != 0 && shell_context->buffer[input_line][i] != PIPE) {
 		i++;
 	}
-	if (buffer[input_line][i+1] == ' '){
+	if (shell_context->buffer[input_line][i+1] == ' '){
 		i++;
 	}
 	
-	if (buffer[input_line][i] == 0) {
+	if (shell_context->buffer[input_line][i] == 0) {
 		log_to_serial("I: No pipe found");
 		return 0; // no pipe found
 	}
@@ -523,6 +583,8 @@ int parse_pipe(int input_line, int index){
 
 
 void execute_program(int input_line){
+	ShellContext *shell_context = getShellContext();
+
 	// Espacio para los programas y sus argumentos
 	char command1[STRING_SIZE];
 	char command2[STRING_SIZE];
@@ -590,8 +652,8 @@ void execute_program(int input_line){
 			.stderr = stdout,
 		};
 
-		console_in = stdin;  // set the console input to the stdin of the program
-		console_out = stdout; // set the console output to the stdout of the program
+		shell_context->console_in = stdin;  // set the console input to the stdin of the program
+		shell_context->console_out = stdout; // set the console output to the stdout of the program
 		
 		Pid program_pid = runProgram(program1->command, args1, PRIORITY_NORMAL, &io_files, 0);
 		log_decimal("I: Running program with PID: ", program_pid);
@@ -602,33 +664,33 @@ void execute_program(int input_line){
 			rm_stdout();
 			newPrompt();
 		} else {
-			running_programs++;
-			running_program_pids[0] = program_pid; // save the pid of the running program
+			shell_context->running_programs++;
+			shell_context->running_program_pids[0] = program_pid; // save the pid of the running program
 			ProcessDeathCondition condition = { .pid = program_pid };
 			subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition); // subscribe to the process death event
-			wakeProcess(threadcito); // thread para el output
+			wakeProcess(shell_context->threadcito); // thread para el output
 		}
 		return;
 	} else { // caso con pipe
 		// Crea los archivos para la entrada y salida estándar del programa
 		uint64_t stdin = mkFile("stdin", FILE_TYPE_FIFO, 1024);
 		uint64_t stdout = mkFile("stdout", FILE_TYPE_FIFO, 1024);
-		pipe = mkFile("pipe", FILE_TYPE_FIFO, 1024); // pipe para la comunicación entre los dos programas
+		shell_context->pipe = mkFile("pipe", FILE_TYPE_FIFO, 1024); // pipe para la comunicación entre los dos programas
 
 		IO_Files io_files1 = {
 			.stdin = stdin,
-			.stdout = pipe,
-			.stderr = pipe,
+			.stdout = shell_context->pipe,
+			.stderr = shell_context->pipe,
 		};
 
 		IO_Files io_files2 = {
-			.stdin = pipe,
+			.stdin = shell_context->pipe,
 			.stdout = stdout,
 			.stderr = stdout,
 		};
 
-		console_in = stdin;
-		console_out = stdout;
+		shell_context->console_in = stdin;
+		shell_context->console_out = stdout;
 
 		Pid program_pid1 = runProgram(command1, args1, PRIORITY_NORMAL, &io_files1, 0);
 		log_decimal("I: Running first program with PID: ", program_pid1);
@@ -655,17 +717,17 @@ void execute_program(int input_line){
 		}
 
 		
-		running_programs += 2;
+		shell_context->running_programs += 2;
 		
-		running_program_pids[0] = program_pid1;
-		running_program_pids[1] = program_pid2;
+		shell_context->running_program_pids[0] = program_pid1;
+		shell_context->running_program_pids[1] = program_pid2;
 		
 		ProcessDeathCondition condition1 = { .pid = program_pid1 };
 		ProcessDeathCondition condition2 = { .pid = program_pid2 };
 		
 		subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition1);
 		subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition2);
-		wakeProcess(threadcito); // despertar el thread para el output
+		wakeProcess(shell_context->threadcito); // despertar el thread para el output
 		return;
 	}
 }
@@ -673,6 +735,8 @@ void execute_program(int input_line){
 // void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 void key_handler(KeyboardEvent * event)
 {
+	ShellContext *shell_context = getShellContext();
+
 	char event_type = event->event_type;
 	int hold_times = event->hold_times;
 	char ascii = event->ascii;
@@ -681,6 +745,13 @@ void key_handler(KeyboardEvent * event)
 	if (event_type != 1 && event_type != 3)  // just register press events (not release or null events)
 		return;
 
+	// Si el evento es F5, redibuja la pantalla
+	if (scan_code == 0x3F && event_type == 1) // F5 key
+	{
+		redraw();
+		return;
+	}
+
 	int is_ctrl_pressed, is_shift_pressed = 0;
 
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x1D, 0, (uint64_t)&is_ctrl_pressed, 0, 0);
@@ -688,21 +759,21 @@ void key_handler(KeyboardEvent * event)
 
 
 	// --- HOLDING ESC (or pressing ctrl + C) FORCE QUITS ALL RUNNING PROGRAMS (both of them if pipe) ---
-	if (((ascii == ASCII_ESC && hold_times == 2) || (is_ctrl_pressed && ascii == 'C')) && running_programs)
+	if (((ascii == ASCII_ESC && hold_times == 2) || (is_ctrl_pressed && ascii == 'C')) && shell_context->running_programs)
 	{
-		killProcess(running_program_pids[0]);
-		killProcess(running_program_pids[1]);
+		killProcess(shell_context->running_program_pids[0]);
+		killProcess(shell_context->running_program_pids[1]);
 		return;
-	} else if (is_ctrl_pressed && ascii == 'c' && running_programs)
+	} else if (is_ctrl_pressed && ascii == 'c' && shell_context->running_programs)
 	{
-		killProcess(running_program_pids[0]);
+		killProcess(shell_context->running_program_pids[0]);
 		return;
 	}
 
 	// Enviar EOF
 	if(is_ctrl_pressed && ascii == 'd')
 	{
-		closeFifoForWriting(console_in);
+		closeFifoForWriting(shell_context->console_in);
 		return;
 	}
 	
@@ -712,15 +783,15 @@ void key_handler(KeyboardEvent * event)
 	{
 		if((scan_code == 0x49 && event_type == 3))
 		{
-			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
-			if(is_shift_pressed) scroll = oldest_string;	// with shift + ctrl + up, scroll to the top
-			else DECREASE_INDEX(scroll, BUFFER_SIZE);
+			if(shell_context->scroll == shell_context->oldest_string) return;  			// don't scroll up if the oldest line is at the top
+			if(is_shift_pressed) shell_context->scroll = shell_context->oldest_string;	// with shift + ctrl + up, scroll to the top
+			else DECREASE_INDEX(shell_context->scroll, BUFFER_SIZE);
 		}
 		else if(scan_code == 0x51 && event_type == 3)
 		{
-			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
-			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
-			else ADVANCE_INDEX(scroll, BUFFER_SIZE);
+			if(shell_context->scroll == shell_context->current_string) return;  			// don't scroll down if the current line is at the bottom
+			if(is_shift_pressed) shell_context->scroll = shell_context->current_string;   // whith shift + ctrl + down, scroll to the bottom
+			else ADVANCE_INDEX(shell_context->scroll, BUFFER_SIZE);
 		}
 
 		redraw();
@@ -739,19 +810,19 @@ void key_handler(KeyboardEvent * event)
 		// --- SCROLL --- 
 		else if((scan_code == 0x48 && event_type == 3))
 		{
-			if(scroll == oldest_string) return;  			// don't scroll up if the oldest line is at the top
-			if(is_shift_pressed) scroll = oldest_string;	// with shift + ctrl + up, scroll to the top
-			else DECREASE_INDEX(scroll, BUFFER_SIZE);
+			if(shell_context->scroll == shell_context->oldest_string) return;  			// don't scroll up if the oldest line is at the top
+			if(is_shift_pressed) shell_context->scroll = shell_context->oldest_string;	// with shift + ctrl + up, scroll to the top
+			else DECREASE_INDEX(shell_context->scroll, BUFFER_SIZE);
 		}
 		else if(scan_code == 0x50 && event_type == 3)
 		{
-			if(scroll == current_string) return;  			// don't scroll down if the current line is at the bottom
-			if(is_shift_pressed) scroll = current_string;   // whith shift + ctrl + down, scroll to the bottom
-			else ADVANCE_INDEX(scroll, BUFFER_SIZE);
+			if(shell_context->scroll == shell_context->current_string) return;  			// don't scroll down if the current line is at the bottom
+			if(is_shift_pressed) shell_context->scroll = shell_context->current_string;   // whith shift + ctrl + down, scroll to the bottom
+			else ADVANCE_INDEX(shell_context->scroll, BUFFER_SIZE);
 		}
 		else if(ascii == 'l')
 		{
-			scroll = current_string;
+			shell_context->scroll = shell_context->current_string;
 		}else{
 			return;
 		}
@@ -765,7 +836,7 @@ void key_handler(KeyboardEvent * event)
 	// 		O sea que podés decidir si mantener una tecla presionada solo mande la interrupción la primera vez
 	if (hold_times == 1 || KEY_REPEAT_ENABLED || ascii == ASCII_BS)
 	{
-		if (running_programs){
+		if (shell_context->running_programs){
 			if (ascii != ASCII_BS){
 				add_char_to_stdout(ascii);
 	
@@ -779,11 +850,11 @@ void key_handler(KeyboardEvent * event)
 	}
 
 	// If tab pressed, autocomplete the command
-	if (ascii == ASCII_HT && !running_programs)
+	if (ascii == ASCII_HT && !shell_context->running_programs)
 	{
 		char command[STRING_SIZE] = {0};
 		char args[STRING_SIZE] = {0};
-		int nohup = parse_command(current_string, 0, command, args);
+		int nohup = parse_command(shell_context->current_string, 0, command, args);
 		
 		if (command[0] == 0) {
 			return;
@@ -794,7 +865,7 @@ void key_handler(KeyboardEvent * event)
 
 		if (autocomplete != NULL) {
 			// Borra el comando actual
-			current_position = 0;
+			shell_context->current_position = 0;
 			add_str_to_stdout(autocomplete->command);
 			add_char_to_stdout(' ');
 			redraw(); // redraw to show the new command
@@ -804,7 +875,7 @@ void key_handler(KeyboardEvent * event)
 	}
 	
 	// --- ENTER TO EXECUTE ---
-	if (ascii == '\n' && !running_programs) {
+	if (ascii == '\n' && !shell_context->running_programs) {
 		log_to_serial("I: Enter pressed, executing program");
 		redraw(); // redibuja para que se parsee el marcado
 		execute_program(PREV_STRING);
@@ -828,10 +899,12 @@ void status_bar_handler(RTC_Time *time)
 
 // Thread que se encarga de leer de la salida estándar del programa que se está ejecutando
 void output_handler(){
+	ShellContext *shell_context = getShellContext();
+
 	while (1)
 	{
 		char buffer[STRING_SIZE] = {0};
-		int read = readFifo(console_out, buffer, STRING_SIZE-1);
+		int read = readFifo(shell_context->console_out, buffer, STRING_SIZE-1);
 
 		if (read > 0) {	
 			add_str_to_stdout(buffer);
@@ -839,7 +912,7 @@ void output_handler(){
 			// EOF: se terminó de leer, me pongo a dormir hasta que me despierten porque hay algo nuevo
 			rm_stdout();
 
-			if(!running_programs){
+			if(!shell_context->running_programs){
 				newPrompt(); // si no hay programas corriendo, muestro el prompt
 			} 
 
@@ -901,6 +974,30 @@ void home_screen()
 
 void shell_main(char *args)
 {
+	ShellContext * shell_context = (ShellContext *)malloc(sizeof(ShellContext));
+	if(shell_context == NULL) {
+		log_to_serial("E: Failed to allocate memory for shell context");
+		return;
+	}
+
+	char * pid_str = uint64_to_string(getPID());
+	uint64_t fileId = mkFile(pid_str, FILE_TYPE_RAW_DATA, sizeof(uint64_t)); // create the file to store the pointer to the shell context
+	free(pid_str);
+
+	if (fileId == 0) {
+		log_to_serial("E: Failed to create shell context file");
+		free(shell_context);
+		return;
+	}
+
+	uint32_t bytes_read = writeRaw(fileId, (char *)&shell_context, sizeof(uint64_t), 0); // write the pointer to the shell context
+	if (bytes_read != sizeof(uint64_t)) {
+		log_to_serial("E: Failed to write shell context pointer to file");
+		free(shell_context);
+		return;
+	}
+
+
 	log_to_serial("PinkOS shell started");
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 
@@ -911,9 +1008,9 @@ void shell_main(char *args)
 	subscribeToEvent(KEY_EVENT, (uint64_t)key_handler, 0);
 	subscribeToEvent(RTC_EVENT, (uint64_t)status_bar_handler, 0);
 
-	threadcito = newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
+	shell_context->threadcito = newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
 
-	current_text_color = ColorSchema->text;
+	shell_context->current_text_color = ColorSchema->text;
 	add_str_to_stdout((char *)"># * This system has a * 90% humor setting * ...\n >#* but only 100% style.\n");
 	add_str_to_stdout((char *)"\n >#* Type help for help\n");
 
