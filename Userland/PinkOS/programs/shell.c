@@ -97,6 +97,9 @@ ShellContext *getShellContext()
 void draw_status_bar();
 void newPrompt();
 void idle(char *message);
+void add_char_to_stdout(char character);
+void scroll_if_out_of_bounds();
+
 
 
 // The buffer is an array of strings of fixed length, so that each enter key press will be stored in a new string
@@ -667,7 +670,7 @@ void execute_program(int input_line){
 			shell_context->running_programs++;
 			shell_context->running_program_pids[0] = program_pid; // save the pid of the running program
 			ProcessDeathCondition condition = { .pid = program_pid };
-			subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition); // subscribe to the process death event
+			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &condition); // subscribe to the process death event
 			wakeProcess(shell_context->threadcito); // thread para el output
 		}
 		return;
@@ -725,8 +728,8 @@ void execute_program(int input_line){
 		ProcessDeathCondition condition1 = { .pid = program_pid1 };
 		ProcessDeathCondition condition2 = { .pid = program_pid2 };
 		
-		subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition1);
-		subscribeToEvent(PROCESS_DEATH_EVENT, (uint64_t)child_death_handler, &condition2);
+		subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &condition1);
+		subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &condition2);
 		wakeProcess(shell_context->threadcito); // despertar el thread para el output
 		return;
 	}
@@ -897,7 +900,7 @@ void key_handler(KeyboardEvent * event)
 
 		if (autocomplete != NULL) {
 			// Borra el comando actual
-			shell_context->current_position = 0;
+			shell_context->current_position = nohup ? 1 : 0; // si es nohup, no borra el &
 			add_str_to_stdout(autocomplete->command);
 			add_char_to_stdout(' ');
 			redraw(); // redraw to show the new command
@@ -992,17 +995,15 @@ void home_screen()
 	drawRectangle(ColorSchema->background, screen_width, 140, position);
 	position.x += 50;
 	position.y += 25;
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Welcome to PinkOS!", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
-	
+	drawString("Welcome to PinkOS!", ColorSchema->text, ColorSchema->background, position);
 	position.y += 50;
 	
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press space to continue", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
+	drawString("Press space to continue", ColorSchema->text, ColorSchema->background, position);
+	decFontSize();
+	decFontSize();
 	
-	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
-	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
 	KeyboardEvent event;
-	
-	waitForEvent(KEY_EVENT, (uint64_t)&event, (uint64_t)&condition);
+	waitForEvent(KEY_EVENT, (void *)&event, (void *)&condition);
 }
 
 
@@ -1039,8 +1040,8 @@ void shell_main(char *args)
 	redraw();
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
-	subscribeToEvent(KEY_EVENT, (uint64_t)key_handler, 0);
-	subscribeToEvent(RTC_EVENT, (uint64_t)status_bar_handler, 0);
+	subscribeToEvent(KEY_EVENT, (void (*)(void *))key_handler, (void *)0);
+	subscribeToEvent(RTC_EVENT, (void (*)(void *))status_bar_handler, (void *)0);
 
 	shell_context->threadcito = newThread((void *)output_handler, "", PRIORITY_LOW); // thread for handling output from the console
 
@@ -1053,5 +1054,4 @@ void shell_main(char *args)
 	wait: setWaiting(getPID());
 	goto wait; // por si a algún vivo se le ocurre despertar el proceso de la shell
 
-	return 0;
 }

@@ -26,7 +26,7 @@ static Program programs[] = {
         "Forrest Gump",
         forrest_gump_main,
         0,
-        "Run Forrest, run!",
+        "Run Forrest, run!>!*",
         "usage: forrest_gump \nForrest Gump v1 \n Runs, and runs, and runs..."
     },
     // {
@@ -138,7 +138,7 @@ static Program programs[] = {
         "Test ascii",
         test_ascii_main,
         0,
-        "Tests all ascii chars in stdout in a loop.",
+        "Tests all ascii chars in stdout.>!*",
         "Usage: ascii\nTest ascii v1\n Tests all ascii chars in stdout in a loop."
     },
     {
@@ -202,7 +202,7 @@ static Program programs[] = {
         "Change Theme",
         change_theme_main,
         0,
-        "Toggle between the default and mockup color themes",
+        "Toggle between color themes",
         "usage: chagetheme \nChangeTheme v1 \n Use this command to change the color theme."
     },
     {
@@ -235,7 +235,7 @@ static Program programs[] = {
         block_main,
         MANAGE_PROCESSES_PERMISSION,
         "Block a process",
-        "usage: block <pid> \nBlock v1 \n Use this program to block a process by its PID. The process will not be able to run until it is unblocked."
+        "usage: block <pid> \nBlock v1 \n Use this program to block a process by its PID."
     },
     {
         "cat",
@@ -243,15 +243,39 @@ static Program programs[] = {
         cat_main,
         0,
         "Concatenate and print files",
-        "usage: cat <file> \nCat v1 \n Use this program to concatenate and print files to the console."
+        "usage: cat <file> \nCat v1 \n Use this program to print standard input to the screen, or the contents of a file if specified (soon)."
     },
     {
         "loop",
         "Loop",
         loop_main,
         0,
-        "Runs a program in a loop",
+        "Runs a program in a loop.>!*",
         "usage: loop <program> \nLoop v1 \n Use this program to run a program in a loop until it is killed."
+    },
+    {
+        "phylo",
+        "Philosophers",
+        phylo_main,
+        MANAGE_PROCESSES_PERMISSION | MAKE_ETHEREAL_REQUEST_PERMISSION, 
+        "Dining philosophers problem.>!*",
+        "usage: phylo <num_philosophers>\nPhylo v1 \n Use this program to simulate the dining philosophers problem. \n You can specify the number of philosophers (default is 5)."
+    },
+    {
+        "filter",
+        "Filter",
+        filter_main,
+        0,
+        "Filters the output of a program",
+        "usage: filter <program> \nFilter v1 \n Use this program to filter the output of a program."
+    },
+    {
+        "printer",
+        "Printer",
+        printer_main,
+        0,
+        "Prints things to test other programs",
+        "usage: printer \nPrinter v1 \n Use this program to print a couple of things to test other programs."
     },
     {
         "test",
@@ -274,7 +298,7 @@ static Program programs[] = {
         "Test Processes",
         test_processes_main,
         ROOT_PERMISSIONS & ~DRAWING_PERMISSION, // ROOT_PERMISSIONS without DRAWING_PERMISSION
-        "Test process management. >?==caution==: This runs in a loop forever",
+        "Test process management.>!*",
         "usage: test_processes \nTest Processes v1 \n Use this program to test the process management system of PinkOS. It creates a lot of processes and tests the process management system."
     },
     {
@@ -284,30 +308,6 @@ static Program programs[] = {
         ROOT_PERMISSIONS & ~DRAWING_PERMISSION, // ROOT_PERMISSIONS without DRAWING_PERMISSION
         "Test synchronization between processes",
         "usage: test_sync <n> <use_sem> \nTest Synchronization v1 \n Use this program to test the synchronization between processes. It creates two processes that increment and decrement a global variable."
-    },
-    {
-        "phylo",
-        "Philosophers",
-        phylo_main,
-        MANAGE_PROCESSES_PERMISSION | MAKE_ETHEREAL_REQUEST_PERMISSION, 
-        "Dining philosophers problem",
-        "usage: phylo <num_philosophers>\nPhylo v1 \n Use this program to simulate the dining philosophers problem. \n You can specify the number of philosophers (default is 5)."
-    },
-    {
-        "filter",
-        "Filter",
-        filter_main,
-        0,
-        "Filters the output of a program",
-        "usage: filter <program> \nFilter v1 \n Use this program to filter the output of a program."
-    },
-    {
-        "printer",
-        "Printer",
-        printer_main,
-        0,
-        "Prints a couple of things to test other programs",
-        "usage: printer \nPrinter v1 \n Use this program to print a couple of things to test other programs."
     },
 
     

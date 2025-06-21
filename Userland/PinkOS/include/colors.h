@@ -24,7 +24,7 @@ typedef struct Colors {
     uint32_t info;
 } Colors;
 
-static const Colors PinkOSMockupColors = {
+static Colors PinkOSMockupColors = {
     .primary = 0x00f0489f,
     .secondary = 0x00df8090,
     .highlight = 0x00f5d8d3,
@@ -43,7 +43,7 @@ static const Colors PinkOSMockupColors = {
 };
 
 
-static const Colors PinkOSColors = {
+static Colors PinkOSColors = {
     .primary = 0x00f0489f,
     .secondary = 0x00df8090,
     .highlight = 0x00f5d8d3,

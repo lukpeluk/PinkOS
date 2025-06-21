@@ -15,7 +15,7 @@ static void bussy_wait(uint64_t n) {
   }
 }
 
-int endless_loop_print_main(char *args) {
+void endless_loop_print_main(char *args) {
     Pid pid = getPID();
     uint64_t wait_time = MINOR_WAIT;
     
@@ -35,9 +35,7 @@ int endless_loop_print_main(char *args) {
     while (1) {
         printf("PID: %d \n", pid);
         bussy_wait(wait_time);
-    }
-    
-    return 0; // Never reached
+    }    
 }
 
 

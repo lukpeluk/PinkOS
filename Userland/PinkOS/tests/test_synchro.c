@@ -1,5 +1,6 @@
 #include <libs/stdpink.h>
 #include <libs/events.h>
+#include <libs/serialLib.h>
 
 #define TOTAL_PAIR_PROCESSES 2
 
@@ -32,7 +33,7 @@ static void process_inc_function(char *args) {
     if (use_sem) {
       sem_wait(sem_id);
     }
-    slowInc(&global_shared_value, inc);
+    slowInc((int64_t *)&global_shared_value,(int64_t) inc);
     if (use_sem) {
       sem_post(sem_id);
     }
@@ -74,7 +75,6 @@ int test_synchro_main(char *args) {
   
   // Create increment processes (+1)
   for (i = 0; i < TOTAL_PAIR_PROCESSES; i++) {
-    IO_Files io_files = {0, 0, 0};
     char args_str[256] = {0};
     sprintf(args_str, "%d 1 %d", n, use_sem);
     
@@ -88,7 +88,6 @@ int test_synchro_main(char *args) {
 
   // Create decrement processes (-1)
   for (i = 0; i < TOTAL_PAIR_PROCESSES; i++) {
-    IO_Files io_files = {0, 0, 0};
     char args_str[256] = {0};
     sprintf(args_str, "%d -1 %d", n, use_sem);
     

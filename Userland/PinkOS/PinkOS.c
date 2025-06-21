@@ -5,9 +5,11 @@
 #include <permissions.h>
 #include <libs/events.h>
 
+extern void _hlt();
 
 
-int init_main()
+
+void init_main(char *args)
 {
 	installProgram(get_program_entry("shell"));
 	
@@ -42,8 +44,12 @@ int main(){
 	// syscall(RUN_PROGRAM_SYSCALL, (uint64_t)&init, (uint64_t)"", 0, 0, 0);
 	log_to_serial("PinkOS: Starting init process...");
 	installProgram(&init);
-	runProgram(&init, "", PRIORITY_HIGH, 0, 0);
+	runProgram("init", "", PRIORITY_HIGH, 0, 0);
 	
-
-	idle((char *)"idle from main");
+	// Se queda en bucle hasta sus últimos respiros (cuando el scheduler inicie init, no vuelve nunca más acá... )
+	while(1) {
+		_hlt();
+	}
+	// El main no debería terminar nunca, así que no debería llegar a este punto
+	log_to_serial("E: PinkOS: Main process should never end, something went wrong!");
 }

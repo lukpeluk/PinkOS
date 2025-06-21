@@ -56,8 +56,6 @@ int test_processes_main(char * args) {
 
     // Create max_processes processes
     for (rq = 0; rq < max_processes; rq++) {
-      char *args[] = {NULL};
-      IO_Files io_files = {0, 0, 0}; // Default IO
       
       // Try to run endless_loop program
       p_rqs[rq].pid = newThread(endless_loop, "", PRIORITY_NORMAL);

@@ -13,5 +13,6 @@ void help_main(char * args){
         }
         sleep(20); // sleep to avoid flooding the console with output
     } while (increment_index());
-
+    printf("\n>! *) >.This means the program runs in a loop.\n");
+    printf("># This color>. means the program is a test program.\n");
 }
