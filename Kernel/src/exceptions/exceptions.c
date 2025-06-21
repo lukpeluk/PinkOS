@@ -4,6 +4,7 @@
 #include <drivers/registersDriver.h>
 #include <processManager/scheduler.h>
 #include <processManager/processState.h>
+#include <drivers/serialDriver.h>
 
 
 void exceptionDispatcher(int exception) {

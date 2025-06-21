@@ -353,7 +353,8 @@ uint64_t allocateStack() {
 
 // Ejecuta un callback recursivamente en todos los descendientes del proceso especificado
 // No corre en el parent, solo en los descendientes
-void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
+// Pasa a cada callback el PID del proceso en el que se debe ejecutar el callback
+void runOnChilds(void (*callback)(Pid), Pid parent_pid) {
     if (processList == NULL || callback == NULL) {
         // log_to_serial("runOnChilds: Lista de procesos vacia o callback invalido");
         return;
@@ -367,7 +368,7 @@ void runOnChilds(void (*callback)(ProcessControlBlock *), Pid parent_pid) {
             runOnChilds(callback, current->process.pid);
             
             // Después de procesar todos los descendientes, ejecutar callback en este proceso
-            callback(current);
+            callback(current->process.pid);
         }
         current = current->next;
     } while (current != processList);
@@ -401,7 +402,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
     // log_to_serial("addProcessToScheduler: Iniciando la creacion de un nuevo proceso");
 
-    if (program.entry == NULL, entry == NULL) {
+    if (program.entry == NULL || entry == NULL) {
         log_to_serial("E: addProcessToScheduler: Error, invalid input");
         return NULL;
     }
@@ -447,7 +448,7 @@ ProcessControlBlock * addProcessToScheduler(Program program, ProgramEntry entry,
 
     // mem_register_sector(newProcessBlock->stackBase - STACK_SIZE, newProcessBlock->stackBase, stackStr);
 
-    if (newProcessBlock->stackBase == NULL) {
+    if ((void*)newProcessBlock->stackBase == NULL) {
         log_to_serial("E: addProcessToScheduler: Error al alocar memoria para el stack del proceso");
         free(newProcessBlock); // Liberar el PCB si no se pudo alocar el stack
         return NULL; // Error al alocar memoria
@@ -513,7 +514,7 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL  && processList != NULL){
         log_to_serial("E: invalid parent process");
-        return NULL;
+        return 0;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
         parent = parent->parent; // Si el padre no es un proceso main, buscar al padre main (basicamente, si es un thread, buscar al main del thread)
@@ -636,7 +637,7 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
     ProcessControlBlock * parent = getProcessControlBlock(parent_pid);
     if(parent == NULL){
         // console_log("E: newThread: Proceso padre no encontrado (PID %d), no se puede crear el thread", parent_pid); 
-        return NULL;
+        return 0;
     }
     if(parent->process.type != PROCESS_TYPE_MAIN){
         parent = parent->parent;
@@ -663,16 +664,16 @@ Pid newThread(ProgramEntry entrypoint, char *arguments, Priority priority, Pid p
 
 //! NO USAR DIRECTAMENTE, USAR terminateProcess QUE ES RECURSIVA, ESTO PODRÍA DEJAR PROCESOS HUÉRFANOS
 //! Cuando se llame, se da por sentado que el proceso existe y puede matarse, las validaciones deben hacerse antes de llamar a esta función
-int terminateSingleProcess(uint32_t pid) {
+void terminateSingleProcess(Pid pid) {
 
     ProcessControlBlock * to_remove = getProcessControlBlock(pid);
     if(to_remove == NULL){
         log_to_serial("E: terminateSingleProcess: Proceso no encontrado");
-        return -1;
+        return;
     }
     if(to_remove->process.pid == 1 || to_remove->next == to_remove){
         // O estás borrando init o estás borrando el único proceso que hay, ilegalísimo
-        return -2;
+        return;
     }
 
     // Si el proceso es gráfico, eliminar la ventana asociada

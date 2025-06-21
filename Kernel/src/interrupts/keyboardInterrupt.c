@@ -23,7 +23,7 @@
 extern char getKeyCode();
 
 static int index = 0;
-static special_key_pressed = 0; // Variable to track if ctrl is pressed
+static int special_key_pressed = 0; // Variable to track if ctrl is pressed
 
 
 void simulateKeyCode(unsigned char scan_code) {

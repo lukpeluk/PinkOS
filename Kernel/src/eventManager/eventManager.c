@@ -143,7 +143,7 @@ void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)
         if(process_to_listen.pid == 0) {
             // El proceso no existe, notificar inmediatamente
             log_to_serial("E: ##### EventManager: Notifying process death event immediately for PID");
-            notifyEvent(NULL, PROCESS_DEATH_EVENT, &process_to_listen.pid, filterProcessDeathCondition);
+            notifyEvent(0, PROCESS_DEATH_EVENT, &process_to_listen.pid, filterProcessDeathCondition);
         }
     }
 }
@@ -253,7 +253,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
     Listener* previous = NULL;
     while (current != NULL) {
         // console_log("I: EventManager: Checking listener with PID %d for event %d", current->pid, eventId);
-        if (pid != NULL && !isSameProcessGroup(current->pid, pid)) {
+        if (pid != 0 && !isSameProcessGroup(current->pid, pid)) {
             // If the PID does not match, skip this listener
             current = current->next;
             previous = current;
@@ -277,7 +277,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             memcpy(eventData, data, eventManager.events[eventId].data_size);
             
             // Create a thread to handle the event
-            Pid pid = newThread(current->handler, eventData, PRIORITY_NORMAL, current->pid);
+            Pid pid = newThread((void *)current->handler, eventData, PRIORITY_NORMAL, current->pid);
             if (pid == 0) {
                 // Handle error: could not create thread
                 // console_log("E: EventManager: Could not create thread for event handler");
@@ -376,7 +376,7 @@ void handleProcessDeath(Pid pid) {
     }
     // console_log("I: EventManager: Notifying process death event for PID: %d", pid);
 
-    notifyEvent(NULL, PROCESS_DEATH_EVENT, &pid, filterProcessDeathCondition);
+    notifyEvent(0, PROCESS_DEATH_EVENT, &pid, filterProcessDeathCondition);
 }
 
 
@@ -390,7 +390,7 @@ int filterSleepCondition(void* condition_data, void* data) {
 }
 
 void handleSleep(uint64_t millis) {
-    notifyEvent(NULL, SLEEP_EVENT, &millis, filterSleepCondition);
+    notifyEvent(0, SLEEP_EVENT, &millis, filterSleepCondition);
 }
 
 int filterRTCCondition(void* condition_data, void* data) {
@@ -403,7 +403,7 @@ int filterRTCCondition(void* condition_data, void* data) {
 }
 
 void handleRTCEvent(RTC_Time time) {
-    notifyEvent(NULL, RTC_EVENT, &time, filterRTCCondition);
+    notifyEvent(0, RTC_EVENT, &time, filterRTCCondition);
 }
 
 int filterKeyboardCondition(void* condition_data, void* data) {
@@ -430,6 +430,6 @@ int filterExceptionCondition(void* condition_data, void* data) {
 }
 
 void handleException(Exception exception) {
-    notifyEvent(NULL, EXCEPTION_EVENT, &exception, filterExceptionCondition);
+    notifyEvent(0, EXCEPTION_EVENT, &exception, filterExceptionCondition);
 }
 
