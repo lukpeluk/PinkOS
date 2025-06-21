@@ -1,72 +1,118 @@
-// //! Estoy suponiendo que tengo las siguientes funciones disponibles (que despues tengo que implementar en stdpink.h):
-// //! uint_64 atoi (char * str); string a entero
-// //! char * num_to_string (int num); entero a string (con memoria dinámica?)
-// //! char * concat(char * str1, char * str2); concatena dos strings (con memoria dinámica?)
-// //! int strcpy(char * dest, char * src); copia un string a otro
+#include <libs/stdpink.h>
+#include <types.h>
 
-// #include <libs/stdpink.h>
-// #include <types.h>
+typedef enum {
+    HUNGRY,
+    EATING,
+    THINKING
+} PhilosopherState;
+typedef struct {
+    Pid pid;
+    PhilosopherState state;
+} Philosopher;
 
-// typedef enum {
-//     HUNGRY,
-//     EATING,
-//     THINKING
-// } PhilosopherState;
+#define MAX_PHILOSOPHERS 10 
 
-// typedef struct {
-//     Pid pid;
-//     PhilosopherState state;
-// } Philosopher;
+char philosopher_states[3] = {'H', 'E', 'T'};           // array auxiliar para imprimir los estados
+
+// informacion de filosofos
+Philosopher philosophers[MAX_PHILOSOPHERS] = {0};       // array global de philosofos y sus estados
+int philosophers_count;
+
+// semaforos
+uint64_t forks[MAX_PHILOSOPHERS] = {0};                 // array global de semaforos para los fork
+uint64_t mutex = 0;                                         // mutex para proteger todo
     
-// void philosopher(int id, PhilosopherState *state, int *left_fork, int *right_fork) {
-//     while(1){
+void thinking(){
+    sleep(500); 
+}
+
+void eating(){
+    sleep(500); 
+}
+
+// Recibe el id del filosofo, un puntero a la variable del estado del filosofo,
+// y los punteros a las variables que tienen los ids de los semaforos de los tenedores izquierdo y derecho
+void philosopher(char *args) {
+    int id;
+    if(sscanf(args, "%d", &id) != 1) {
+        printf("Error parsing philosopher arguments: %s\n", args);
+        return;
+    }
+
+    int left = id;
+    int right = (id + 1) % philosophers_count;
+
+    while(1){
+        // Piensa
+        sem_wait(mutex);
+        philosophers[id].state = THINKING;
+        sem_post(mutex);
+        thinking();
         
-//     }
-// }
+        // Tiene hambre
+        sem_wait(mutex);
+        philosophers[id].state = HUNGRY;
+        sem_post(mutex);
+        
+        // Toma los tenedores
+        id % 2 == 0 ? sem_wait(forks[left]) : sem_wait(forks[right]);
+        id % 2 == 0 ? sem_wait(forks[right]) : sem_wait(forks[left]);
 
-// void phylo_main(char *args) {
-//     // Initialize the philosophers and forks
-//     int num_philosophers = 5;
-//     if (args != NULL && args[0] != '\0') {
-//         num_philosophers = atoi(args);
-//         if (num_philosophers <= 0) {
-//             printf((char *)"Invalid number of philosophers: %s\n", args);
-//             return;
-//         }
-//     }
-    
-//     // Create file permissions for the philosophers' shared memory
-//     FilePermissions permissions = {
-//         .writing_owner = getProcessGroupMain(),
-//         .writing_conditions = '*',
-//         .reading_owner = getProcessGroupMain(),
-//         .reading_conditions = '*'
-//     };
+        // Come
+        sem_wait(mutex);
+        philosophers[id].state = EATING;
+        sem_post(mutex);
+        eating();
 
-//     // Create a unique name for the shared memory based on the masters PID
-//     Pid pid = getPID();
-//     char philosophers_mem_name[32];
-//     char *prefix = "philosophers_memory_";
-    
-//     char *pid_str = num_to_string(pid);
-//     char *full_name = concat(prefix, pid_str);
-//     strcpy(philosophers_mem_name, full_name);
-//     free(full_name);
-//     free(pid_str);
+        //Deja los tenedores
+        id % 2 == 0 ? sem_post(forks[left]) : sem_post(forks[right]);
+        id % 2 == 0 ? sem_post(forks[right]) : sem_post(forks[left]);
+    }
+}
 
-//     // Create the shared memory for philosophers
-//     uint64_t sh_m = mkFile(philosophers_mem_name, FILE_TYPE_RAW_DATA, num_philosophers * (sizeof(Philosopher) + sizeof(uint64_t)),  permissions);
-    
-//     Philosopher * philosophers = malloc(num_philosophers * sizeof(Philosopher));
-//     uint64_t * forks = malloc(num_philosophers * sizeof(uint64_t));
-    
-//     int writeRaw(uint64_t id, void * buffer, uint32_t size, uint32_t offset);
+void phylo_main(char *args) {
+     // Initialize the philosophers and forks
+    int num_philosophers = 5;
+    // if (args != NULL && args[0] != '\0') {
+    //     num_philosophers = string_to_int(args);
+    //     if (num_philosophers <= 0) {
+    //         printf((char *)"Invalid number of philosophers: %s\n", args);
+    //         return;
+    //     }
+    // }
 
-//     for (int i = 0; i < num_philosophers; i++) {
-//         philosophers[i].pid = newThread(philosopher, (char *) i, PRIORITY_NORMAL);
-//         philosophers[i].state = HUNGRY;
-//         forks[i] = sem_init(1);
-//     }
+    if(mutex = sem_init(1) == 0){
+        print("Error while creating mutex semaphore\n");
+    } else {
+        printf("Mutex sem: %u\n", mutex);
+    }
+
+    for (int i = 0; i < num_philosophers; i++) {
+        // Initialize each philosopher
+        char args[16];
+        sprintf(args, "%d", i);
+        philosophers[i].pid = newThread(philosopher, args, PRIORITY_NORMAL);
+        philosophers[i].state = THINKING;
+
+        // Initialize each fork semaphore
+        if(forks[i] = sem_init(1) == 0){
+            printf("Error while creating fork %d semaphore\n", i);
+        } else {
+            printf("Fork %d sem: %u\n", i, forks[i]);
+        }
+    }
+
+    while (1){
+        printf("Philosophers states: ");
+        sem_wait(mutex);
+        for (int i = 0; i < num_philosophers; i++) {
+            printf("%c ", philosopher_states[philosophers[i].state]);
+        }
+        sem_post(mutex);
+        printf("\n");
+        sleep(2000); 
+    }
     
-// }
+}
 

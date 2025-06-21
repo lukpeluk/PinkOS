@@ -269,6 +269,23 @@ static Program programs[] = {
         "Test process management. >?==caution==: This runs in a loop forever",
         "usage: test_processes \nTest Processes v1 \n Use this program to test the process management system of PinkOS. It creates a lot of processes and tests the process management system."
     },
+    {
+        "phylo",
+        "Philosophers",
+        phylo_main,
+        MANAGE_PROCESSES_PERMISSION | MAKE_ETHEREAL_REQUEST_PERMISSION, 
+        "Dining philosophers problem",
+        "usage: phylo <num_philosophers>\nPhylo v1 \n Use this program to simulate the dining philosophers problem. \n You can specify the number of philosophers (default is 5)."
+    },
+    {
+        "filter",
+        "Filter",
+        filter_main,
+        0,
+        "Filters the output of a program",
+        "usage: filter <program> \nFilter v1 \n Use this program to filter the output of a program. \n The program will run in a loop until it is killed."
+    },
+
     
     // TODO: ↓↓↓↓↓↓
     // {"shutdown", "shutdown", 0, 0, "usage: shutdown", "shutdown v1 \n use this program to shutdown the system"},
