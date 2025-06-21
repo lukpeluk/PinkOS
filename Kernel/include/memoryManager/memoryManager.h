@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// #define USE_BUDDY
+
 void initMemoryManager();
 void* malloc(size_t size);
 void free(void* ptr);

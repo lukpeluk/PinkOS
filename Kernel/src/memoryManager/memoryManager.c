@@ -1,4 +1,6 @@
 #include <memoryManager/memoryManager.h>
+
+#ifndef USE_BUDDY
 #include <drivers/serialDriver.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -62,3 +64,5 @@ void* realloc(void* ptr, size_t new_size) {
     // log_to_serial("realloc: Nueva memoria asignada");
     return new_ptr;
 }
+
+#endif
