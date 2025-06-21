@@ -1,6 +1,7 @@
 #include <eventHandling/eventHandlers.h>
 #include <eventHandling/handlerIds.h>
 #include <processManager/processState.h>
+#include <drivers/serialDriver.h>
 
 #define NOT_SET 0
 // calls the handler if it is implemented setting the kernel in root mode first

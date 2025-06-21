@@ -2,8 +2,8 @@
 #include <windowManager/windowManager.h>
 #include <drivers/videoDriver.h>
 #include <drivers/serialDriver.h>
+#include <types.h>
 
-#define NULL 0
 
 typedef struct WindowControlBlock {
     uint32_t pid;

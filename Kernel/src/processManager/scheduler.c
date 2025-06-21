@@ -1,17 +1,18 @@
 #include <drivers/serialDriver.h>
 #include <processManager/scheduler.h>
 #include <processManager/processState.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <memoryManager/memoryManager.h>
+#include <eventManager/eventManager.h>
 #include <windowManager/windowManager.h>
 #include <fileSystem/fileSystem.h>
-#include <eventManager/eventManager.h>
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <types.h>
 
 #define STACK_SIZE 0x10000       // Tamaño de cada stack (4 KB)
 #define TICKS_TILL_SWITCH 1     // Cantidad de ticks hasta cambiar de proceso
 
-#define NULL 0
 #define VALIDATE_IO_FILE(id) (!id || validateFileType(stdin, FILE_TYPE_FIFO))
 
 // VALIDA QUE TODO EL STRUC FilePermissions sea != 0.

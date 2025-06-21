@@ -2,6 +2,8 @@
 #include <drivers/keyboardDriver.h>
 #include <drivers/mouseDriver.h>
 #include <drivers/serialDriver.h>
+#include <drivers/keyboardDriver.h>
+#include <eventManager/eventManager.h>
 
 
 #define MOUSE_IRQ 12

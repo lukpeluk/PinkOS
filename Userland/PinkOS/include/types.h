@@ -2,8 +2,7 @@
 #define TYPES_H
 
 #include <stdint.h>
-
-#define NULL ((void*)0)
+#include <stddef.h>
 
 // ----- Forward declarations -----
 typedef struct File File;

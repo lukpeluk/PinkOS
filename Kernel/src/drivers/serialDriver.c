@@ -13,8 +13,10 @@ static uint16_t header_code = NO_DATA_YET;         // código de respuesta del h
                                             // respuesta está en curso o hubo algún problema debo ignorarlo/sobrescribirlo
 
 static char * current = 0;           // puntero al byte actual de raw_data que se está procesando
-static uint64_t total_size = 0;     // tamaño total de los datos que se esperan recibir, se define en el header
+static uint64_t total_size = 0;      // tamaño total de los datos que se esperan recibir, se define en el header
 
+void process_header(char c);
+void finish_request(uint16_t code);
 
 // función que se llama cuando se recibe un byte por el puerto serie
 void process_serial(char c){
@@ -119,7 +121,7 @@ void send_to_serial(char * message){
 // Cuando se termina de recibir el header, se setea status a LOADING
 void process_header(char c){
     // cuántos bytes leí (calculo la diferencia entre RAW_DATA_ADDRESS y current)
-    uint64_t index = current - RAW_DATA_ADDRESS - 1;
+    uint64_t index = (uint64_t)(current - RAW_DATA_ADDRESS - 1);
 
     // 2 bytes iniciales son el header_code
     // los siguientes 2 bytes van en clientResponse->content_type

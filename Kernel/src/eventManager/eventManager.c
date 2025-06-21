@@ -4,12 +4,13 @@
 #include <memoryManager/memoryManager.h>
 #include <windowManager/windowManager.h>
 #include <drivers/serialDriver.h>
-#include <lib.h>
 #include <drivers/pitDriver.h>
+#include <types.h>
+#include <lib.h>
 
 #define MAX_EVENTS 6
 
-#define NULL ((void*)0)
+void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition_data, void* data));
 
 typedef enum {
     SUSCRIPTION,
