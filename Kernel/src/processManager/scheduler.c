@@ -614,9 +614,8 @@ Pid newProcessWithIO(Program program, char *arguments, Priority priority, Pid pa
     // Si es gráfico, crear la ventana asociada
     if (newProcessBlock->process.program.permissions & DRAWING_PERMISSION) {
         // log_to_serial("newProcess: El proceso es grafico, creando ventana asociada");
-        uint8_t *buffer = addWindow(newProcessBlock->process.pid);
-        if (buffer == NULL) {
-            // console_log("E: newProcess: No se pudo crear la ventana para el proceso con PID %d", newProcessBlock->process.pid);
+        if (addWindow(newProcessBlock->process.pid) != 0) {
+            console_log("E: newProcess: No se pudo crear la ventana para el proceso con PID %d", newProcessBlock->process.pid);
             terminateProcess(newProcessBlock->process.pid); // Si no se pudo crear la ventana, eliminar el proceso (capaz es demasiado drástico, no sé, para pensar)
         }
     }
@@ -755,7 +754,7 @@ void scheduleNextProcess() {
                 processListTail = prev;
             }
             // log_to_serial("scheduleNextProcess: El proceso actual ya esta terminado, no se puede programar otro proceso");
-            free(current->stackBase); // Liberar el stack del proceso actual
+            free((void *)current->stackBase); // Liberar el stack del proceso actual
             // mem_free_sector(current->stackBase - STACK_SIZE); // Liberar el sector de memoria del stack del proceso actual
             free(current); // Liberar el PCB del proceso actual
             processCount--;
@@ -973,6 +972,8 @@ int sem_destroy(uint64_t id) {
         prev = currentSem;
         currentSem = currentSem->next;
     }
+
+    return 1; // No se encontró el semáforo, no se pudo destruir
 }
 
 

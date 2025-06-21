@@ -33,7 +33,7 @@ Program* getProgramByCommand(const char* command) {
     if (!command) return 0;
     
     for (int i = 0; i < programs_count; i++) {
-        if (programs[i].command && strcmp(programs[i].command, command) == 0) {
+        if (strcmp(programs[i].command, command) == 0) {
             return &programs[i];
         }
     }
@@ -63,7 +63,7 @@ Program* searchProgramByPrefix(const char* prefix) {
     if (!prefix) return 0;
     
     for (int i = 0; i < programs_count; i++) {
-        if (programs[i].command && startsWith(programs[i].command, prefix)) {
+        if (startsWith(programs[i].command, prefix)) {
             return &programs[i];
         }
     }
@@ -76,7 +76,7 @@ int getMatchingCommands(const char* prefix, char** results, int max_results) {
     
     int count = 0;
     for (int i = 0; i < programs_count && count < max_results; i++) {
-        if (programs[i].command && startsWith(programs[i].command, prefix)) {
+        if (startsWith(programs[i].command, prefix)) {
             results[count] = programs[i].command;
             count++;
         }
@@ -124,7 +124,7 @@ int installProgram(Program* program) {
     
     // Check if program already exists
     for (int i = 0; i < programs_count; i++) {
-        if (programs[i].command && strcmp(programs[i].command, program->command) == 0) {
+        if (strcmp(programs[i].command, program->command) == 0) {
             return 1; // Program already exists
         }
     }
@@ -153,7 +153,7 @@ int uninstallProgramByCommand(const char* command) {
     
     // Find the program
     for (int i = 0; i < programs_count; i++) {
-        if (programs[i].command && strcmp(programs[i].command, command) == 0) {
+        if (strcmp(programs[i].command, command) == 0) {
             // Shift all programs after this one back by one position
             for (int j = i; j < programs_count - 1; j++) {
                 programs[j] = programs[j + 1];

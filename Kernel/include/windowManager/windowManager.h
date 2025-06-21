@@ -32,7 +32,7 @@ uint8_t * getBufferByPID(Pid pid);
 
 // Agregar y eliminar ventanas, se encarga de allocar y liberar memoria
 // Agregar una ventana devuelve un puntero al buffer de la ventana, o NULL si no se pudo allocar memoria
-uint8_t * addWindow(Pid pid);
+int addWindow(Pid pid);
 int removeWindow(Pid pid);
 
 /** switchToWindow: 

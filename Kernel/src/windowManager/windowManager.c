@@ -2,6 +2,7 @@
 #include <windowManager/windowManager.h>
 #include <drivers/videoDriver.h>
 #include <drivers/serialDriver.h>
+#include <memoryManager/memoryManager.h>
 #include <types.h>
 
 
@@ -23,7 +24,7 @@ void initWindowManager(){
 
 Pid getFocusedWindow(){
     if (focusedWindow == NULL) {
-        return NULL;
+        return 0;
     }
     return focusedWindow->pid;
 }
@@ -82,11 +83,11 @@ uint8_t * getBufferByPID(Pid pid){
 
 
 // TODO: capaz permitir elegir si focusear la ventana o si ponerla como segunda
-uint8_t * addWindow(Pid pid){
+int addWindow(Pid pid){
     WindowControlBlock *newWindow = (WindowControlBlock *)malloc(sizeof(WindowControlBlock));
     if (newWindow == NULL) {
         // log_to_serial("addWindow: Error al allocar memoria para la nueva ventana");
-        return NULL; // No se pudo allocar memoria
+        return -1; // No se pudo allocar memoria
     }
     newWindow->pid = pid;
     newWindow->redraw = 1; // Por defecto, la ventana necesita ser redibujada
@@ -95,18 +96,20 @@ uint8_t * addWindow(Pid pid){
     if (newWindow->buffer == NULL) {
         // log_to_serial("addWindow: Error al crear el buffer de video");
         free(newWindow); // Liberar memoria si no se pudo crear el buffer
-        return NULL; // No se pudo allocar memoria para el buffer
+        return -1; // No se pudo allocar memoria para el buffer
     }
 
     // Insertar al principio de la lista, ahora se volvió el foco actual
     newWindow->next = focusedWindow; 
     focusedWindow = newWindow;
+
+    return 0; // Éxtio
 }
 
 int removeWindow(Pid pid){
     if (focusedWindow == NULL) {
         // log_to_serial("removeWindow: No hay ventanas para eliminar");
-        return; 
+        return -1; // No hay ventanas para eliminar
     }
 
     WindowControlBlock *current = focusedWindow;

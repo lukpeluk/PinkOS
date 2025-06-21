@@ -62,14 +62,14 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * retorna el pid del proceso creado, 0 si error
 
                 IO_Files io_files = {0};
-                if (arg4 != NULL) {
+                if ((void *)arg4 != NULL) {
                     io_files = *(IO_Files *)arg4; // Si se pasa un struct de I/O, lo usamos
                     // log_to_serial("runProgram: Asignando I/O al nuevo proceso");
                     // log_decimal("runProgram: stdin file id: ", io_files.stdin);
                     // log_decimal("runProgram: stdout file id: ", io_files.stdout);
                 }
                     
-                Program * program = getProgramByCommand(arg1);
+                Program * program = getProgramByCommand((char *)arg1);
                 if(program == NULL) {
                     log_to_serial("E: Program not found");
                     return 0; // Error: program not found
@@ -165,7 +165,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * -> Tarea de quien la llame liberar la memoria (todo: allocar a nombre del proceso)
 
                 VALIDATE_PERMISSIONS(MANAGE_PROCESSES_PERMISSION);
-                Process * processes = getAllProcesses(arg1);
+                Process * processes = getAllProcesses((int *)arg1);
                 if (processes == NULL) {
                     return 0;
                 }
@@ -329,7 +329,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * Devuelve una lista null terminated de IDs de todos los archivos, ordenados por path
             // * -> es tarea de quien la llama liberar la memoria
 
-            return listFiles(); 
+            return (uint64_t)listFiles(); 
             break;
 
         case SET_FILE_PERMISSIONS_SYSCALL:
@@ -349,7 +349,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
         case VALIDATE_FILE_ACCESS_PERMISSIONS_SYSCALL:
             // * orden syscall: file id, acción
             // * retorna 1 si el proceso que llamó puede hacer la acción dada en el archivo especificado
-            return validateFileAccessPermissions((char *)arg1, getCurrentProcessPID(), (FileAction)arg2);
+            return validateFileAccessPermissions(arg1, getCurrentProcessPID(), (FileAction)arg2);
             break;
 
         // TODO: MEMORY MANAGER que guarde quién registró cada cosa
@@ -357,7 +357,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * orden syscall: cantidad de memoria a alocar, puntero donde dejar el puntero a la memoria alocada
             // * malloc de toda la vida, devuelve un puntero a la memoria alocada o NULL si no se pudo alocar
 
-            *(uint64_t*)arg2 = malloc((uint64_t)arg1);
+            *(uint64_t*)arg2 = (uint64_t)malloc((uint64_t)arg1);
             return *(uint64_t*)arg2;
 
         // case REALLOCATE_MEMORY_SYSCALL:
@@ -368,7 +368,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * orden syscall: puntero a la memoria a liberar
             // * libera la memoria alocada por malloc, no hace nada si el puntero es NULL
 
-            free((uint64_t)arg1);
+            free((void *)arg1);
             break;
 
         // TODO : Ver temas de system monitor
@@ -386,7 +386,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * devuelve un arreglo de PIDs de las ventanas abiertas, null terminated
             // * Es tarea de quien llame a esta función liberar la memoria del arreglo devuelto
 
-            return getWindows();
+            return (uint64_t) getWindows();
             break;
         case GET_FOCUSED_WINDOW_SYSCALL:
             // * no recibe nada, devuelve el pid de la ventana que tiene el foco
@@ -433,7 +433,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                     // Program not found, return 0
                     return 0;
                 }
-                return program;
+                return (uint64_t)program;
             }
             break;
         case INSTALL_PROGRAM_SYSCALL:
