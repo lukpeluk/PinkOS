@@ -11,6 +11,7 @@
 #include <libs/audioLib.h>
 #include <pictures.h>
 #include <colors.h>
+#include <themes.h>
 #include <libs/events.h>
 #include <libs/serialLib.h>
 

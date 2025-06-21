@@ -5,10 +5,11 @@
 
 
 void change_theme_main(char *args){
-    if (ColorSchema == &PinkOSColors) {
-        ColorSchema = &PinkOSMockupColors;
-    } else {
-        ColorSchema = &PinkOSColors;
-    }
-    clear_main(args);
+    //! Deprecado, ahora es un builtin
+    // if (ColorSchema == &PinkOSColors) {
+    //     ColorSchema = &PinkOSMockupColors;
+    // } else {
+    //     ColorSchema = &PinkOSColors;
+    // }
+    // clear_main(args);
 }
