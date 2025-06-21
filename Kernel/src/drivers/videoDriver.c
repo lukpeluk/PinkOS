@@ -83,6 +83,8 @@ void overlayTest(uint8_t * overlay_buffer) {
 
 
 void videoLoop() {
+	// static uint64_t frames_drawn = 0; // Contador de frames dibujados
+
 	// This function is intended to be called every timer tick to update the video buffer.
 	// Currently, it does nothing as the video buffer is updated directly when drawing.
 	if (milliseconds_elapsed() - last_frame_time < (1000 / FRAME_RATE)) {
@@ -97,24 +99,25 @@ void videoLoop() {
 		return; // No focused window, nothing to do
 	}
 
+	last_frame_time = milliseconds_elapsed();
+	// frames_drawn++;
 
 	// Optimización: si el overlay buffer no está habilidado directamente copio el focused buffer
 	if(overlay_buffer == NULL) {
-		toggleOverlay();
+		// toggleOverlay();
 		lightspeed_memcpy((void*)VBE_mode_info->framebuffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 		return;
 	}
 
-	// overlayTest(overlay_buffer);
-	
-	last_frame_time = milliseconds_elapsed();
+	overlayTest(overlay_buffer);
+
 	lightspeed_memcpy(staging_buffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 
 	// Copia el overlay buffer pero ignora los píxeles negros (0x00000000), que son tomados como transparentes
-	// TODO: ver si esto puede tener problemas al usar 24 bytes por píxel (al compararlo casteado a 32) parece funcar bien igual
+	uint32_t transparency_mask = (VBE_mode_info->bpp == 24) ? 0x00FFFFFF : 0xFFFFFFFF;
 	for(uint64_t i = 0; i < VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8); i += (VBE_mode_info->bpp / 8)) {
 		uint32_t pixel = *(uint32_t *)(overlay_buffer + i);
-		if(pixel != 0x00000000) {
+		if((pixel & transparency_mask) != 0x00000000) {
 			*(uint32_t *)(staging_buffer + i) = pixel;
 		}
 	}
@@ -134,7 +137,6 @@ uint8_t * createVideoBuffer() {
 	memset(buffer, 0, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 	return buffer;
 }
-
 
 void putPixel(uint8_t * videoBuffer, uint32_t hexColor, uint64_t x, uint64_t y) {
     if(x >= VBE_mode_info->width || y >= VBE_mode_info->height || videoBuffer == NULL) {
