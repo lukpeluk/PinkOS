@@ -17,11 +17,11 @@ char philosopher_states[3] = {'H', 'E', 'T'};           // array auxiliar para i
 
 // informacion de filosofos
 Philosopher philosophers[MAX_PHILOSOPHERS] = {0};       // array global de philosofos y sus estados
-int philosophers_count;
+int philosophers_count = 5;
 
 // semaforos
 uint64_t forks[MAX_PHILOSOPHERS] = {0};                 // array global de semaforos para los fork
-uint64_t mutex = 0;                                         // mutex para proteger todo
+uint64_t mutex = 0;                                     // mutex para proteger todo
     
 void thinking(){
     sleep(1000); 
@@ -36,13 +36,15 @@ void eating(){
 void philosopher(char *args) {
     int id;
     if(sscanf(args, "%d", &id) != 1) {
-        printf("Error parsing philosopher arguments: %s\n", args);
+        // printf("Error parsing philosopher arguments: %s\n", args);
         return;
     }
+
 
     int left = id;
     int right = (id + 1) % philosophers_count;
 
+    // printf("Philosopher %d: Left fork %d, sem: %u, Right fork %d, sem %u\n", id, left, forks[left], right, forks[right]);
     while(1){
         // Piensa
         sem_wait(mutex);
@@ -66,14 +68,14 @@ void philosopher(char *args) {
         eating();
 
         //Deja los tenedores
-        id % 2 == 0 ? sem_post(forks[left]) : sem_post(forks[right]);
         id % 2 == 0 ? sem_post(forks[right]) : sem_post(forks[left]);
+        id % 2 == 0 ? sem_post(forks[left]) : sem_post(forks[right]);
     }
 }
 
 void phylo_main(char *args) {
      // Initialize the philosophers and forks
-    philosophers_count = 5;
+    // philosophers_count = 5;
     // if (args != NULL && args[0] != '\0') {
     //     philosophers_count = string_to_int(args);
     //     if (philosophers_count <= 0) {
@@ -96,8 +98,9 @@ void phylo_main(char *args) {
             printf("Error while creating fork %d semaphore\n", i);
             return;
         }
-        printf("Todos los semaforos inicializados\n");
     }
+    printf("Todos los semaforos inicializados\n");
+    sleep(1000);
     
 
     for (int i = 0; i < philosophers_count; i++) {
@@ -107,7 +110,6 @@ void phylo_main(char *args) {
         philosophers[i].pid = newThread(philosopher, args, PRIORITY_NORMAL);
         philosophers[i].state = THINKING;
     }
-    printf("Todos los filosofos inicializados\n");
 
     while (1){
         printf("Philosophers states: ");
@@ -117,7 +119,7 @@ void phylo_main(char *args) {
         }
         sem_post(mutex);
         printf("\n");
-        sleep(5000); 
+        sleep(1000); 
     }
     
 }

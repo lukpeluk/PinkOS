@@ -855,7 +855,7 @@ void backupCurrentProcessRegisters() {
 int setWaiting(Pid pid) {
     ProcessControlBlock *current = processList;
     if (current == NULL || pid == 1) {
-        log_to_serial("E: setWaiting: No hay procesos en la lista o estás intentando poner en espera el init (ilegal)");
+        log_to_serial("E: setWaiting: No hay procesos en la lista o estas intentando poner en espera el init (ilegal)");
         return -1; // Error: no hay procesos en la lista o estás modificando el init (ilegal)
     }
 
@@ -926,6 +926,8 @@ Semaphore * getSemaphore(uint64_t id) {
 //     -> (Básicamente quién puede modificarlo/esperarlo, si el proceso actual y sus threads, el actual e hijos, todas las instancias del programa, o todos.)
 uint64_t sem_init(int initial_value) {
     Semaphore* sem = (Semaphore*)malloc(sizeof(Semaphore));
+    log_decimal("sem_init: Allocando semaforo con valor inicial: ", initial_value);
+    log_decimal("sem_init: nextSemaphoreId: ", nextSemaphoreId);
     if(sem == NULL) return 0;
 
     sem->id = nextSemaphoreId++; 

@@ -10,7 +10,7 @@ void exceptionDispatcher(int exception) {
 	saveRegisters();
 	// callExceptionHandler(exception, getBackupRegisters());
 	// quitProgram(getCurrentProcessPID());
-	console_log("E: AUCH, se ha producido una excepción: %d", exception);
+	console_log("E: AUCH, se ha producido una excepcion: %d", exception);
 	// uint16_t cs;
 	// __asm__ volatile ("mov %%cs, %0" : "=r"(cs));
 	// uint8_t ring = cs & 0x3;
