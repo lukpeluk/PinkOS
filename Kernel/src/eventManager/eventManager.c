@@ -135,8 +135,9 @@ void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)
     eventManager.events[eventId].listeners = newListener;       // Para que sea O(1) en vez de O(n) al agregar un listener (el señorito se quejaba de que era O(n))
 
     // Si se registró para escuchar la muerte de un proceso, y este proceso no existe, se notifica inmediatamente
-    if(eventId == PROCESS_DEATH_EVENT) {
-        Process process_to_listen = getProcess(pid_to_notify);
+    if(eventId == PROCESS_DEATH_EVENT && condition_data != NULL) {
+        ProcessDeathCondition* condition = (ProcessDeathCondition*)condition_data;
+        Process process_to_listen = getProcess(condition->pid);
 
         if(process_to_listen.pid == 0) {
             // El proceso no existe, notificar inmediatamente
@@ -184,6 +185,19 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
 
     // log_to_serial("I: EventManager: Setting process as waiting");
     // log_decimal("I: EventManager: PID: ", pid);
+
+   if(eventId == PROCESS_DEATH_EVENT && condition_data != NULL) {
+        console_log("I: EventManager: Registering waiting event for process death condition");
+        ProcessDeathCondition* condition = (ProcessDeathCondition*)condition_data;
+        Process process_to_listen = getProcess(condition->pid);
+
+        if(process_to_listen.pid == 0) {
+            // El proceso no existe, notificar inmediatamente
+            log_to_serial("E: ##### EventManager: Notifying process death event immediately for PID");
+            return;
+        }
+    }
+    
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 
     // log_to_serial("E: EventManager: Le chupo un webo el wait... no espero una chota");
