@@ -29,14 +29,14 @@ static Program programs[] = {
         "Run Forrest, run!",
         "usage: forrest_gump \nForrest Gump v1 \n Runs, and runs, and runs..."
     },
-    {
-        "parrot",
-        "Parrot",
-        parrot_main,
-        0,
-        "Like echo but for user input via stdin",
-        "usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
-    },
+    // {
+    //     "parrot",
+    //     "Parrot",
+    //     parrot_main,
+    //     0,
+    //     "Like echo but for user input via stdin",
+    //     "usage: parrot \nParrot v1 \n Repeats what you input via stdin, runs until forced to quit"
+    // },
     {
         "monalisa",
         "Mona Lisa",
@@ -117,14 +117,14 @@ static Program programs[] = {
         "Resumes the current song",
         "usage: resume \nResume v1 \n Resumes the current song"
     },
-    {
-        "clear",
-        "Clear",
-        clear_main,
-        0,
-        "Clears the screen",
-        "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
-    },
+    // {
+    //     "clear",
+    //     "Clear",
+    //     clear_main,
+    //     0,
+    //     "Clears the screen",
+    //     "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
+    // },
     {
         "ls",
         "List",
@@ -149,38 +149,38 @@ static Program programs[] = {
         "Demo program for showcasing permissions",
         "usage: demo \nDemo v1 \n Use this program to showcase the permission system of PinkOS in the demonstration."
     }, 
-    {
-        "whatsapp",
-        "Whatsapp",
-        whatsapp_main,
-        MAKE_ETHEREAL_REQUEST_PERMISSION,
-        "Mandate mensajitos con el puerto serial",
-        "usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
-    },
-    {
-        "francis",
-        "Francis",
-        francis_main,
-        MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
-        "LO AMO",
-        "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
-    },
-    {
-        "pietra",
-        "Pietra",
-        pietra_main,
-        MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
-        "Dibujar un bitmap",
-        "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
-    },
-    {
-        "chatgpt",
-        "ChatGPT",
-        chatgpt_main,
-        MAKE_ETHEREAL_REQUEST_PERMISSION,
-        "Chat with GPT-3",
-        "usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
-    },
+    // {
+    //     "whatsapp",
+    //     "Whatsapp",
+    //     whatsapp_main,
+    //     MAKE_ETHEREAL_REQUEST_PERMISSION,
+    //     "Mandate mensajitos con el puerto serial",
+    //     "usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
+    // },
+    // {
+    //     "francis",
+    //     "Francis",
+    //     francis_main,
+    //     MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
+    //     "LO AMO",
+    //     "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
+    // },
+    // {
+    //     "pietra",
+    //     "Pietra",
+    //     pietra_main,
+    //     MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
+    //     "Dibujar un bitmap",
+    //     "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
+    // },
+    // {
+    //     "chatgpt",
+    //     "ChatGPT",
+    //     chatgpt_main,
+    //     MAKE_ETHEREAL_REQUEST_PERMISSION,
+    //     "Chat with GPT-3",
+    //     "usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
+    // },
     {
         "set_timezone",
         "Set Timezone",
@@ -189,14 +189,14 @@ static Program programs[] = {
         "Set the timezone",
         "usage: set_timezone <timezone> \nSet Timezone v1 \n Use this program to set the timezone of the system."
     },
-    {
-        "apt_install",
-        "Apt Install",
-        apt_install_main,
-        MAKE_ETHEREAL_REQUEST_PERMISSION | CHANGE_FONT_SIZE_PERMISSION,
-        "Install a package",
-        "usage: apt_install \nApt Install v1 \n Use this program to install a package."
-    },
+    // {
+    //     "apt_install",
+    //     "Apt Install",
+    //     apt_install_main,
+    //     MAKE_ETHEREAL_REQUEST_PERMISSION | CHANGE_FONT_SIZE_PERMISSION,
+    //     "Install a package",
+    //     "usage: apt_install \nApt Install v1 \n Use this program to install a package."
+    // },
     {
         "changetheme",
         "Change Theme",

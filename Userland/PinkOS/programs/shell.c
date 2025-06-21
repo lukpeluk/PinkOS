@@ -946,8 +946,8 @@ void home_screen()
 	position.x = (screen_width - MONA_LISA_WIDTH * scale) / 2;
 	position.y = (screen_height - MONA_LISA_HEIGHT * scale) / 2;
 
-	drawBitmap((uint32_t *) mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
-
+	// drawBitmap((uint32_t *) mona_lisa, MONA_LISA_WIDTH, MONA_LISA_HEIGHT, position, scale);
+	clearScreen(ColorSchema->text);
 	incFontSize();
 	incFontSize();
 
@@ -962,7 +962,7 @@ void home_screen()
 	
 	position.y += 50;
 	
-	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press any key to continue", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
+	syscall(DRAW_STRING_AT_SYSCALL, (uint64_t)"Press space to continue", (uint64_t)ColorSchema->text, (uint64_t)ColorSchema->background, (uint64_t)&position, 0);
 	
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
 	syscall(DEC_FONT_SIZE_SYSCALL, 0, 0, 0, 0, 0);
