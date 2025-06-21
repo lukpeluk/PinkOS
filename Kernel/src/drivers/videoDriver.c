@@ -91,13 +91,21 @@ void videoLoop() {
 	uint8_t * focused_buffer = getFocusedBuffer();
 	uint8_t * overlay_buffer = getOverlayBuffer();
 
-	if(focused_buffer == NULL || overlay_buffer == NULL || staging_buffer == NULL) {
+	if(focused_buffer == NULL || staging_buffer == NULL) {
 		log_to_serial("E: videoLoop: No focused buffer or staging buffer available");
 		console_log("Values of the pointers: focused_buffer: %p, overlay_buffer: %p, staging_buffer: %p", focused_buffer, overlay_buffer, staging_buffer);
 		return; // No focused window, nothing to do
 	}
 
-	overlayTest(overlay_buffer);
+
+	// Optimización: si el overlay buffer no está habilidado directamente copio el focused buffer
+	if(overlay_buffer == NULL) {
+		toggleOverlay();
+		lightspeed_memcpy((void*)VBE_mode_info->framebuffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+		return;
+	}
+
+	// overlayTest(overlay_buffer);
 	
 	last_frame_time = milliseconds_elapsed();
 	lightspeed_memcpy(staging_buffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));

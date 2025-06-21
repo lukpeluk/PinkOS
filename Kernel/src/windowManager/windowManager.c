@@ -16,6 +16,7 @@ typedef struct WindowControlBlock {
 
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
 static uint8_t *overlayBuffer;   
+static int overlay_enabled = 0; // Si está habilitado el overlay, esto es por optimización, si todo el tiempo copiábamos el overlay el video driver iba medio lento
 
 void initWindowManager(){
     overlayBuffer = createVideoBuffer();
@@ -43,8 +44,16 @@ uint8_t * getFocusedBuffer(){
     return focusedWindow->buffer;
 }
 
+// Null no significa error, significa que el overlay no está habilitado
 uint8_t * getOverlayBuffer(){
+    if(!overlay_enabled){
+        return NULL;
+    }
     return overlayBuffer;
+}
+
+void toggleOverlay(){
+    overlay_enabled = !overlay_enabled;
 }
 
 WindowControlBlock * getWindowBlock(Pid pid){

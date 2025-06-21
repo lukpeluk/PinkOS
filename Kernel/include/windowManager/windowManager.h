@@ -24,10 +24,16 @@ uint8_t * getFocusedBuffer();
 
 /** getOverlayBuffer: 
  * Gets the overlay buffer used for drawing overlays (like alt+tab or in the future, the mouse)
+ * Null means the overlay is disabled
  *
  * @return A pointer to the overlay buffer, where 0x000000 is considered transparent. (we don't have an alpha channel yet, because we use 24 bit color...)
 */
 uint8_t * getOverlayBuffer();
+
+/** 
+ * Enables or disables the overlay buffer
+ */
+void toggleOverlay();
 
 /** getBufferByPID: 
  * Gets the buffer of a window by its PID
