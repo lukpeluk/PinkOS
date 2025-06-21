@@ -732,6 +732,38 @@ void execute_program(int input_line){
 	}
 }
 
+
+// Builtins changetheme y clear
+// Devuelve 1 si era builtin, 0 si no hizo nada
+int execute_builtin(int input_line){
+	ShellContext *shell_context = getShellContext();
+
+	char command[STRING_SIZE];
+	char args[STRING_SIZE];
+
+	parse_command(input_line, 0, command, args);
+
+	if(strcmp(command, "changetheme") == 0 || strcmp(command, "ct") == 0)
+	{
+		if (ColorSchema == &PinkOSColors) {
+			ColorSchema = &PinkOSMockupColors;
+		} else {
+			ColorSchema = &PinkOSColors;
+		}
+		newPrompt();
+		redraw();
+		return 1;
+	} else if(strcmp(command, "clear") == 0){
+		shell_context->scroll = shell_context->current_string;
+		newPrompt();
+		redraw();
+		return 1;
+	}
+
+	return 0;
+}
+
+
 // void key_handler(char event_type, int hold_times, char ascii, char scan_code)
 void key_handler(KeyboardEvent * event)
 {
@@ -878,7 +910,9 @@ void key_handler(KeyboardEvent * event)
 	if (ascii == '\n' && !shell_context->running_programs) {
 		log_to_serial("I: Enter pressed, executing program");
 		redraw(); // redibuja para que se parsee el marcado
-		execute_program(PREV_STRING);
+		if(!execute_builtin(PREV_STRING)){
+			execute_program(PREV_STRING);
+		}
 	}
 }
 
