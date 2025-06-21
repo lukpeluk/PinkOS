@@ -57,6 +57,7 @@ void cat_main(char *args);
 void loop_main(char *args);
 void test_priority_main(char *args);
 void test_processes_main(char *args);
+void test_synchro_main(char *args);
 void phylo_main(char *args);
 void filter_main(char *args);
 void printer_main(char *args);

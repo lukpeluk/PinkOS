@@ -6,6 +6,14 @@
 // RUNNABLE PROGRAMS
 static Program programs[] = {
     {
+        "shell", 
+        "PinkOS Shell", 
+        shell_main, 
+        0xFFFFFFFF, 
+        "The PinkOS Shell",
+        "Starts the PinkOS shell"
+    },
+    {
         "echo", 
         "echo", 
         echo_main, 
@@ -268,6 +276,14 @@ static Program programs[] = {
         ROOT_PERMISSIONS & ~DRAWING_PERMISSION, // ROOT_PERMISSIONS without DRAWING_PERMISSION
         "Test process management. >?==caution==: This runs in a loop forever",
         "usage: test_processes \nTest Processes v1 \n Use this program to test the process management system of PinkOS. It creates a lot of processes and tests the process management system."
+    },
+    {
+        "test_sync",
+        "Test Synchronization",
+        test_synchro_main,
+        ROOT_PERMISSIONS & ~DRAWING_PERMISSION, // ROOT_PERMISSIONS without DRAWING_PERMISSION
+        "Test synchronization between processes",
+        "usage: test_sync <n> <use_sem> \nTest Synchronization v1 \n Use this program to test the synchronization between processes. It creates two processes that increment and decrement a global variable."
     },
     {
         "phylo",

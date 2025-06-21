@@ -225,8 +225,8 @@ int rmFile(uint64_t id) {
     return (int)syscall(RM_FILE_SYSCALL, id, 0, 0, 0, 0);
 }
 
-uint64_t openFile(char * path, Pid pid, FileAction action, FileType type) {
-    return syscall(OPEN_FILE_SYSCALL, (uint64_t)path, (uint64_t)pid, (uint64_t)action, (uint64_t)type, 0);
+uint64_t openFile(char * path, FileAction action, FileType type) {
+    return syscall(OPEN_FILE_SYSCALL, (uint64_t)path, (uint64_t)action, (uint64_t)type, 0, 0);
 }
 
 int closeFile(uint64_t id, Pid pid) {
