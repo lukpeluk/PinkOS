@@ -1,6 +1,7 @@
 #include <libs/stdpink.h>
 #include <syscalls/syscall.h>
 #include <libs/events.h>
+#include <libs/serialLib.h>
 
 #include <stdarg.h>
 #include <stdin.h>
@@ -81,7 +82,7 @@ uint64_t strlen(const char * s) {
 
 Pid runProgram(char * program, char * args, Priority priority, IO_Files * io_files, int nohup) {
     uint64_t new_pid = (uint64_t) nohup;
-    syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, &new_pid);
+    syscall(RUN_PROGRAM_SYSCALL, (uint64_t)program, (uint64_t)args, (uint64_t)priority, (uint64_t)io_files, (uint64_t)&new_pid);
     return (Pid)new_pid;
 }
 
@@ -156,7 +157,7 @@ int uninstallProgramByCommand(const char * command) {
 
 int readStdin(void * buffer, uint32_t size) {
     uint64_t result = size;
-    syscall(READ_STDIN, (uint64_t)buffer, &result, 0, 0, 0);
+    syscall(READ_STDIN, (uint64_t)buffer, (uint64_t)&result, 0, 0, 0);
     return result;
 }
 
@@ -247,7 +248,7 @@ int writeRaw(uint64_t id, void * buffer, uint32_t size, uint32_t offset) {
 
 int readFifo(uint64_t id, void * buffer, uint32_t size) {
     uint64_t result = size;
-    syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, &result, 0, 0);   // Mario bros cloud vibes
+    syscall(READ_FIFO_FILE_SYSCALL, id, (uint64_t)buffer, (uint64_t)&result, 0, 0);   // Mario bros cloud vibes
     return result;
 }
 
@@ -402,6 +403,20 @@ int string_to_int(const char * str) {
     }
 
     return sign * result;
+}
+
+int atoi(const char * str){
+    int res = 0;
+    int sign = 1;
+    int i = 0;
+    if(str[0] == '-'){
+        sign = -1;
+        i++;
+    }
+    for(; str[i] != '\0'; i++){
+        res = res * 10 + str[i] - '0';
+    }
+    return sign * res;
 }
 
 // Convert string to uint64_t
@@ -673,14 +688,14 @@ char getChar(){
 
 
 // Helper function to skip whitespace characters
-static void skip_whitespace() {
-    char c;
-    while ((c = getChar()) == ' ' || c == '\t' || c == '\n' || c == '\r') {
-        // Skip whitespace
-    }
-    // Put back the non-whitespace character
-    // Note: We need a way to unget a character, for now we'll work around this
-}
+// static void skip_whitespace() {
+//     char c;
+//     while ((c = getChar()) == ' ' || c == '\t' || c == '\n' || c == '\r') {
+//         // Skip whitespace
+//     }
+//     // Put back the non-whitespace character
+//     // Note: We need a way to unget a character, for now we'll work around this
+// }
 
 void scanf(char * format, ...){
     va_list args;

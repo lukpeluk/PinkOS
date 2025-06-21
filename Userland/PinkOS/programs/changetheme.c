@@ -4,7 +4,7 @@
 #include <colors.h>
 
 
-void change_theme_main(unsigned char *args){
+void change_theme_main(char *args){
     if (ColorSchema == &PinkOSColors) {
         ColorSchema = &PinkOSMockupColors;
     } else {

@@ -185,7 +185,7 @@ uint32_t rickroll_frame_07[RICK_ROLL_WIDTH * RICK_ROLL_HEIGHT] = {
     0xFF828C97, 0xFF818B97, 0xFF848B96, 0xFF858A93, 0xFF919299, 0xFF857C8D, 0xFF312720, 0xFF292612, 0xFF1D1B03, 0xFF545044, 0xFF777071, 0xFF3C3835, 0xFF312F30, 0xFF8A838A, 0xFFA19CA7, 0xFF9999A2, 0xFF9A9AA4, 0xFF979BA6, 0xFF979AA5, 0xFF989DA5, 0xFF969DA5, 0xFF88919D,
 };
 
-uint32_t * rickroll_frames[] = {
+uint32_t (*rickroll_frames[])[RICK_ROLL_WIDTH * RICK_ROLL_HEIGHT] = {
     &rickroll_frame_01,
     &rickroll_frame_02,
     &rickroll_frame_03,
@@ -223,7 +223,7 @@ void easter_egg_main(char *args){
         c = get_char_from_stdin();
 
         // 
-        drawBitmap(rickroll_frames[frame], RICK_ROLL_WIDTH, RICK_ROLL_HEIGHT, position, scale);
+        drawBitmap((uint32_t *)rickroll_frames[frame], RICK_ROLL_WIDTH, RICK_ROLL_HEIGHT, position, scale);
         if (frame == rickroll_frame_count - 1) {
             direction = -1;
         } else if (frame == 0) {

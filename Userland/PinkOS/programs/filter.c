@@ -4,7 +4,6 @@
 
 void filter_main(char *args) {
     char buffer[BUFFER_SIZE];
-    char line_buffer[BUFFER_SIZE];
     int bytes_read;
 
     while((bytes_read = readStdin(buffer, BUFFER_SIZE)) >= 0) {

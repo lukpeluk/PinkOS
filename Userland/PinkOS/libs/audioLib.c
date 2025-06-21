@@ -1,6 +1,6 @@
 #include <libs/audioLib.h>
 #include <stdint.h>
-#include <syscalls/syscallCodes.h>
+#include <syscalls/syscall.h>
 #include <libs/stdpink.h>
 
 

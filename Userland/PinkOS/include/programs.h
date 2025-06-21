@@ -48,7 +48,7 @@ void francis_main(char *args);
 void chatgpt_main(char *args);
 void set_timezone_main(char *args);
 void apt_install_main(char *args);
-void change_theme_main(unsigned char *args);
+void change_theme_main(char *args);
 void wc_main(char *args);
 void kill_main(char *args);
 void nice_main(char *args);

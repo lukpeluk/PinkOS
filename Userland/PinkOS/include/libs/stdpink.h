@@ -437,6 +437,13 @@ void free(void * ptr);
 
 // ===== HERE =====
 
+/**
+* Converts an integer to a string
+* @param num the integer to convert
+* @return pointer to the string representation
+*/
+int atoi(const char * str);
+
 /*
  * Prints a string to the console
  * @param string the string to print
