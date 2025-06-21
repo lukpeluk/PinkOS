@@ -21,8 +21,6 @@
 #include <programManager/programManager.h>
 #include <memoryManager/memoryManager.h>
 
-#include <tests/tests.h>
-
 extern uint8_t text;
 extern uint8_t rodata;
 extern uint8_t data;
@@ -229,9 +227,9 @@ void testAudio(){
 	// sleep(1000);
 	// stop_sound();
 
-	play_audio(pinkPanther, 1, 140);
-    sleep(6000);
-    pause_audio();
+	// play_audio(pinkPanther, 1, 140);
+    // sleep(6000);
+    // pause_audio();
     // AudioState prev_audio = get_audio_state();
 
     // play_audio(testAudioNotes, 1, 60);
@@ -281,8 +279,6 @@ int main()
     init_pit();
     init_serial();
 
-    // sleep(1000);
-
     log_to_serial("I: Usa 'I:' adelante de los mensajes para que el sea informativo");
     log_to_serial("W: Usa 'W:' adelante de los mensajes para que el sea de advertencia");
     log_to_serial("E: Usa 'E:' adelante de los mensajes para que el sea un error");
@@ -290,8 +286,7 @@ int main()
 
     log_to_serial("I: PinkOS Kernel started");
 
-    ncPrint((const char *)"se llego al main\n");
-    // log_to_serial("En el main de kernel\n");
+    // ncPrint((const char *)"se llego al main\n");
     
 	initProcessState();
     initScheduler();
@@ -303,17 +298,6 @@ int main()
 	init_rtc();
 	set_timezone(-3);
     init_mouse();
-
-    // test_serial();
-
-    // log_to_serial("I: Kernel binary initialized, clearing BSS");
-    // schedulingTest("Scheduler Test");    
-
-    // log_to_serial("I: Testing audio driver");
-	// testAudio();
-    // log_to_serial("I: Audio test finished");
-
-    // ncPrint((const char *)"ya se termino todo lo de kernel, yendo a userspace\n");
 
     ((EntryPoint)PinkOSAddress)();
 
