@@ -283,7 +283,15 @@ static Program programs[] = {
         filter_main,
         0,
         "Filters the output of a program",
-        "usage: filter <program> \nFilter v1 \n Use this program to filter the output of a program. \n The program will run in a loop until it is killed."
+        "usage: filter <program> \nFilter v1 \n Use this program to filter the output of a program."
+    },
+    {
+        "printer",
+        "Printer",
+        printer_main,
+        0,
+        "Prints a couple of things to test other programs",
+        "usage: printer \nPrinter v1 \n Use this program to print a couple of things to test other programs."
     },
 
     
