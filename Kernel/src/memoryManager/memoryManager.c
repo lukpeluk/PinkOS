@@ -50,6 +50,8 @@ void free(void* ptr) {
 }
 
 void* realloc(void* ptr, size_t new_size) {
+    return NULL;
+
     if (ptr != NULL) {
         free(ptr);
     }

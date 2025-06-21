@@ -125,14 +125,14 @@ static Program programs[] = {
     //     "Resumes the current song",
     //     "usage: resume \nResume v1 \n Resumes the current song"
     // },
-    // {
-    //     "clear",
-    //     "Clear",
-    //     clear_main,
-    //     0,
-    //     "Clears the screen",
-    //     "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
-    // },
+    {
+        "clear",
+        "Clear",
+        clear_main,
+        0,
+        "Clears the screen",
+        "usage: clear \nClear v1 \n Clears the screen (you can still scroll up if you want to see the previous output)"
+    },
     {
         "ls",
         "List",
@@ -357,4 +357,10 @@ int increment_index(){
         index_to_actual_program = 0;
     }
     return index_to_actual_program;
+}
+
+void install_all_programs() {
+    for (int i = 0; i < programs_count; i++) {
+        installProgram(&(programs[i]));
+    }
 }

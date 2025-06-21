@@ -4,7 +4,7 @@
 #include <memoryManager/memoryManager.h>
 
 // Program manager configuration
-#define PROGRAM_BLOCK_SIZE 10  // Number of slots to add when expanding the array
+#define PROGRAM_BLOCK_SIZE 69  // Number of slots to add when expanding the array
 
 // Forward declarations for program main functions can be added as needed when installing programs
 
@@ -118,6 +118,7 @@ int installProgram(Program* program) {
         if (!programs) {
             programs_count = 0;
             programs_capacity = 0;
+            console_log("E: Memory allocation failed for program manager");
             return 0; // Memory allocation failed
         }
     }
@@ -125,6 +126,7 @@ int installProgram(Program* program) {
     // Check if program already exists
     for (int i = 0; i < programs_count; i++) {
         if (strcmp(programs[i].command, program->command) == 0) {
+            console_log("I: Program already exists, todo bien igual");
             return 1; // Program already exists
         }
     }
@@ -134,6 +136,7 @@ int installProgram(Program* program) {
         programs_capacity += PROGRAM_BLOCK_SIZE;
         Program* new_programs = (Program*)realloc(programs, sizeof(Program) * programs_capacity);
         if (!new_programs) {
+            console_log("E: Memory allocation failed while resizing program manager");
             return 0; // Memory allocation failed
         }
         programs = new_programs;
@@ -142,8 +145,8 @@ int installProgram(Program* program) {
     // Add the new program
     programs[programs_count] = *program;
     programs_count++;
-    // log_to_serial("I: Program installed: ");
-    // log_to_serial(program->command);
+    log_to_serial("I: Program installed: ");
+    log_to_serial(program->command);
     return 1; // Success
 }
 

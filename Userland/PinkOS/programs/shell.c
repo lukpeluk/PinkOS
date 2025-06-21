@@ -601,10 +601,13 @@ void execute_program(int input_line){
 
 	// Get the program entry point
 	Program *program1 = get_program_entry(command1);
-	int installed = installProgram(program1); // install the program if it was not installed yet
+	// int installed = installProgram(program1); // install the program if it was not installed yet
+
+	log_to_serial("I: Executing program: ");
+	log_to_serial(program1->command);
 
 	// if the program is not found, print an error message
-	if (program1 == 0 || !installed) {
+	if (program1 == 0) {
 		// "Command not found"
 		add_str_to_stdout((char *)command_not_found_msg);
 		newPrompt();
@@ -616,9 +619,9 @@ void execute_program(int input_line){
 		int nohup2 = parse_command(input_line, piped_program_index+1, command2, args2);
 
 		Program * program2 = get_program_entry(command2);
-		installed = installProgram(program2); // install the program if it was not installed yet
+		// installed = installProgram(program2); // install the program if it was not installed yet
 
-		if (program2 == 0 || !installed) {
+		if (program2 == 0) {
 			add_str_to_stdout((char *)command_not_found_msg);
 			newPrompt();
 			return;
@@ -1010,6 +1013,8 @@ void home_screen()
 
 void shell_main(char *args)
 {
+	log_to_serial("PinkOS shell started");
+
 	ShellContext * shell_context = (ShellContext *)malloc(sizeof(ShellContext));
 	if(shell_context == NULL) {
 		log_to_serial("E: Failed to allocate memory for shell context");
@@ -1033,8 +1038,9 @@ void shell_main(char *args)
 		return;
 	}
 
+	// Installs all programs to make them available in the shell
+	install_all_programs();
 
-	log_to_serial("PinkOS shell started");
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 
 	home_screen();

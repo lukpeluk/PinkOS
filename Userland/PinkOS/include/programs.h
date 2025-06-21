@@ -17,6 +17,7 @@ typedef void (*ProgramEntry)(char*);
 // } Program;
 
 Program* get_program_entry(const char* name);
+void install_all_programs();
 
 char * get_name();
 char * get_command();
