@@ -6,6 +6,14 @@
 // RUNNABLE PROGRAMS
 static Program programs[] = {
     {
+        "first_steps",
+        "First Steps",
+        first_steps_main,
+        0,
+        "A short tutorial.",
+        "usage: first_steps \nFirst Steps v1 \n A short tutorial to help you get started with PinkOS. \n It will show you some shortcuts and tips to use the system."
+    },
+    {
         "shell", 
         "PinkOS Shell", 
         shell_main, 
