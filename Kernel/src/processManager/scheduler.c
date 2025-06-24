@@ -232,7 +232,10 @@ Process * getAllProcesses(int *count) {
     *count = processCount; 
 
     Process * processes = (Process *)malloc(sizeof(Process) * processCount);
-    if(processes == NULL) return NULL; // Error al alocar memoria
+    if(processes == NULL){
+        console_log("E: getAllProcesses: Error al alocar memoria para la lista de procesos");
+        return NULL; // Error al alocar memoria
+    }
 
     ProcessControlBlock * current = processList;
     uint32_t index = 0;

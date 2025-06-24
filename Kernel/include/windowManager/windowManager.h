@@ -1,4 +1,3 @@
-
 #include <stdint.h>
 #include <processManager/scheduler.h>
 
@@ -60,5 +59,61 @@ int switchToWindow(Pid pid);
 Pid * getWindows();
 
 void setRedrawFlag(Pid pid, int redraw);
+
+// WINDOW SWITCHER FUNCTIONALITY
+
+/** 
+ * Initializes the window switcher (call when Alt+Tab is pressed)
+ * Activates the overlay and sets up navigation state
+ */
+void initWindowSwitcher();
+
+/** 
+ * Navigate to next window in the switcher
+ */
+void windowSwitcherNext();
+
+/** 
+ * Navigate to previous window in the switcher
+ */
+void windowSwitcherPrev();
+
+/** 
+ * Confirm the currently selected window and close switcher
+ */
+void windowSwitcherConfirm();
+
+/** 
+ * Cancel window switcher without switching windows
+ */
+void windowSwitcherCancel();
+
+/** 
+ * Check if window switcher is currently active
+ * @return 1 if active, 0 if not
+ */
+int isWindowSwitcherActive();
+
+/** 
+ * Get the currently selected window index in the switcher
+ * @return Index of selected window, or -1 if switcher not active
+ */
+int getSelectedWindowIndex();
+
+/**
+ * Draw the window switcher overlay (internal function used by videoDriver)
+ * @param overlay_buffer The overlay buffer to draw into
+ */
+void windowManagerDrawOverlay(uint8_t * overlay_buffer);
+
+/**
+ * Switch to next window without showing overlay (direct Alt+Tab)
+ */
+void switchToNextWindow();
+
+/**
+ * Switch to previous window without showing overlay (direct Alt+Shift+Tab)
+ */
+void switchToPrevWindow();
 
 

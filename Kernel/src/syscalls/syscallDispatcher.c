@@ -165,11 +165,11 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * -> Tarea de quien la llame liberar la memoria (todo: allocar a nombre del proceso)
 
                 VALIDATE_PERMISSIONS(MANAGE_PROCESSES_PERMISSION);
-                Process * processes = getAllProcesses((int *)arg1);
+                Process * processes = getAllProcesses((int *)arg2);
                 if (processes == NULL) {
                     return 0;
                 }
-                return (uint64_t)processes;
+                *((Program**)arg1) = processes; // Deja la lista de procesos en el primer argumento
             }
             break;
         case GET_GROUP_MAIN_PID_SYSCALL:

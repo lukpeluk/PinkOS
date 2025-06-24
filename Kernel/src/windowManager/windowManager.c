@@ -1,4 +1,3 @@
-
 #include <windowManager/windowManager.h>
 #include <drivers/videoDriver.h>
 #include <drivers/serialDriver.h>
@@ -17,6 +16,14 @@ typedef struct WindowControlBlock {
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
 static uint8_t *overlayBuffer;   
 static int overlay_enabled = 0; // Si está habilitado el overlay, esto es por optimización, si todo el tiempo copiábamos el overlay el video driver iba medio lento
+
+// ===================== WINDOW SWITCHER FUNCTIONALITY =====================
+
+// Static variables for window switcher state
+static int window_switcher_active = 0;
+static int selected_window_index = 0;
+static Pid *cached_windows = NULL;
+static int cached_window_count = 0;
 
 void initWindowManager(){
     overlayBuffer = createVideoBuffer();
@@ -217,4 +224,337 @@ void setRedrawFlag(Pid pid, int redraw){
         return; // No se encontró la ventana con el PID especificado
     }
     windowBlock->redraw = redraw; // Actualizar el flag de redibujado
+}
+
+void initWindowSwitcher() {
+    // Don't activate if no windows available
+    cached_windows = getWindows();
+    if (cached_windows == NULL) {
+        cached_window_count = 0;
+        return;
+    }
+    
+    // Count windows
+    cached_window_count = 0;
+    while (cached_windows[cached_window_count] != 0) {
+        cached_window_count++;
+    }
+    
+    if (cached_window_count == 0) {
+        // Not enough windows to switch, free memory and return
+        free(cached_windows);
+        cached_windows = NULL;
+        cached_window_count = 0;
+        return;
+    }
+    
+    // Activate switcher
+    window_switcher_active = 1;
+    selected_window_index = 0;
+    
+    // Find currently focused window and set it as selected
+    Pid focused = getFocusedWindow();
+    for (int i = 0; i < cached_window_count; i++) {
+        if (cached_windows[i] == focused) {
+            selected_window_index = i;
+            break;
+        }
+    }
+    
+    // Enable overlay to show switcher
+    if (!overlay_enabled) {
+        toggleOverlay();
+    }
+    
+    console_log("Window switcher activated with %d windows", cached_window_count);
+}
+
+void windowSwitcherNext() {
+    if (!window_switcher_active || cached_window_count == 0) {
+        return;
+    }
+    
+    selected_window_index = (selected_window_index + 1) % cached_window_count;
+    console_log("Window switcher: next -> index %d", selected_window_index);
+}
+
+void windowSwitcherPrev() {
+    if (!window_switcher_active || cached_window_count == 0) {
+        return;
+    }
+    
+    selected_window_index = (selected_window_index - 1 + cached_window_count) % cached_window_count;
+    console_log("Window switcher: prev -> index %d", selected_window_index);
+}
+
+void windowSwitcherConfirm() {
+    if (!window_switcher_active || cached_window_count == 0) {
+        windowSwitcherCancel();
+        return;
+    }
+    
+    // Switch to selected window
+    Pid selected_pid = cached_windows[selected_window_index];
+    switchToWindow(selected_pid);
+    
+    console_log("Window switcher: confirmed switch to PID %d", selected_pid);
+    
+    // Clean up and deactivate
+    window_switcher_active = 0;
+    if (cached_windows != NULL) {
+        free(cached_windows);
+        cached_windows = NULL;
+    }
+    cached_window_count = 0;
+    selected_window_index = 0;
+    
+    // Disable overlay
+    if (overlay_enabled) {
+        toggleOverlay();
+    }
+}
+
+void windowSwitcherCancel() {
+    if (!window_switcher_active) {
+        return;
+    }
+    
+    log_to_serial("Window switcher: cancelled");
+    
+    // Clean up and deactivate without switching
+    window_switcher_active = 0;
+    if (cached_windows != NULL) {
+        free(cached_windows);
+        cached_windows = NULL;
+    }
+    cached_window_count = 0;
+    selected_window_index = 0;
+    
+    // Disable overlay
+    if (overlay_enabled) {
+        toggleOverlay();
+    }
+}
+
+int isWindowSwitcherActive() {
+    return window_switcher_active;
+}
+
+int getSelectedWindowIndex() {
+    if (!window_switcher_active) {
+        return -1;
+    }
+    return selected_window_index;
+}
+
+void windowManagerDrawOverlay(uint8_t * overlay_buffer) {
+    // Only draw if window switcher is active
+    if (!window_switcher_active) {
+        return;
+    }
+    
+    // Clear the overlay buffer
+    memset(overlay_buffer, 0, getScreenWidth() * getScreenHeight() * 3); // Assuming 24-bit color
+    
+    uint64_t screen_width = getScreenWidth();
+    uint64_t screen_height = getScreenHeight();
+    
+    if (cached_windows == NULL || cached_window_count == 0) {
+        drawStringAt(overlay_buffer, "No windows available", 0xFFFFFF, 0x000000, 
+                    &(Point){screen_width / 2 - 80, screen_height / 2});
+        return;
+    }
+    
+    // Calculate layout for window previews
+    uint64_t preview_width = 200;
+    uint64_t preview_height = 150;
+    uint64_t spacing = 20;
+    uint64_t total_width = (preview_width * cached_window_count) + (spacing * (cached_window_count - 1));
+    
+    // Center the layout on screen
+    uint64_t start_x = (screen_width - total_width) / 2;
+    uint64_t start_y = (screen_height - preview_height) / 2;
+    
+    // Draw background panel
+    uint64_t panel_padding = 30;
+    drawRectangle(overlay_buffer, 
+                 &(Point){start_x - panel_padding, start_y - panel_padding}, 
+                 &(Point){start_x + total_width + panel_padding, start_y + preview_height + panel_padding + 60}, 
+                 0x2A2A2A);
+    drawRectangleBoder(overlay_buffer, 
+                      &(Point){start_x - panel_padding, start_y - panel_padding}, 
+                      &(Point){start_x + total_width + panel_padding, start_y + preview_height + panel_padding + 60}, 
+                      2, 0x555555);
+    
+    // Draw each window preview
+    for (int i = 0; i < cached_window_count; i++) {
+        Pid current_pid = cached_windows[i];
+        uint8_t * window_buffer = getBufferByPID(current_pid);
+        
+        uint64_t preview_x = start_x + i * (preview_width + spacing);
+        uint64_t preview_y = start_y;
+        
+        // Highlight selected window
+        int is_selected = (i == selected_window_index);
+        uint32_t border_color = is_selected ? 0x00AAFF : 0x666666;
+        uint32_t border_thickness = is_selected ? 4 : 1;
+        uint32_t bg_color = is_selected ? 0x2A2A3A : 0x1A1A1A;
+        
+        // Draw preview background
+        drawRectangle(overlay_buffer, 
+                     &(Point){preview_x, preview_y}, 
+                     &(Point){preview_x + preview_width, preview_y + preview_height}, 
+                     bg_color);
+        
+        // Draw simplified window content if buffer is available
+        if (window_buffer != NULL) {
+            uint64_t scale_x = screen_width / preview_width;
+            uint64_t scale_y = screen_height / preview_height;
+            
+            for (uint64_t py = 0; py < preview_height; py++) {
+                for (uint64_t px = 0; px < preview_width; px++) {
+                    uint64_t src_x = px * scale_x;
+                    uint64_t src_y = py * scale_y;
+                    
+                    if (src_x < screen_width && src_y < screen_height) {
+                        uint64_t src_offset = (src_x * 3) + (src_y * screen_width * 3); // Assuming 24-bit color
+                        uint32_t pixel = *(uint32_t *)(window_buffer + src_offset) & 0x00FFFFFF;
+                        if (pixel == 0x000000) pixel = 0x010101; // Replace transparent pixels with a light gray for visibility
+                        putPixel(overlay_buffer, pixel, preview_x + px, preview_y + py);
+                    }
+                }
+            }
+        } else {
+            drawStringAt(overlay_buffer, "No preview", 0xFFFFFF, 0x000000, 
+                        &(Point){preview_x + 50, preview_y + 70});
+        }
+        
+        // Draw border around preview
+        drawRectangleBoder(overlay_buffer, 
+                          &(Point){preview_x, preview_y}, 
+                          &(Point){preview_x + preview_width, preview_y + preview_height}, 
+                          border_thickness, border_color);
+        
+        // Draw PID label below preview
+        char pid_label[20];
+        int pid_int = (int)current_pid;
+        int label_len = 0;
+        if (pid_int == 0) {
+            pid_label[0] = '0';
+            label_len = 1;
+        } else {
+            int temp = pid_int;
+            while (temp > 0) {
+                temp /= 10;
+                label_len++;
+            }
+            for (int j = label_len - 1; j >= 0; j--) {
+                pid_label[j] = (pid_int % 10) + '0';
+                pid_int /= 10;
+            }
+        }
+        pid_label[label_len] = '\0';
+        
+        uint32_t label_color = is_selected ? 0xFFFFFF : 0xCCCCCC;
+        uint32_t muted_label_color = is_selected ? 0xAAAAAA : 0x888888;
+        drawStringAt(overlay_buffer, "PID: ", muted_label_color, 0x2A2A2A, 
+                    &(Point){preview_x + 10, preview_y + preview_height + 10});
+        drawStringAt(overlay_buffer, pid_label, muted_label_color, 0x2A2A2A, 
+                    &(Point){preview_x + 60, preview_y + preview_height + 10});
+
+        // Draw program name below PID
+        Process process = getProcess(current_pid);
+        char * program_name = process.program.name;
+        if (program_name == NULL || strlen(program_name) == 0) {
+            program_name = "Unknown";
+        }
+        uint64_t name_length = strlen(program_name) * getCharWidth();
+        // Start position same as PID label,left aligned
+        Point name_position = {preview_x + 10, preview_y + preview_height + 30};
+        drawStringAt(overlay_buffer, program_name, label_color, 0x2A2A2A, 
+                    &name_position);
+    }
+    // Center in x axis
+    char * bottom_text = "Alt+Tab: Navigate  Alt+Shift+Tab: Back  Esc: Cancel";
+    uint64_t text_length = strlen(bottom_text) * getCharWidth();
+    Point text_position = {screen_width / 2 - text_length / 2, screen_height - 64};
+    Point rect_start = {text_position.x - 10, text_position.y - 10};
+    Point rect_end = {text_position.x + text_length + 10, text_position.y + 10 + getCharHeight()};
+    // Draw instructions centered at bottom of screen
+    drawRectangle(overlay_buffer, &rect_start, &rect_end, 0x2A2A2A);
+    drawStringAt(overlay_buffer, bottom_text, 0xAAAAAA, 0x2A2A2A, 
+                &text_position);
+                
+}
+
+// Function to switch to next window without showing overlay (direct Alt+Tab)
+void switchToNextWindow() {
+    Pid * windows = getWindows();
+    if (windows == NULL) {
+        return;
+    }
+    
+    // Count windows
+    int window_count = 0;
+    while (windows[window_count] != 0) {
+        window_count++;
+    }
+    
+    if (window_count <= 1) {
+        free(windows);
+        return; // Not enough windows to switch
+    }
+    
+    // Find currently focused window
+    Pid focused = getFocusedWindow();
+    int current_index = 0;
+    for (int i = 0; i < window_count; i++) {
+        if (windows[i] == focused) {
+            current_index = i;
+            break;
+        }
+    }
+    
+    // Switch to next window
+    int next_index = (current_index + 1) % window_count;
+    switchToWindow(windows[next_index]);
+    
+    console_log("Direct switch to next window PID %d", windows[next_index]);
+    free(windows);
+}
+
+// Function to switch to previous window without showing overlay (direct Alt+Shift+Tab)
+void switchToPrevWindow() {
+    Pid * windows = getWindows();
+    if (windows == NULL) {
+        return;
+    }
+    
+    // Count windows
+    int window_count = 0;
+    while (windows[window_count] != 0) {
+        window_count++;
+    }
+    
+    if (window_count <= 1) {
+        free(windows);
+        return; // Not enough windows to switch
+    }
+    
+    // Find currently focused window
+    Pid focused = getFocusedWindow();
+    int current_index = 0;
+    for (int i = 0; i < window_count; i++) {
+        if (windows[i] == focused) {
+            current_index = i;
+            break;
+        }
+    }
+    
+    // Switch to previous window
+    int prev_index = (current_index - 1 + window_count) % window_count;
+    switchToWindow(windows[prev_index]);
+    
+    console_log("Direct switch to prev window PID %d", windows[prev_index]);
+    free(windows);
 }

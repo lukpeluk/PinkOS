@@ -66,9 +66,10 @@ void initVideoDriver() {
 	}
 }
 
+
 void overlayTest(uint8_t * overlay_buffer) {
-	static Point position = {0, 0}; // Cursor position in the video buffer
-	position.x += 5; // Reset position to the start of the buffer
+    static Point position = {0, 0};
+	position.x += 5;
 	position.y += 5;
 
 	if(position.x >= VBE_mode_info->width) {
@@ -81,6 +82,13 @@ void overlayTest(uint8_t * overlay_buffer) {
 	drawStringAt(overlay_buffer, "Francis te AMO <3", 0xFF0000, 0x00000000, &position);
 }
 
+
+void PnomeOverlay(uint8_t * overlay_buffer) {
+	if (!isWindowSwitcherActive()) {
+        return; // Don't draw anything if switcher is not active
+    }
+    windowManagerDrawOverlay(overlay_buffer);
+}
 
 void videoLoop() {
 	// static uint64_t frames_drawn = 0; // Contador de frames dibujados
@@ -104,12 +112,10 @@ void videoLoop() {
 
 	// Optimización: si el overlay buffer no está habilidado directamente copio el focused buffer
 	if(overlay_buffer == NULL) {
-		// toggleOverlay();
 		lightspeed_memcpy((void*)VBE_mode_info->framebuffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 		return;
 	}
-
-	overlayTest(overlay_buffer);
+	PnomeOverlay(overlay_buffer);
 
 	lightspeed_memcpy(staging_buffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 

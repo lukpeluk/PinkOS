@@ -27,6 +27,7 @@ void timer_handler() {
 	handleSleep(milliseconds_elapsed()); // Handle sleep events based on the elapsed time
 	
 	// audioLoop(); // Call the audio driver main loop to update the audio stream
+	checkOverlayDelay();
 	videoLoop(); // Call the video driver main loop to update the video buffer
 	schedulerLoop(); // Call the scheduler to switch processes if needed
 }

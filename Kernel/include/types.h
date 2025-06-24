@@ -57,6 +57,7 @@ typedef void (*ProgramEntry)(char*);
 
 #define SMALL_TEXT_SIZE 64
 #define MEDIUM_TEXT_SIZE 256
+#define LARGE_TEXT_SIZE 1024
 
 typedef struct IO_Files {
     uint64_t stdin;  // Entrada estándar del proceso
@@ -76,11 +77,12 @@ typedef struct {
 typedef struct {
     char command[SMALL_TEXT_SIZE];
     char name[SMALL_TEXT_SIZE];
+    
     ProgramEntry entry;
     uint32_t permissions;
     char help[MEDIUM_TEXT_SIZE];  // A very brief description
-    // char* description;  // All the information about the command (deprecated by the man page file)
-    uint64_t man_page; // A publically readable but unmodifiable file with the program's manual
+    char description[LARGE_TEXT_SIZE];  // All the information about the command (deprecated by the man page file)
+    // uint64_t man_page; // A publically readable but unmodifiable file with the program's manual
 } Program;
 
 // typedef struct {
