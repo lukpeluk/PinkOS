@@ -3,6 +3,7 @@
 
 extern char getKeyCode();
 
+#define ACCENT_SCANCODE 0x28
 #define BUFFER_SIZE 10
 #define PRESSED_KEYS_CACHE_SIZE 6
 
@@ -22,6 +23,7 @@ int bufferWriteIndex = 0;
 static int shift_pressed = 0;
 static int altgr_pressed = 0;
 static int caps_lock = 0;
+static int accent_pressed = 0; // usado para que la siguiente letra se tome como acentuada (capaz también podríamos hacer que consonantes se vuelvan acciones especiales)
 
 static int handling_special_scancode = 0; // indicates if a scancode is one of the special ones, that use two interrupts
 
@@ -38,6 +40,15 @@ KeyboardEvent processScancode(char scancode) {
 
     if(c == 0xE0) {
         handling_special_scancode = 1;
+        return (KeyboardEvent) {0};
+    }
+
+    // Maneja el caso del acento (se ignora soltar acento)
+    if (!handling_special_scancode && c == ACCENT_SCANCODE) {
+        accent_pressed = !accent_pressed;
+        return (KeyboardEvent) {0};
+    }
+    if(!handling_special_scancode && c == ACCENT_SCANCODE + 0x80) {
         return (KeyboardEvent) {0};
     }
 
@@ -118,9 +129,9 @@ int set_key(char scan_code, char is_special) {
 
     // Flags for modifier keys
     if(!is_special){
-        shift_pressed = scan_code == 0x2A ? 1 : shift_pressed;
+        shift_pressed = scan_code == 0x2A || scan_code == 0x36 ? 1 : shift_pressed;
         altgr_pressed = scan_code == 0x38 ? 1 : altgr_pressed;
-        caps_lock = scan_code == 0x3A ? 1 : caps_lock;
+        caps_lock = scan_code == 0x3A ? !caps_lock : caps_lock;
     }
 
     int avaliable_slot = -1;
@@ -149,9 +160,8 @@ void release_key(char scan_code, char is_special) {
 
     // Flags for modifier keys
     if(!is_special){
-        shift_pressed = scan_code == 0x2A ? 0 : shift_pressed;
+        shift_pressed = scan_code == 0x2A || scan_code == 0x36 ? 0 : shift_pressed;
         altgr_pressed = scan_code == 0x38 ? 0 : altgr_pressed;
-        caps_lock = scan_code == 0x3A ? 0 : caps_lock;
     }
 
     for(int i = 0; i < PRESSED_KEYS_CACHE_SIZE; i++) {
@@ -421,6 +431,48 @@ char keycodeToAscii(char keycode) {
     }
     if (ascii == ASCII_NUL) {
         ascii = base_layer[(unsigned char) keycode];
+    }
+
+    if(accent_pressed && ascii != ASCII_NUL) {
+        switch (ascii){
+            case 'a':
+                ascii = 0xE1; // á
+                break;
+            case 'e':
+                ascii = 0xE9; // é
+                break;
+            case 'i':
+                ascii = 0xED; // í
+                break;
+            case 'o':
+                ascii = 0xF3; // ó
+                break;
+            case 'u':
+                ascii = 0xFA; // ú
+                break;
+            case 'n':
+                ascii = 0xF1; // ñ
+                break;
+            case 'A':
+                ascii = 0xC1; // Á
+                break;
+            case 'E':
+                ascii = 0xC9; // É
+                break;
+            case 'I':
+                ascii = 0xCD; // Í
+                break;
+            case 'O':
+                ascii = 0xD3; // Ó
+                break;
+            case 'U':       
+                ascii = 0xDA; // Ú
+                break;
+            case 'N':
+                ascii = 0xD1; // Ñ
+                break;
+        }
+        accent_pressed = 0; // Reset accent pressed state
     }
     return ascii;
 }
