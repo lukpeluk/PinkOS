@@ -14,6 +14,14 @@ static Program programs[] = {
         "usage: first_steps \nFirst Steps v1 \n A short tutorial to help you get started with PinkOS. \n It will show you some shortcuts and tips to use the system."
     },
     {
+        "help",
+        "Help",
+        help_main,
+        0,
+        "Prints the help menu",
+        "usage: help \nHelp v1 \n Prints the help menu"
+    },
+    {
         "shell", 
         "PinkOS Shell", 
         shell_main, 
@@ -70,14 +78,6 @@ static Program programs[] = {
         "usage: time \nTime v1 \n Prints the current time"
     },
     {
-        "help",
-        "Help",
-        help_main,
-        0,
-        "Prints the help menu",
-        "usage: help \nHelp v1 \n Prints the help menu"
-    },
-    {
         "man",
         "MAN",
         man_main,
@@ -92,6 +92,14 @@ static Program programs[] = {
         MANAGE_PROCESSES_PERMISSION,
         "Prints the list of running processes",
         "usage: ps \nPS v1 \n Prints the list of running processes"
+    },
+    {
+        "scancode",
+        "Scancode printer",
+        scancode_printer_main,
+        0,
+        "Prints the scancode of the pressed keys",
+        "usage: scancode \nScancode printer v1 \n Prints the scancode and some extra information of the pressed keys."
     },
     {
         "snake",

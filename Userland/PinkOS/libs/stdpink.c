@@ -377,6 +377,34 @@ char * uint64_to_string(uint64_t num) {
     return &buffer[i + 1];
 }
 
+// Convert uint64_t to hexadecimal string
+char * uint64_to_hex_string(uint64_t num, int uppercase) {
+    static char buffer[17]; // 16 hex digits + null terminator for 64-bit
+    buffer[16] = '\0';
+    int i = 15;
+    
+    if (num == 0) {
+        buffer[i--] = '0';
+        return &buffer[i + 1];
+    }
+    
+    char hex_chars_lower[] = "0123456789abcdef";
+    char hex_chars_upper[] = "0123456789ABCDEF";
+    char *hex_chars = uppercase ? hex_chars_upper : hex_chars_lower;
+    
+    while (num > 0) {
+        buffer[i--] = hex_chars[num % 16];
+        num /= 16;
+    }
+    
+    return &buffer[i + 1];
+}
+
+// Convert pointer to hexadecimal string (without 0x prefix)
+char * pointer_to_hex_string(void* ptr) {
+    return uint64_to_hex_string((uint64_t)ptr, 0); // lowercase by default
+}
+
 // Convert string to int (similar to atoi)
 int string_to_int(const char * str) {
     int result = 0;
@@ -483,6 +511,25 @@ void printf(char * format, ...) {
         if (*str == '%') {
             str++;
             switch (*str) {
+                case 'x': {
+                    uint64_t num = va_arg(args, uint64_t);
+                    char * hex_str = uint64_to_hex_string(num, 0); // lowercase
+                    writeStdout(hex_str, strlen(hex_str));
+                    break;
+                }
+                case 'X': {
+                    uint64_t num = va_arg(args, uint64_t);
+                    char * hex_str = uint64_to_hex_string(num, 1); // uppercase
+                    writeStdout(hex_str, strlen(hex_str));
+                    break;
+                }
+                case 'p': {
+                    void* ptr = va_arg(args, void*);
+                    char * hex_str = pointer_to_hex_string(ptr);
+                    writeStdout("0x", 2);
+                    writeStdout(hex_str, strlen(hex_str));
+                    break;
+                }
                 case 'd': {
                     int num = va_arg(args, int);
                     char * num_str = num_to_string(num);

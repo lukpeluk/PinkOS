@@ -63,5 +63,6 @@ void phylo_main(char *args);
 void filter_main(char *args);
 void printer_main(char *args);
 void first_steps_main(char *args);
+void scancode_printer_main(char *args);
 
 #endif
