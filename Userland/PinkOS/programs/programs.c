@@ -173,30 +173,30 @@ static Program programs[] = {
     //     "Mandate mensajitos con el puerto serial",
     //     "usage: whatsapp \nWhatsapp v1 \n Use this program to chat with your friends via serial port."
     // },
-    // {
-    //     "francis",
-    //     "Francis",
-    //     francis_main,
-    //     MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
-    //     "LO AMO",
-    //     "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
-    // },
-    // {
-    //     "pietra",
-    //     "Pietra",
-    //     pietra_main,
-    //     MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
-    //     "Dibujar un bitmap",
-    //     "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
-    // },
-    // {
-    //     "chatgpt",
-    //     "ChatGPT",
-    //     chatgpt_main,
-    //     MAKE_ETHEREAL_REQUEST_PERMISSION,
-    //     "Chat with GPT-3",
-    //     "usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
-    // },
+    {
+        "francis",
+        "Francis",
+        francis_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
+        "LO AMO",
+        "usage: francis \nFrancis v1 \n Use this program to see the love of your life."
+    },
+    {
+        "pietra",
+        "Pietra",
+        pietra_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION | DRAWING_PERMISSION,
+        "Dibujar un bitmap",
+        "usage: pietra \nPietra v1 \n Use this program to draw a bitmap on the screen."
+    },
+    {
+        "chatgpt",
+        "ChatGPT",
+        chatgpt_main,
+        MAKE_ETHEREAL_REQUEST_PERMISSION,
+        "Chat with GPT-3",
+        "usage: chatgpt \nChatGPT v1 \n Use this program to chat with GPT-3."
+    },
     {
         "set_timezone",
         "Set Timezone",
