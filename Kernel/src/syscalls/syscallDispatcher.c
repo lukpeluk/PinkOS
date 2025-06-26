@@ -119,6 +119,19 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             VALIDATE_PROCESS_PERMISSIONS(arg1);
             return changePriority((Pid)arg1, (Priority)arg2) == 0;
             break;
+
+        case DETACH_PROCESS_SYSCALL:
+            // * Orden syscall: pid del proceso a desvincular
+            // * retorna 0 si error
+
+            // Desvincula el proceso del shell, lo vuelve nohup
+            VALIDATE_PROCESS_PERMISSIONS(arg1);  // Solo alguien de su grupo o con permisos globales puede desvincular un proceso
+
+            // Busco el main del grupo porque un thread no puede desvincularse, se desvincula el proceso principal del grupo
+            Pid process = getProcessGroupMain((Pid)arg1);
+
+            return detachProcess((Pid)arg1) == 0;
+            break;
         
         // SCHEDULING
         case YIELD_SYSCALL:
@@ -404,9 +417,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
         
         // PROGRAM MANAGER
         case GET_PROGRAM_SYSCALL:
-            // VALIDATE_PERMISSIONS(GET_PROGRAM_PERMISSION);
             {
-
                 Program* program = getProgramByCommand((char *)arg1);
                 if (program == NULL) {
                     // Program not found, return 0
@@ -417,7 +428,6 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             }
             break;
         case GET_PROGRAM_LIST_SYSCALL:
-            // VALIDATE_PERMISSIONS(GET_PROGRAM_LIST_PERMISSION);
             // Devuelve el puntero a la lista de programas y deja en arg1 la cantidad de programas
             {
                 Program* programs = getAllPrograms();
@@ -427,7 +437,6 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             }
             break;
         case SEARCH_PROGRAM_SYSCALL:
-            // VALIDATE_PERMISSIONS(SEARCH_PROGRAM_PERMISSION);
             {
                 Program* program = searchProgramByPrefix((char *)arg1);
                 if (program == NULL) {
@@ -441,14 +450,14 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // * orden syscall: puntero a un struct Program con la info del programa a instalar
             // * retorna 0 si hubo error, 1 si éxito (el programa se instaló o ya estaba instalado)
 
-            // VALIDATE_PERMISSIONS(INSTALL_PROGRAM_PERMISSION);
+            VALIDATE_PERMISSIONS(INSTALL_PROGRAM_PERMISSION);
             {
                 Program * program = (Program *)arg1;
                 return installProgram(program); 
             }
             break;
         case UNINSTALL_PROGRAM_SYSCALL:
-            // VALIDATE_PERMISSIONS(UNINSTALL_PROGRAM_PERMISSION);
+            VALIDATE_PERMISSIONS(INSTALL_PROGRAM_PERMISSION);
             {
                 const char * command = (const char *)arg1;
                 return uninstallProgramByCommand(command);

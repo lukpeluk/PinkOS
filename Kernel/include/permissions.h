@@ -7,6 +7,7 @@
 #define MANAGE_PROCESSES_PERMISSION         0b10000000000000000000000000000000 
 #define MANAGE_FILES_PERMISSION             0b01000000000000000000000000000000 
 #define MANAGE_WINDOWS_PERMISSION           0b00100000000000000000000000000000
+#define INSTALL_PROGRAM_PERMISSION          0b00010000000000000000000000000000
 //                                                   .
 //                                                   .
 // GUI Permissions 0x00000001 - 0x0000000F           .                    [  ]

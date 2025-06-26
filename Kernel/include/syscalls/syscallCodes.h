@@ -15,6 +15,7 @@
 #define QUIT_SYSCALL 2
 #define KILL_PROCESS_SYSCALL 3
 #define CHANGE_PRIORITY_SYSCALL 4 // Cambia la prioridad de un proceso
+#define DETACH_PROCESS_SYSCALL 5 // Desvincula un proceso de su shell (lo vuelve nohup)
 
 #define YIELD_SYSCALL 10 // Renunciar a la CPU, para que el scheduler pueda elegir otro proceso
 #define SET_WAITING_SYSCALL 11 // Pone al proceso en estado de espera, para que no consuma CPU

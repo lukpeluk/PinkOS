@@ -308,6 +308,27 @@ Pid getProcessGroupMain(Pid pid) {
     return pcb->process.type == PROCESS_TYPE_THREAD ? pcb->parent->process.pid : pcb->process.pid; // Si es un thread, devolver el PID del proceso main, si no, devolver el PID del mismo proceso
 }
 
+int detachProcess(Pid pid){
+    ProcessControlBlock *pcb = getProcessControlBlock(pid);
+    if (pcb == NULL) {
+        log_to_serial("E: detachProcess: Proceso no encontrado");
+        return -1; // Proceso no encontrado
+    }
+    if (pcb->process.type == PROCESS_TYPE_THREAD) {
+        log_to_serial("E: detachProcess: No se puede desvincular un thread, solo un proceso main");
+        return -1; // No se puede desvincular un thread
+    }
+
+    // Nohup/detached es ser hijo de init
+    ProcessControlBlock *init = getProcessControlBlock(1);
+    if(init == NULL) {
+        log_to_serial("E: detachProcess: Proceso init no encontrado (what the fuck?)");
+        return -1;
+    }
+    pcb->parent = init;
+    return 0;
+}
+
 // Devuelve si un proceso dado es descendiente de otro proceso (o sea, si es hijo, hijo de un hijo, thread de un hijo, etc.)
 // Si el proceso es el mismo devuelve 1 (se toma como que un proceso siempre es descendiente de sí mismo)
 int isDescendantOf(Pid child_pid, Pid parent_pid) {
