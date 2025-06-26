@@ -104,7 +104,7 @@ int getSelectedWindowIndex();
  * Draw the window switcher overlay (internal function used by videoDriver)
  * @param overlay_buffer The overlay buffer to draw into
  */
-void windowManagerDrawOverlay(uint8_t * overlay_buffer);
+void windowManagerDrawOverlay();
 
 /**
  * Switch to next window without showing overlay (direct Alt+Tab)

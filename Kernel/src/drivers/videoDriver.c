@@ -83,13 +83,6 @@ void overlayTest(uint8_t * overlay_buffer) {
 }
 
 
-void PnomeOverlay(uint8_t * overlay_buffer) {
-	if (!isWindowSwitcherActive()) {
-        return; // Don't draw anything if switcher is not active
-    }
-    windowManagerDrawOverlay(overlay_buffer);
-}
-
 void videoLoop() {
 	// static uint64_t frames_drawn = 0; // Contador de frames dibujados
 
@@ -115,7 +108,8 @@ void videoLoop() {
 		lightspeed_memcpy((void*)VBE_mode_info->framebuffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 		return;
 	}
-	PnomeOverlay(overlay_buffer);
+
+    windowManagerDrawOverlay(); // Esto es para que el alt+tab se refresque en tiempo real en cada frame (medio overkill pero queda fachero)
 
 	lightspeed_memcpy(staging_buffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 

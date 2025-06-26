@@ -14,7 +14,7 @@ typedef struct WindowControlBlock {
 } WindowControlBlock;
 
 static WindowControlBlock *focusedWindow = NULL;  // Proceso actualmente en ejecución
-static uint8_t *overlayBuffer;   
+static uint8_t *overlay_buffer;   
 static int overlay_enabled = 0; // Si está habilitado el overlay, esto es por optimización, si todo el tiempo copiábamos el overlay el video driver iba medio lento
 
 // ===================== WINDOW SWITCHER FUNCTIONALITY =====================
@@ -26,8 +26,8 @@ static Pid *cached_windows = NULL;
 static int cached_window_count = 0;
 
 void initWindowManager(){
-    overlayBuffer = createVideoBuffer();
-    // drawRectangle(overlayBuffer, (Point *) {50, 50}, (Point *) {90, 90}, 0x000000); 
+    overlay_buffer = createVideoBuffer();
+    // drawRectangle(overlay_buffer, (Point *) {50, 50}, (Point *) {90, 90}, 0x000000); 
 };
 
 Pid getFocusedWindow(){
@@ -56,7 +56,7 @@ uint8_t * getOverlayBuffer(){
     if(!overlay_enabled){
         return NULL;
     }
-    return overlayBuffer;
+    return overlay_buffer;
 }
 
 void toggleOverlay(){
@@ -347,7 +347,7 @@ int getSelectedWindowIndex() {
     return selected_window_index;
 }
 
-void windowManagerDrawOverlay(uint8_t * overlay_buffer) {
+void windowManagerDrawOverlay() {
     // Only draw if window switcher is active
     if (!window_switcher_active) {
         return;
