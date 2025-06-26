@@ -23,7 +23,7 @@ def png_to_c_bitmap(file_path):
     array_str = ",\n\t".join(", ".join(bitmap_array[i:i+width]) for i in range(0, len(bitmap_array), width))
     
     # Print the final C array code
-    print(f"// {width} by {height} px bitmap\nuint32_t bitmap[{width * height}] = {{\n\t{array_str}\n}};")
+    print(f"#include <stdint.c>\n\n// {width} by {height} px bitmap\nuint32_t bitmap[{width * height}] = {{\n\t{array_str}\n}};")
 
 
 # convert the first argument recieved to a C-style bitmap
