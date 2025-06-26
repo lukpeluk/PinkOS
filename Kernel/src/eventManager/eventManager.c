@@ -159,10 +159,6 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
         return; // Memory allocation failed
     }
 
-    if(eventId == SLEEP_EVENT) {
-        console_log("I: EventManager: Registering sleeping wait for process %d", pid);
-    }
-
     newListener->pid = pid;
     newListener->handler = NULL; // No handler for waiting events
     newListener->data = data;
@@ -207,10 +203,6 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
         }
     }
 
-    if(eventId == SLEEP_EVENT && condition_data != NULL) {
-        console_log("I: EventManager: sleep event registered successfully, setting process as waiting for %d milliseconds", ((SleepCondition*)condition_data)->millis);
-    }
-    
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 
     // log_to_serial("E: EventManager: Le chupo un webo el wait... no espero una chota");
@@ -257,14 +249,9 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
     }
     // console_log("I: EventManager: Notifying event %d", eventId);
 
-
-
     Listener* current = eventManager.events[eventId].listeners;
     Listener* previous = NULL;
     while (current != NULL) {
-        if(eventId == SLEEP_EVENT) {
-            console_log("I: Maybe notifying pid %d", current->pid);
-        }
 
         // console_log("I: EventManager: Checking listener with PID %d for event %d", current->pid, eventId);
         if (pid != 0 && !isSameProcessGroup(current->pid, pid)) {
@@ -323,10 +310,6 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
                 }
             }
         } else if (current->type == WAITING) {
-
-            if(eventId == SLEEP_EVENT)
-                console_log("I: EventManager: Waking up the process %d from sleep", current->pid);
-
             // Notify to the scheduler that the process is not waiting anymore
             // Si el proceso dejó un puntero no nulo, es para que le copie la data del evento
             if(current->data != NULL) {
@@ -335,7 +318,6 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
             wakeProcess(current->pid);
 
             if (previous == NULL) {
-                console_log("I: EventManager: Removing FIRST listener for event %d", eventId);
                 // Removing the first listener in the list
                 eventManager.events[eventId].listeners = current->next;
                 free(current->condition_data); // Free the condition data if it was allocated
@@ -344,7 +326,6 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
                 // previous sigue siendo null
                 continue; // Skip the rest of the loop to avoid double incrementing current
             } else {
-                console_log("I: EventManager: Removing listener for event %d", eventId);
                 // Removing a listener in the middle or end of the list
                 previous->next = current->next;
                 free(current->condition_data); // Free the condition data if it was allocated
@@ -357,8 +338,7 @@ void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition
         previous = current;
         current = current->next;
     }
-
-    console_log("I: EventManager: Finished notifying event %d", eventId);
+    // console_log("I: EventManager: Finished notifying event %d", eventId);
 }
 
 
@@ -405,9 +385,7 @@ void handleProcessDeath(Pid pid) {
 
 
 int filterSleepCondition(void* condition_data, void* data) {
-    console_log("I: Waiting til: %d, current millis: %d", ((SleepCondition*)condition_data)->millis, *(uint64_t*)data);
     if (condition_data == NULL || data == NULL) {
-        console_log("I: EventManager: No condition data, accepting all events");
         return 1; // No condition, accept all events
     }
     SleepCondition* condition = (SleepCondition*)condition_data;
