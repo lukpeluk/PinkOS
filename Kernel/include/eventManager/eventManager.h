@@ -30,6 +30,10 @@ typedef struct ProcessDeathCondition {
     Pid pid; // PID of the process that died
 } ProcessDeathCondition;
 
+typedef struct ProcessDetachingCondition {
+    Pid pid; // PID of the process that is being detached
+} ProcessDetachingCondition;
+
 typedef struct ExceptionCondition {
     uint64_t exception_id; // Exception ID to filter
 } ExceptionCondition;
@@ -42,6 +46,7 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
 void unregisterEventSubscription(int eventId, Pid pid);
 
 void handleProcessDeath(Pid pid);
+void handleProcessDetaching(Pid pid);
 void handleSleep(uint64_t millis);
 void handleRTCEvent(RTC_Time time);
 void handleKeyEvent(KeyboardEvent keyEvent);

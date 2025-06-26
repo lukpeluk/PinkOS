@@ -7,6 +7,8 @@
 #define PROCESS_DEATH_EVENT 3
 #define EXCEPTION_EVENT 4
 #define BROADCAST_EVENT 5
+// #define GLOBAL_KEY_EVENT 6
+#define PROCESS_DETACH_EVENT 6
 
 
 typedef struct {
@@ -46,6 +48,10 @@ typedef struct SleepCondition {
 typedef struct ProcessDeathCondition {
     Pid pid; // PID of the process that died
 } ProcessDeathCondition;
+
+typedef struct ProcessDetachingCondition {
+    Pid pid; // PID of the process that is being detached
+} ProcessDetachingCondition;
 
 typedef struct ExceptionCondition {
     uint64_t exception_id; // Exception ID to filter

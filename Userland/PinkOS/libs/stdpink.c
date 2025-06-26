@@ -102,6 +102,10 @@ void changePriority(Pid pid, Priority priority) {
     syscall(CHANGE_PRIORITY_SYSCALL, (uint64_t)pid, (uint64_t)priority, 0, 0, 0);
 }
 
+int detachProcess(Pid pid){
+    return syscall(DETACH_PROCESS_SYSCALL, (uint64_t)pid, 0, 0, 0, 0);
+}
+
 void yield() {
     syscall(YIELD_SYSCALL, 0, 0, 0, 0, 0);
 }

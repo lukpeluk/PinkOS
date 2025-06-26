@@ -517,6 +517,12 @@ void child_death_handler(Pid *pid)
 	}
 }
 
+void child_detached_handler(Pid *pid){
+	log_decimal("I: -- USERSPACE HANDLER -- Child detached handler called for PID: ", *pid);
+	child_death_handler(pid); // Por ahora haría lo mismo me parece (TODO: ver qué onda si se detachea un proceso pipeado)
+	rm_stdout(); // Vuelo el stdout a la mierda, porque si se detacheó el proceso, que le escriba a magoya
+}
+
 
 // Devuelve en command el comando y en args los argumentos
 // Y retorna si es nohup o no
@@ -673,8 +679,10 @@ void execute_program(int input_line){
 		} else {
 			shell_context->running_programs++;
 			shell_context->running_program_pids[0] = program_pid; // save the pid of the running program
-			ProcessDeathCondition condition = { .pid = program_pid };
-			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &condition); // subscribe to the process death event
+			ProcessDeathCondition death_condition = { .pid = program_pid };
+			ProcessDetachingCondition detach_condition = { .pid = program_pid };
+			subscribeToEvent(PROCESS_DEATH_EVENT, (void (*)(void *))child_death_handler, &death_condition); // subscribe to the process death event
+			subscribeToEvent(PROCESS_DETACH_EVENT, (void (*)(void *))child_detached_handler, &detach_condition); // subscribe to the process death event
 			wakeProcess(shell_context->threadcito); // thread para el output
 		}
 		return;

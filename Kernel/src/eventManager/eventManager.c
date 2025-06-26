@@ -8,7 +8,7 @@
 #include <types.h>
 #include <lib.h>
 
-#define MAX_EVENTS 6
+#define MAX_EVENTS 7
 
 void notifyEvent(Pid pid, int eventId, void* data, int (*filter)(void* condition_data, void* data));
 
@@ -41,6 +41,7 @@ typedef struct EventManager {
 
 static EventManager eventManager;
 int filterProcessDeathCondition(void* condition_data, void* data);
+int filterProcessDetachingCondition(void* condition_data, void* data);
 
 
 void initEventManager() {
@@ -52,8 +53,6 @@ void initEventManager() {
     eventManager.events[KEY_EVENT].one_time = 0; // Set to 0 if you want the event to persist after being notified
     // log_to_serial("Event Manager initialized: KEY_EVENT");
     // log_decimal("Event size: ", eventManager.events[KEY_EVENT].data_size);
-
-
 
     eventManager.events[SLEEP_EVENT].id = SLEEP_EVENT;
     eventManager.events[SLEEP_EVENT].data_size = sizeof(uint64_t);
@@ -94,6 +93,12 @@ void initEventManager() {
     eventManager.events[BROADCAST_EVENT].one_time = 0;
     // log_to_serial("Event Manager initialized: BROADCAST_EVENT");
     // log_decimal("Event size: ", eventManager.events[BROADCAST_EVENT].data_size);
+
+    eventManager.events[PROCESS_DETACH_EVENT].id = PROCESS_DETACH_EVENT;
+    eventManager.events[PROCESS_DETACH_EVENT].data_size = sizeof(Pid);
+    eventManager.events[PROCESS_DETACH_EVENT].condition_data_size = sizeof(ProcessDetachingCondition); // Size of the condition data for process death events
+    eventManager.events[PROCESS_DETACH_EVENT].listeners = NULL;
+    eventManager.events[PROCESS_DETACH_EVENT].one_time = 1; 
     
 }
 
@@ -143,7 +148,17 @@ void registerEventSubscription(int eventId, Pid pid, void (*handler)(void* data)
         if(process_to_listen.pid == 0 || process_to_listen.state == PROCESS_STATE_TERMINATED) {
             // El proceso no existe, notificar inmediatamente
             log_to_serial("E: ##### EventManager: Notifying process death event immediately for PID");
-            notifyEvent(0, PROCESS_DEATH_EVENT, &process_to_listen.pid, filterProcessDeathCondition);
+            notifyEvent(0, PROCESS_DEATH_EVENT, &condition->pid, filterProcessDeathCondition);
+        }
+    }
+    // Mismo para el detach de procesos, un poco boilerplate, ya habría que ver cómo refactorizar el tema de eventos...
+    if (eventId == PROCESS_DETACH_EVENT && condition_data != NULL) {
+        ProcessDetachingCondition* condition = (ProcessDetachingCondition*)condition_data;
+        Process process_to_listen_parent = getParent(condition->pid);
+
+        // Si el padre es init (detacheado), notificar inmediatamente
+        if(process_to_listen_parent.pid == 0 || process_to_listen_parent.state == PROCESS_STATE_TERMINATED || process_to_listen_parent.pid == 1) {
+            notifyEvent(0, PROCESS_DETACH_EVENT, &condition->pid, filterProcessDetachingCondition); 
         }
     }
 }
@@ -162,6 +177,19 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
             // El proceso no existe, notificar inmediatamente
             if(data != NULL) {
                 *(Pid *)data = condition->pid; // Medio al pedo devolverle el pid, es literal al que estaba escuchando, pero bueno para cumplir el contrato general de devolver el evento
+            }
+            return;
+        }
+    }
+    // Mismo para el detach de procesos, un poco boilerplate, ya habría que ver cómo refactorizar el tema de eventos...
+    if (eventId == PROCESS_DETACH_EVENT && condition_data != NULL) {
+        ProcessDetachingCondition* condition = (ProcessDetachingCondition*)condition_data;
+        Process process_to_listen_parent = getParent(condition->pid);
+
+        // Si el padre es init (detacheado), notificar inmediatamente
+        if(process_to_listen_parent.pid == 0 || process_to_listen_parent.state == PROCESS_STATE_TERMINATED || process_to_listen_parent.pid == 1) {
+            if(data != NULL) {
+                *(Pid *)data = condition->pid;
             }
             return;
         }
@@ -348,6 +376,15 @@ int filterProcessDeathCondition(void* condition_data, void* data) {
     return (pid == condition.pid); // Filter by PID
 }
 
+int filterProcessDetachingCondition(void* condition_data, void* data) {
+    if (condition_data == NULL || data == NULL) {
+        return 1; // No condition, accept all events
+    }
+    ProcessDetachingCondition condition = *(ProcessDetachingCondition*)condition_data;
+    Pid pid = *(Pid*)data;
+    return (pid == condition.pid); // Filter by PID
+}
+
 void handleProcessDeath(Pid pid) {
     // console_log("Handling process death event for PID: %d", pid);
     // Remove all the listeners with the given PID from all events
@@ -376,6 +413,10 @@ void handleProcessDeath(Pid pid) {
     // console_log("I: EventManager: Notifying process death event for PID: %d", pid);
 
     notifyEvent(0, PROCESS_DEATH_EVENT, &pid, filterProcessDeathCondition);
+}
+
+void handleProcessDetaching(Pid pid){
+    notifyEvent(0, PROCESS_DETACH_EVENT, &pid, filterProcessDetachingCondition);
 }
 
 

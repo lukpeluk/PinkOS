@@ -114,6 +114,13 @@ void killProcess(Pid pid);
 void changePriority(Pid pid, Priority priority);
 
 /**
+ * Detaches the process with the given PID from the current shell (makes it nohup)
+ * @param pid the PID of the process to detach
+ * @return 0 if success
+*/
+int detachProcess(Pid pid);
+
+/**
  * Yields the CPU to allow the scheduler to choose another process
  * @return void
 */

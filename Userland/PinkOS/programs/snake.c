@@ -81,6 +81,7 @@ void snake_main(char *args) {
     if (args[0] == '1') num_players = 1;
     if (args[0] == '2') num_players = 2;
     
+    detachProcess(getPID());
 
     init();
     last_draw_time = getMillisElapsed();

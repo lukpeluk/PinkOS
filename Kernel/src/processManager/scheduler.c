@@ -326,6 +326,7 @@ int detachProcess(Pid pid){
         return -1;
     }
     pcb->parent = init;
+    handleProcessDetaching(pid);
     return 0;
 }
 
