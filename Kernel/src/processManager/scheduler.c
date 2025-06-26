@@ -896,6 +896,9 @@ int wakeProcess(Pid pid) {
     do {
         if (current->process.pid == pid) {
             // Cambiar el estado del proceso a READY
+            if(!current->process.state == PROCESS_STATE_WAITING) {
+                return 0; // Error: el proceso no estaba en espera, igual se devuelve 0 porque el resultado sigue siendo que el proceso no está en espera (ver si sería mejor otra cosa)
+            }
             current->process.state = PROCESS_STATE_READY;
             current->waiting_for = NULL; // Si estaba esperando un semáforo, limpiarlo
             return 0; // Éxito

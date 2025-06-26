@@ -38,6 +38,8 @@ static void process_inc_function(char *args) {
       sem_post(sem_id);
     }
   }
+
+  log_to_serial("Process increment function completed");
 }
 
 int test_synchro_main(char *args) {
@@ -98,8 +100,10 @@ int test_synchro_main(char *args) {
     }
     printf("Created decrement process PID %d\n", pids[i + TOTAL_PAIR_PROCESSES]);
   }
+
   ProcessDeathCondition pdc;
   for (i = 0; i < 2 * TOTAL_PAIR_PROCESSES; i++) {
+    log_to_serial("Registering process death event");
     pdc.pid = pids[i];
     waitForEvent(PROCESS_DEATH_EVENT, NULL, &pdc);
   }
@@ -108,19 +112,15 @@ int test_synchro_main(char *args) {
   // Check final result
   printf("Final shared value: %d\n", global_shared_value);
   
-  if (use_sem) {
-    if (global_shared_value == 0) {
-      printf(">+SUCCESS: Synchronization worked correctly\n");
-    } else {
-      printf(">!ERROR: Synchronization failed, expected 0, got %d\n", global_shared_value);
-    }
+  if(use_sem) {
     sem_destroy(sem_id);
-  } else {
-    log_to_serial("No synchronization test completed");
-    printf("No synchronization test completed (race conditions expected)\n");
-    printf("Result: %d (may not be 0 due to race conditions)\n", global_shared_value);
   }
 
+  if (global_shared_value == 0) {
+    printf(">+SUCCESS: Synchronization worked correctly\n");
+  } else {
+    printf(">!ERROR: Synchronization failed, expected 0, got %d\n", global_shared_value);
+  }
 
   log_to_serial("Test synchronization completed");
 
