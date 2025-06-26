@@ -167,8 +167,20 @@ int readStdin(void * buffer, uint32_t size) {
     return result;
 }
 
-int writeStdout(const void * buffer, uint32_t size) {
+int noblockWriteStdout(const void * buffer, uint32_t size) {
     return (int)syscall(WRITE_STDOUT, (uint64_t)buffer, (uint64_t)size, 0, 0, 0);
+}
+
+int writeStdout(const void * buffer, uint32_t size) {
+    int written = 0;
+    while(written < size) {
+        int result = syscall(WRITE_STDOUT, (uint64_t)(buffer + written), (uint64_t) (size - written), 0, 0, 0);
+        if (result < 0) {
+            return result; // Error occurred
+        }
+        written += result;
+    }
+    return written;
 }
 
 int writeStderr(const void * buffer, uint32_t size) {
@@ -719,6 +731,7 @@ int sprintf(char * buffer, char * format, ...) {
     return chars_written;
 }
 
+// Ahora es bloqueante
 void putChar(char c){
     writeStdout(&c, 1);
 }

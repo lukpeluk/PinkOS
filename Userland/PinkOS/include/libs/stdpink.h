@@ -140,6 +140,14 @@ int readStdin(void * buffer, uint32_t size);
  * @param size the size of the data to write
  * @return the number of bytes written, or -1 if the file is closed for writing, -2 if the process does not have stdout assigned
 */
+int noblockWriteStdout(const void * buffer, uint32_t size);
+
+/**
+ * Writes to the standard output, blocking until all data is written (it's a buissy wait, TODO: implement it better)
+ * @param buffer the buffer containing the data to write
+ * @param size the size of the data to write
+ * @return the number of bytes written, or -1 if the file is closed for writing, -2 if the process does not have stdout assigned
+*/
 int writeStdout(const void * buffer, uint32_t size);
 
 /**

@@ -11,7 +11,7 @@ void first_steps_main(char * args) {
     printf("  - Use >#\"Ctrl + C\">. to kill the first running program.\n");
     printf("  - Use >#\"Ctrl + Shift + C\">. or hold >#\"ESC\">. to kill all \n     programs running in the current shell.\n");
     printf("  - Use >#\"Ctrl + D\">. to send an EOF (End of File) signal,\n     which can be useful in some programs.\n");
-    sleep(20); // sleep to avoid flooding the console with output
+    // sleep(20); // sleep to avoid flooding the console with output
     printf("  - Use >#\"Crtl + ArrowUp\">. to scroll up in the terminal output.\n");
     printf("  - Use >#\"Crtl + ArrowDown\">. to scroll down in the terminal\n     output.\n");
     printf("  - Use >#\"Ctrl + Shift + ArrowUp\">. to scroll to the beginning\n     of the terminal output.\n");

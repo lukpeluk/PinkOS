@@ -17,6 +17,6 @@ void forrest_gump_main(char *args) {
             print(message);
         }
         syscall(DRAW_CHAR_SYSCALL, 'F', 0x00df8090, 0x00000000, 1, 0);  // ! Wow wow wow, this program has permission to draw directly to screen???
-        sleep(1000);                        // ! Wait for 1 second before printing again
+        sleep(800);                        // ! Wait for 1 second before printing again
     }
 }
