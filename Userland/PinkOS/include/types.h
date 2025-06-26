@@ -76,7 +76,6 @@ typedef struct {
 typedef struct {
     char command[SMALL_TEXT_SIZE];
     char name[SMALL_TEXT_SIZE];
-    
     ProgramEntry entry;
     uint32_t permissions;
     char help[MEDIUM_TEXT_SIZE];  // A very brief description

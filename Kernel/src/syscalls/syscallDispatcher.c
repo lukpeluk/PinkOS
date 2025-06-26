@@ -161,7 +161,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             return 0;
             break;
         case GET_PROCESS_LIST_SYSCALL: {
-            // * No recibe nada, devuelve una lista de todos los procesos en ejecución.
+            // * orden syscall: puntero a un Process* donde se dejará la lista de procesos, puntero a un int donde se dejará la cantidad de procesos
             // * -> Tarea de quien la llame liberar la memoria (todo: allocar a nombre del proceso)
 
                 VALIDATE_PERMISSIONS(MANAGE_PROCESSES_PERMISSION);
@@ -169,7 +169,8 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                 if (processes == NULL) {
                     return 0;
                 }
-                *((Program**)arg1) = processes; // Deja la lista de procesos en el primer argumento
+                *((Process**)arg1) = processes; // Deja la lista de procesos en el primer argumento
+                return processes;
             }
             break;
         case GET_GROUP_MAIN_PID_SYSCALL:

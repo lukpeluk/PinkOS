@@ -187,7 +187,6 @@ void drawRectangleBoder(uint8_t * videoBuffer, Point * start, Point * end, uint3
 
 #define CHAR_WIDTH 8
 #define CHAR_HEIGHT 8
-#define FONT_NOF_CHARS 95
 
 static uint64_t x = 0;
 static uint64_t y = 0;

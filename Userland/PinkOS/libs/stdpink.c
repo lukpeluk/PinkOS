@@ -125,7 +125,9 @@ Process getProcess(Pid pid) {
 }
 
 Process * getAllProcesses(int * count) {
-    return (Process *)syscall(GET_PROCESS_LIST_SYSCALL, (uint64_t)count, 0, 0, 0, 0);
+    Process * process_list;
+    syscall(GET_PROCESS_LIST_SYSCALL, (uint64_t)&process_list, (uint64_t)count, 0, 0, 0);
+    return process_list;
 }
 
 Pid getProcessGroupMain() {
