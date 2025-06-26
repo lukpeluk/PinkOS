@@ -153,6 +153,20 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
         return; // Invalid event ID
     }
 
+    // Si se registró para escuchar la muerte de un proceso, y este proceso no existe, se notifica inmediatamente
+    if(eventId == PROCESS_DEATH_EVENT && condition_data != NULL) {
+        ProcessDeathCondition* condition = (ProcessDeathCondition*)condition_data;
+        Process process_to_listen = getProcess(condition->pid);
+
+        if(process_to_listen.pid == 0 || process_to_listen.state == PROCESS_STATE_TERMINATED) {
+            // El proceso no existe, notificar inmediatamente
+            if(data != NULL) {
+                *(Pid *)data = condition->pid; // Medio al pedo devolverle el pid, es literal al que estaba escuchando, pero bueno para cumplir el contrato general de devolver el evento
+            }
+            return;
+        }
+    }
+
     Listener* newListener = (Listener*) malloc(sizeof(Listener));
     if (!newListener) {
         log_to_serial("E: EventManager: Memory allocation failed for new listener");
@@ -185,26 +199,6 @@ void registerEventWaiting(int eventId, Pid pid, void* data, void* condition_data
     Listener* current = eventManager.events[eventId].listeners;
     newListener->next = current;
     eventManager.events[eventId].listeners = newListener;       // Para que sea O(1) en vez de O(n) al agregar un listener (el señorito se quejaba de que era O(n) agregar al final)
-
-    // Si se registró para escuchar la muerte de un proceso, y este proceso no existe, se notifica inmediatamente
-    // Esto sería más eficiente si se pusiera directo al principio de esta función, en vez de registrarlo y notificarlo directo no registrarlo
-    if(eventId == PROCESS_DEATH_EVENT && condition_data != NULL) {
-        console_log("I: EventManager: Registering waiting event for process death condition");
-        ProcessDeathCondition* condition = (ProcessDeathCondition*)condition_data;
-        Process process_to_listen = getProcess(condition->pid);
-
-        console_log("I: EventManager: Process to listen PID: %d, the process found with that pid is: %d", condition->pid, process_to_listen.pid);
-
-        if(process_to_listen.pid == 0 || process_to_listen.state == PROCESS_STATE_TERMINATED) {
-            // El proceso no existe, notificar inmediatamente
-            log_to_serial("E: ##### EventManager: Notifying process death event immediately for PID");
-            // if(data == NULL) {
-            //     *(Pid *)data = condition->pid; // Medio al pedo devolverle el pid, es literal al que estaba escuchando, pero bueno para cumplir el contrato general de devolver el evento
-            // }
-            notifyEvent(0, PROCESS_DEATH_EVENT, &process_to_listen.pid, filterProcessDeathCondition); //TODO: no
-            return;
-        }
-    }
 
     setWaiting(pid); // Set the process as waiting, so it can be woken up later when the event occurs
 }
