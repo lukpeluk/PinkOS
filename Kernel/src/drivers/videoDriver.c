@@ -1,9 +1,11 @@
 #include <drivers/videoDriver.h>
 #include <drivers/pitDriver.h>
-
+#include <drivers/serialDriver.h>
 #include <drivers/defaultFont.h>
+
 #include <memoryManager/memoryManager.h>
 #include <windowManager/windowManager.h>
+
 #include <lib.h>
 #include <stdint.h>
 
@@ -105,7 +107,7 @@ void videoLoop() {
 
 	// Optimización: si el overlay buffer no está habilidado directamente copio el focused buffer
 	if(overlay_buffer == NULL) {
-		lightspeed_memcpy((void*)VBE_mode_info->framebuffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+		lightspeed_memcpy((void*)(uintptr_t)VBE_mode_info->framebuffer, focused_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 		return;
 	}
 
@@ -122,7 +124,7 @@ void videoLoop() {
 		}
 	}
 
-	lightspeed_memcpy((void*)VBE_mode_info->framebuffer, staging_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
+	lightspeed_memcpy((void*)(uintptr_t)VBE_mode_info->framebuffer, staging_buffer, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 }
 
 uint8_t * createVideoBuffer() {

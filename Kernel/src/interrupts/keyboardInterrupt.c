@@ -23,6 +23,7 @@
 #define SPECIAL_KEY ALT_KEY  // Acá defino qué tecla se usa para el alt-tab
 
 extern char getKeyCode();
+void handleDirectAltTab();
 
 static int alt_pressed = 0; // Variable to track if alt is pressed
 static int shift_pressed = 0; // Variable to track if shift is pressed

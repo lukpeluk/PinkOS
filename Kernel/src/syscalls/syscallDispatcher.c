@@ -130,7 +130,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
             // Busco el main del grupo porque un thread no puede desvincularse, se desvincula el proceso principal del grupo
             Pid process = getProcessGroupMain((Pid)arg1);
 
-            return detachProcess((Pid)arg1) == 0;
+            return detachProcess(process) == 0;
             break;
         
         // SCHEDULING
@@ -183,7 +183,7 @@ uint64_t systemSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t arg2,
                     return 0;
                 }
                 *((Process**)arg1) = processes; // Deja la lista de procesos en el primer argumento
-                return processes;
+                return (uint64_t)processes;
             }
             break;
         case GET_GROUP_MAIN_PID_SYSCALL:

@@ -468,7 +468,8 @@ void windowManagerDrawOverlay() {
         if (program_name == NULL || strlen(program_name) == 0) {
             program_name = "Unknown";
         }
-        uint64_t name_length = strlen(program_name) * getCharWidth();
+        // uint64_t name_length = strlen(program_name) * getCharWidth();
+
         // Start position same as PID label,left aligned
         Point name_position = {preview_x + 10, preview_y + preview_height + 30};
         drawStringAt(overlay_buffer, program_name, label_color, 0x2A2A2A, 

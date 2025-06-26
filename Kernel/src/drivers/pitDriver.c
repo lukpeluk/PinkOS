@@ -5,6 +5,7 @@
 #include <processManager/scheduler.h>
 #include <drivers/serialDriver.h>
 #include <eventManager/eventManager.h>
+#include <interrupts/keyboardInterrupt.h>
 
 // 18.2 Hz
 // #define MILLISECONDS_PER_TICK 54.9450549451
