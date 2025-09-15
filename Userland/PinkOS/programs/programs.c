@@ -325,6 +325,15 @@ static Program programs[] = {
         "Test synchronization between processes",
         "usage: test_sync <n> <use_sem> \nTest Synchronization v1 \n Use this program to test the synchronization between processes. It creates two processes that increment and decrement a global variable."
     },
+    {
+        "graphics_demo",
+        "Graphics Demo",
+        graphics_demo_main,
+        DRAWING_PERMISSION | CHANGE_FONT_SIZE_PERMISSION,
+        "Environment for testing a tree-based graphics library.",
+        "usage: graphics_demo \nGraphics Demo v1 \n Environment for testing a tree-based graphics library."
+
+    }
 
     
     // TODO: ↓↓↓↓↓↓
