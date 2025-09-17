@@ -54,7 +54,7 @@ static Font font = ibm_bios_font;
 static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
-#define FRAME_RATE 15 // frames per second
+#define FRAME_RATE 60 // frames per second
 
 static int last_frame_time = 0; // last time the video buffer was updated, in milliseconds
 static uint8_t * staging_buffer = NULL;
@@ -163,9 +163,47 @@ void drawRectangle(uint8_t * videoBuffer, Point * start, Point * end, uint32_t h
 	if(start->x < 0 || start->y < 0 || end->x < 0 || end->y < 0) {
 		return; // Negative coordinates are not allowed
 	}
-	for(uint64_t i = start->x; i < end->x; i++){
-		for(uint64_t j = start->y; j < end->y; j++){
-			putPixel(videoBuffer, hexColor, i, j);
+
+	// Highly optimized version
+	uint8_t * framebuffer = (uint8_t *)(uintptr_t) videoBuffer;
+	uint32_t bytes_per_pixel = VBE_mode_info->bpp / 8;
+	uint32_t pitch = VBE_mode_info->pitch;
+	
+	// Pre-calculate color bytes
+	uint8_t color_b = hexColor & 0xFF;
+	uint8_t color_g = (hexColor >> 8) & 0xFF;
+	uint8_t color_r = (hexColor >> 16) & 0xFF;
+	
+	uint64_t rect_width = end->x - start->x;
+	uint64_t rect_height = end->y - start->y;
+	
+	// Special case: if it's a solid color (all bytes same), we can use memset for some optimizations
+	if(color_r == color_g && color_g == color_b && bytes_per_pixel == 3) {
+		// For monochrome colors, we can optimize further, but BGR format makes it tricky
+		// Fall back to the standard approach
+	}
+	
+	// For each row, fill the entire width at once
+	for(uint64_t y = start->y; y < end->y; y++){
+		uint64_t row_offset = y * pitch + start->x * bytes_per_pixel;
+		uint8_t * row_ptr = framebuffer + row_offset;
+		
+		// Fill the row using direct memory access instead of pixel-by-pixel
+		if(bytes_per_pixel == 3) {
+			// For 24-bit color (BGR), fill 3 bytes at a time
+			uint8_t * pixel_ptr = row_ptr;
+			for(uint64_t x = 0; x < rect_width; x++){
+				*pixel_ptr++ = color_b;
+				*pixel_ptr++ = color_g;
+				*pixel_ptr++ = color_r;
+			}
+		} else if(bytes_per_pixel == 4) {
+			// For 32-bit color, we can write 4 bytes at once
+			uint32_t * pixel_ptr = (uint32_t*)row_ptr;
+			uint32_t color_32 = (hexColor & 0xFFFFFF) | 0xFF000000; // Add alpha
+			for(uint64_t x = 0; x < rect_width; x++){
+				*pixel_ptr++ = color_32;
+			}
 		}
 	}
 }
