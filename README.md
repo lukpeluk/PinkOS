@@ -8,6 +8,7 @@ So much so, that we support themes, fonts, font sizes, shortcuts, time zones, so
 
 ## Roadmap
 As next milestones (cosistas are coming):
+- A complete UI framework with a custom language and compiler, PICTURE.
 - Installing programs in runtimes by bringing the binary via serial (Successfull tests have been done).
 - Complete overlay system (for mouse, alt+tab, etc...).
 - More complete mouse support (now scrolling is supported but not clicking, dragging, etc...).
