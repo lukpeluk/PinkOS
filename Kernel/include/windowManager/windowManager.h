@@ -17,9 +17,22 @@ int isFocusedWindow(Pid pid);
 /** getFocusedBuffer: 
  * Gets the buffer of the currently focused window
  * 
- * @return A pointer to the buffer of the focused window, or NULL if no window is present.
+ * @return A pointer to the buffer of the focused window, or NULL if no window is present (and for some reason also null if redraw is 0, //todo ver que onda).
 */
 uint8_t * getFocusedBuffer();
+
+/** getFocusedWorkingBuffer: 
+ * Gets the working buffer of the currently focused window
+ * 
+ * @return A pointer to the working buffer of the focused window, or NULL if no window is present.
+*/
+uint8_t * getFocusedWorkingBuffer();
+
+/** commitChangesToBuffer:
+ * Commits changes from the working buffer to the main buffer of the window with the given PID
+ */
+void commitChangesToBuffer(Pid pid);
+
 
 /** getOverlayBuffer: 
  * Gets the overlay buffer used for drawing overlays (like alt+tab or in the future, the mouse)
@@ -41,6 +54,14 @@ void toggleOverlay();
  * @return A pointer to the buffer of the window with the given PID, or NULL if no such window exists.
 */
 uint8_t * getBufferByPID(Pid pid);
+
+/** getWorkingBufferByPID: 
+ * Gets the working buffer of a window by its PID
+ * 
+ * @param pid The PID of the window to get the working buffer for.
+ * @return A pointer to the working buffer of the window with the given PID, or NULL if no such window exists.
+*/
+uint8_t * getWorkingBufferByPID(Pid pid);
 
 // Agregar y eliminar ventanas, se encarga de allocar y liberar memoria
 // Agregar una ventana devuelve un puntero al buffer de la ventana, o NULL si no se pudo allocar memoria

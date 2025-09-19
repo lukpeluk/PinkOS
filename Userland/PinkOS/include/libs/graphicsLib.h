@@ -31,5 +31,6 @@ void drawBitmap(uint32_t * bitmap, uint64_t width, uint64_t height, Point positi
 void clearScreen(uint32_t color);
 void disableRedraw();
 void enableRedraw();
+void commitChangesToBuffer();
 
 #endif

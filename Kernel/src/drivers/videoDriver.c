@@ -54,7 +54,7 @@ static Font font = ibm_bios_font;
 static int font_size = 2;
 #define FONT_SIZE_LIMIT 6
 
-#define FRAME_RATE 60 // frames per second
+#define FRAME_RATE 16 // frames per second
 
 static int last_frame_time = 0; // last time the video buffer was updated, in milliseconds
 static uint8_t * staging_buffer = NULL;
@@ -138,6 +138,15 @@ uint8_t * createVideoBuffer() {
 	// Clear the buffer to black
 	memset(buffer, 0, VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8));
 	return buffer;
+}
+
+void copyVideoBuffer(uint8_t * destination_buffer, uint8_t * source_buffer) {
+	if(destination_buffer == NULL || source_buffer == NULL) {
+		log_to_serial("E: copyVideoBuffer: Invalid buffer pointers");
+		return;
+	}
+	uint64_t buffer_size = VBE_mode_info->width * VBE_mode_info->height * (VBE_mode_info->bpp / 8);
+	lightspeed_memcpy(destination_buffer, source_buffer, buffer_size);
 }
 
 void putPixel(uint8_t * videoBuffer, uint32_t hexColor, uint64_t x, uint64_t y) {

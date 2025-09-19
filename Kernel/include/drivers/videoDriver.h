@@ -22,6 +22,10 @@ void videoLoop();
 // Returns a pointer to the video buffer, which is a 2D array of pixels. Each pixel is represented by a 32-bit integer.
 uint8_t * createVideoBuffer();
 
+// Buffer operations
+// Efficiently copies one video buffer to another using lightspeed_memcpy
+void copyVideoBuffer(uint8_t * destination_buffer, uint8_t * source_buffer);
+
 // BASIC SHAPES
 void putPixel(uint8_t * videoBuffer, uint32_t hexColor, uint64_t x, uint64_t y);
 

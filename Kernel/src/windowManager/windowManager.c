@@ -8,7 +8,9 @@
 typedef struct WindowControlBlock {
     uint32_t pid;
     int redraw;
-    uint8_t *buffer;                     // Puntero al buffer de la ventana
+    int enable_double_buffering;      // Si está en 1, el proceso dibuja en el working buffer y cuando hace commitChangesToBuffer se copia al buffer principal, si no se dibuja directamente en el buffer principal
+    uint8_t *buffer;                  // - Puntero al buffer de la ventana
+    uint8_t *working_buffer;          // - Puntero al buffer de trabajo, donde se dibuja todo antes de copiarlo al buffer principal (para evitar mostrar estados incompletos)
     struct WindowControlBlock *next;  // Siguiente ventana (lista donde el primer elemento es el foco actual, y el último es el más antiguo y apunta a NULL)
                                       // Si no hay ventanas, debería mostrar algún fondo de pantalla o algo, después lo pensamos
 } WindowControlBlock;
@@ -51,6 +53,13 @@ uint8_t * getFocusedBuffer(){
     return focusedWindow->buffer;
 }
 
+uint8_t * getFocusedWorkingBuffer(){
+    if (focusedWindow == NULL) {
+        return NULL; 
+    }
+    return focusedWindow->working_buffer;
+}
+
 // Null no significa error, significa que el overlay no está habilitado
 uint8_t * getOverlayBuffer(){
     if(!overlay_enabled){
@@ -89,6 +98,14 @@ WindowControlBlock * getWindowBlock(Pid pid){
 }
 
 
+void commitChangesToBuffer(Pid pid){
+    WindowControlBlock *window = getWindowBlock(pid);
+    if (window == NULL) {
+        return; 
+    }
+    copyVideoBuffer(window->buffer, window->working_buffer);
+}
+
 uint8_t * getBufferByPID(Pid pid){
     WindowControlBlock *currentWindow = getWindowBlock(pid);
     if (currentWindow == NULL) {
@@ -97,6 +114,13 @@ uint8_t * getBufferByPID(Pid pid){
     return currentWindow->buffer;
 }
 
+uint8_t * getWorkingBufferByPID(Pid pid){
+    WindowControlBlock *currentWindow = getWindowBlock(pid);
+    if (currentWindow == NULL) {
+        return NULL; // No se encontró la ventana con el PID especificado
+    }
+    return currentWindow->working_buffer;
+}
 
 // TODO: capaz permitir elegir si focusear la ventana o si ponerla como segunda
 int addWindow(Pid pid){
@@ -105,13 +129,22 @@ int addWindow(Pid pid){
         // log_to_serial("addWindow: Error al allocar memoria para la nueva ventana");
         return -1; // No se pudo allocar memoria
     }
+    
+    Program program = getProcess(pid).program; // todo: borrar, esto es temporal para saber si soy graphics_demo
     newWindow->pid = pid;
     newWindow->redraw = 1; // Por defecto, la ventana necesita ser redibujada
-    newWindow->buffer = createVideoBuffer(); // el video driver se encarga de allocar memoria para el buffer con la resolución adecuada
+    newWindow->enable_double_buffering = strcmp(program.command, "graphics_demo") == 0 ? 1 : 0; // Si el programa es graphics_demo, habilitar double buffering
+    //TODO: que haya una syscall para elegir si se quiere double buffering o no
 
-    if (newWindow->buffer == NULL) {
+    newWindow->buffer = createVideoBuffer(); // el video driver se encarga de allocar memoria para el buffer con la resolución adecuada
+    // Para el working buffer, si no está habilitado su working buffer es el mismo que el buffer principal
+    newWindow->working_buffer = (newWindow->enable_double_buffering) ? createVideoBuffer() : newWindow->buffer; 
+
+    if (newWindow->buffer == NULL || newWindow->working_buffer == NULL) {
         // log_to_serial("addWindow: Error al crear el buffer de video");
-        free(newWindow); // Liberar memoria si no se pudo crear el buffer
+        free(newWindow->buffer);
+        free(newWindow->working_buffer);
+        free(newWindow);
         return -1; // No se pudo allocar memoria para el buffer
     }
 
@@ -139,6 +172,7 @@ int removeWindow(Pid pid){
                 prev->next = current->next; // Eliminar de la lista
             }
             free(current->buffer); // Liberar el buffer de video
+            free(current->working_buffer); // Liberar el buffer de trabajo
             free(current); // Liberar la memoria del WindowControlBlock
             return 0; // Eliminación exitosa
         }

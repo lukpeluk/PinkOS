@@ -477,7 +477,7 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
     if (are_interrupts_enabled()) {
         // console_log("E: INTERRUPCIONES HABILITADAS EN EL VIDEO DRIVER SYSCALL\n");
     }
-    uint8_t * videoBuffer = getBufferByPID(getCurrentProcessPID());
+    uint8_t * videoBuffer = getWorkingBufferByPID(getCurrentProcessPID());
     switch (syscall)
     {
         // BASIC SHAPES
@@ -590,7 +590,16 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
             // * orden syscall: no recibe nada
             // * habilita el redraw de la pantalla
 
+            // commitChangesToFocusedBuffer();
+
             setRedrawFlag(getCurrentProcessPID(), 1);
+            break;
+        
+        case COMMIT_CHANGES_TO_BUFFER_SYSCALL:
+            // * orden syscall: no recibe nada
+            // * hace un commit de los cambios del buffer de trabajo del proceso al buffer de video
+
+            commitChangesToBuffer(getCurrentProcessPID());
             break;
 
         case SET_FONT_SIZE_SYSCALL:

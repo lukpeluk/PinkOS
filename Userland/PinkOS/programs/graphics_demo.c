@@ -1,6 +1,8 @@
 #include <programs.h>
 #include <libs/stdpink.h>
 #include <libs/graphicsLib.h>
+#include <libs/events.h>
+#include <keyboard.h>
 #include <colors.h>
 
 
@@ -257,6 +259,24 @@ void initialize_component_tree() {
     component_count = 5;
 }
 
+int paused = 0; 
+static void key_handler(KeyboardEvent * event) {
+    if (event->event_type != 1 && event->event_type != 3) return; // solo eventos de tecla presionada
+
+    if (event->ascii == ' ') {
+        paused = !paused;
+    }
+
+    // Right/left arrows to change alignment of container1
+    if (event->scan_code == 0x4D) { // right arrow
+        components.container1->alignment = (components.container1->alignment + 1) % 3;
+        components.root->needs_full_redraw = 1;
+    } else if (event->scan_code == 0x4B) { // left arrow
+        components.container1->alignment = (components.container1->alignment - 1) % 3;
+        components.root->needs_full_redraw = 1;
+    }
+
+}
 
 
 void graphics_demo_main(char * args){
@@ -265,26 +285,27 @@ void graphics_demo_main(char * args){
     
     // Renderizar el árbol
     render_tree(components.root);
-    
+
+	subscribeToEvent(KEY_EVENT, (void (*)(void *))key_handler, (void *)0);
+
     int i = 0;
     while(1) {
-        i++;
-        if(1) {
-            disableRedraw();
+        if(!paused) {
+            i++;
 
             components.title->bg_color = 0x000000 + (5*i % 256) * 0x00010101; // Cambia el color cada 3 frames
             components.title->text = int_to_string(i);
 
-            // components.container1->width = (2*i % 40 < 20) ? 60 + (2*i % 20) : 80 - (2*i % 20); // Cambia el ancho cada 3 frames (no cada 30!)
-            // Si el tamaño se resetea, cambiar la alineación iterandolas
+            components.container1->width = (2*i % 40 < 20) ? 60 + (2*i % 20) : 80 - (2*i % 20); // Cambia el ancho cada 3 frames (no cada 30!)
+
+            // Itera la alineación cada cierto tiempo
             // if(2*i % 50 == 0)
             //     components.container1->alignment = (components.container1->alignment + 1) % 3;
 
-            components.title->needs_full_redraw = 1;
+            components.root->needs_full_redraw = 1;
 
             render_tree(components.root);
-            enableRedraw();
-            sleep(5); // Un poco más rápido también
+            commitChangesToBuffer();
         }
     }
 }
