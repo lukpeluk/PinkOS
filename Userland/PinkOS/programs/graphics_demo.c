@@ -34,8 +34,6 @@ typedef struct Component {
 
     // Render
     int needs_full_redraw;      // 1 si necesita redibujarse todo, ejemplo cuando un hijo cambia de posición o cambia el color del fondo
-    int needs_border_redraw;    // 1 si solo cambió el borde (ej. está seleccionado) y puede dibujarse sin redibujar todo
-    int needs_text_redraw;      // 1 si solo cambió el texto y puede dibujarse sin redibujar todo (ojo, se dibujará encima de los hijos si los hay)
 } Component;
 
 
@@ -272,7 +270,7 @@ static void key_handler(KeyboardEvent * event) {
         components.container1->alignment = (components.container1->alignment + 1) % 3;
         components.root->needs_full_redraw = 1;
     } else if (event->scan_code == 0x4B) { // left arrow
-        components.container1->alignment = (components.container1->alignment - 1) % 3;
+        components.container1->alignment = (components.container1->alignment + 2) % 3; // Al sumar 2 en módulo 3 es equivalente a restar 1
         components.root->needs_full_redraw = 1;
     }
 
