@@ -174,10 +174,16 @@ void render_tree(GuiContext * context) {
 void iterate_focused(GuiContext * context, int direction) {
     if (!context || !context->selection_order) return;
 
+    // Maneja el caso donde no hay nada en foco y queres empezar a iterar para atrás
+    if(context->focused_index == -1 && direction == -1) {
+        context->focused_index = context->selectable_count; // Así al restar 1 queda en el último
+    }
+
     int new_index = (context->focused_index + direction + context->selectable_count) % context->selectable_count; // Itera circularmente
     if(context->focused) context->focused->needs_full_redraw = 1;
     context->focused = context->selection_order[new_index];
     context->focused->needs_full_redraw = 1;
+    context->focused_index = new_index;
 }
 
 void unfocus(GuiContext * context) {
