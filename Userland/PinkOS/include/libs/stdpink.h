@@ -68,7 +68,7 @@ uint64_t strlen(const char * s);
  * @param src the source string
  * @return void
 */
-void strcpy(char * dest, char * src);
+void strcpy(char * dest, const char * src);
 
 
 // ====== System Functions ======

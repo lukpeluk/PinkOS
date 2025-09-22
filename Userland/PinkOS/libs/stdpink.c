@@ -76,6 +76,16 @@ uint64_t strlen(const char * s) {
     return len;
 }
 
+void strcpy(char *dest, const char *src) {
+    while (*src) {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+}
+
+
 // ====== System Functions ======
 
 // *** Process Management ***
