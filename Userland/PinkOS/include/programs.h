@@ -66,4 +66,6 @@ void first_steps_main(char *args);
 void scancode_printer_main(char *args);
 void graphics_demo_main(char *args);
 
+void home_screen_main();
+
 #endif

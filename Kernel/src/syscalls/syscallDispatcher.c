@@ -602,6 +602,18 @@ uint64_t videoDriverSyscallDispatcher(uint64_t syscall, uint64_t arg1, uint64_t 
             commitChangesToBuffer(getCurrentProcessPID());
             break;
 
+        case ENABLE_DOUBLE_BUFFERING_SYSCALL:
+            // * orden syscall: no recibe nada
+            // * habilita el doble buffering para el proceso actual
+
+            enableDoubleBuffering(getCurrentProcessPID());
+            break;
+        case DISABLE_DOUBLE_BUFFERING_SYSCALL:
+            // * orden syscall: no recibe nada
+            // * deshabilita el doble buffering para el proceso actual
+            disableDoubleBuffering(getCurrentProcessPID());
+            break;
+
         case SET_FONT_SIZE_SYSCALL:
             VALIDATE_PERMISSIONS(CHANGE_FONT_SIZE_PERMISSION);
             setFontSize(arg1);

@@ -32,5 +32,7 @@ void clearScreen(uint32_t color);
 void disableRedraw();
 void enableRedraw();
 void commitChangesToBuffer();
+void enableDoubleBuffering();
+void disableDoubleBuffering();
 
 #endif

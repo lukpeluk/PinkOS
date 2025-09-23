@@ -44,6 +44,14 @@ void commitChangesToBuffer(){
     syscall(COMMIT_CHANGES_TO_BUFFER_SYSCALL, 0, 0, 0, 0, 0);
 }
 
+void enableDoubleBuffering(){
+    syscall(ENABLE_DOUBLE_BUFFERING_SYSCALL, 0, 0, 0, 0, 0);
+}
+
+void disableDoubleBuffering(){
+    syscall(DISABLE_DOUBLE_BUFFERING_SYSCALL, 0, 0, 0, 0, 0);
+}
+
 
 void drawPixel(uint32_t color, Point position){
     syscall(DRAW_PIXEL_SYSCALL, (uint64_t)color, (uint64_t)position.x, (uint64_t)position.y, 0, 0);

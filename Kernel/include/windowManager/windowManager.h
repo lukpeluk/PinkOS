@@ -33,6 +33,15 @@ uint8_t * getFocusedWorkingBuffer();
  */
 void commitChangesToBuffer(Pid pid);
 
+/** enableDoubleBuffering:
+ * Enables double buffering for the window with the given PID
+ */
+void enableDoubleBuffering(Pid pid);
+
+/** disableDoubleBuffering:
+ * Disables double buffering for the window with the given PID
+ */
+void disableDoubleBuffering(Pid pid);
 
 /** getOverlayBuffer: 
  * Gets the overlay buffer used for drawing overlays (like alt+tab or in the future, the mouse)

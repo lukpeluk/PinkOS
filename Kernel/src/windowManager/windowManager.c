@@ -106,6 +106,45 @@ void commitChangesToBuffer(Pid pid){
     copyVideoBuffer(window->buffer, window->working_buffer);
 }
 
+void enableDoubleBuffering(Pid pid){
+    WindowControlBlock *window = getWindowBlock(pid);
+    if (window == NULL) {
+        return;
+    }
+    if (!window->enable_double_buffering) {
+        window->enable_double_buffering = 1;
+        // Crear el working buffer si no existe
+        if (window->working_buffer == window->buffer) {
+            window->working_buffer = createVideoBuffer();
+            if (window->working_buffer == NULL) {
+                log_to_serial("E: enableDoubleBuffering: Error al crear el working buffer");
+                // Revertir los cambios
+                window->working_buffer = window->buffer;
+                window->enable_double_buffering = 0; 
+                return;
+            }
+            // Inicializar el working buffer con el contenido del buffer principal
+            copyVideoBuffer(window->working_buffer, window->buffer);
+        }
+    }
+}
+
+void disableDoubleBuffering(Pid pid){
+    WindowControlBlock *window = getWindowBlock(pid);
+    if (window == NULL) {
+        return;
+    }
+    if (window->enable_double_buffering) {
+        window->enable_double_buffering = 0;
+        // Liberar el working buffer
+        if (window->working_buffer != window->buffer) {
+            free(window->working_buffer);
+            window->working_buffer = window->buffer; // El working buffer vuelve a ser el buffer principal
+        }
+    }
+}
+
+
 uint8_t * getBufferByPID(Pid pid){
     WindowControlBlock *currentWindow = getWindowBlock(pid);
     if (currentWindow == NULL) {
@@ -130,11 +169,9 @@ int addWindow(Pid pid){
         return -1; // No se pudo allocar memoria
     }
     
-    Program program = getProcess(pid).program; // todo: borrar, esto es temporal para saber si soy graphics_demo
     newWindow->pid = pid;
     newWindow->redraw = 1; // Por defecto, la ventana necesita ser redibujada
-    newWindow->enable_double_buffering = strcmp(program.command, "graphics_demo") == 0 ? 1 : 0; // Si el programa es graphics_demo, habilitar double buffering
-    //TODO: que haya una syscall para elegir si se quiere double buffering o no
+    newWindow->enable_double_buffering = 0; // por defecto está deshabilitado (backward compatibility)
 
     newWindow->buffer = createVideoBuffer(); // el video driver se encarga de allocar memoria para el buffer con la resolución adecuada
     // Para el working buffer, si no está habilitado su working buffer es el mismo que el buffer principal

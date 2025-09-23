@@ -1051,7 +1051,8 @@ void shell_main(char *args)
 
 	syscall(SET_CURSOR_LINE_SYSCALL, 1, 0, 0, 0, 0); // evita dibujar la status bar
 
-	home_screen();
+	// home_screen();
+	home_screen_main();
 	redraw();
 
 	// Setea todos los handlers, para quedar corriendo "en el fondo"
