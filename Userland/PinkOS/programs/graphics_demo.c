@@ -240,6 +240,8 @@ static void main_key_handler(KeyboardEvent * event) {
 
 
 void graphics_demo_main(char * args){
+    enableDoubleBuffering(); // Habilitar double buffering para evitar flickering
+
     // Inicializar el árbol de componentes
     initialize_component_tree();
     
@@ -268,5 +270,7 @@ void graphics_demo_main(char * args){
     components.root->needs_full_redraw = 1;
     render_tree(&gui_context);
     }
+
+    disableDoubleBuffering(); // Deshabilitar double buffering al salir porque la shell no lo usa
 }
 
