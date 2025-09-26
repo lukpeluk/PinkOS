@@ -104,7 +104,7 @@ static void render_component(Component* comp, GuiContext * context, Point parent
         
         // Dibujar borde
         int is_focused = (comp == context->focused);
-        drawRectangleBorder(is_focused ? 0xa0b0ff : *(comp->border_color), actual_width, actual_height, is_focused ? 2 : comp->border_size, position);
+        drawRectangleBorder(is_focused && comp->on_focus_gain == NULL ? 0xa0b0ff : *(comp->border_color), actual_width, actual_height, is_focused ? 2 : comp->border_size, position);
         
         // Renderizar texto si existe (siempre centrado)
         if (comp->text) {
