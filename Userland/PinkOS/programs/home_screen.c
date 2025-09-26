@@ -14,10 +14,12 @@ typedef struct {
     Component* start_btn;
     Component* theme_toggle_btn;
     Component* timezone_input;
+    Component* left_cursor;
+    Component* right_cursor;
 } ComponentRegistry;
 
 static Component component_array[3]; 
-static Component option_components[3]; // Para los botones de opciones
+static Component option_components[5]; // Para los botones de opciones
 static Component * component_selection_order[3];
 static ComponentRegistry components;
 static GuiContext gui_context;
@@ -153,11 +155,30 @@ static void main_key_handler(KeyboardEvent * event) {
     static int is_shift_pressed = 0;
 	syscall(IS_KEY_PRESSED_SYSCALL, 0x2A, 0, (uint64_t)&is_shift_pressed);
 
+    static i=0;
     // Flechitas arriba/abajo o tab/shift+tab para cambiar foco
     if (event->scan_code == 0x48 || (event->scan_code == 0x0F && is_shift_pressed)) {
         iterate_focused(&gui_context, -1);
+        i--;
+        if(i<0){
+            i=2;
+            components.left_cursor->y_position = 15+55+55;
+            components.right_cursor->y_position = 15+55+55;
+        } else {
+            components.left_cursor->y_position -= 55;
+            components.right_cursor->y_position -= 55;
+        }
     } else if (event->scan_code == 0x50 || event->scan_code == 0x0F) {
         iterate_focused(&gui_context, 1);
+        i++;
+        if(i>2){
+            i=0;
+            components.left_cursor->y_position = 15;
+            components.right_cursor->y_position = 15;
+        } else {
+            components.left_cursor->y_position += 55;
+            components.right_cursor->y_position += 55;
+        }
     } 
 
     // Esc para quitar el foco
@@ -202,11 +223,11 @@ static void initialize_component_tree() {
     component_array[2] = COMPONENT_CONSTRUCTOR(
         .bg_color = &ColorSchema->background,
         .border_size = 0,
-        .width = 80,
+        .width = 50,
         .height = 180,
         .alignment = ALIGN_CENTER,
         .y_position = 320,
-        .children_count = 3,
+        .children_count = 5,
         .children = &option_components[0],
         .parent = components.root,
     );
@@ -263,7 +284,32 @@ static void initialize_component_tree() {
         .on_focus_lost = on_focus_handler,
     );
     components.timezone_input = &option_components[2];
+
+    option_components[3] = COMPONENT_CONSTRUCTOR(
+        .bg_color = &ColorSchema->background,
+        .text_color = &ColorSchema->text, 
+        .text = ">",
+        .border_size = 0,
+        .width = 10,
+        .height = 40,
+        .y_position = 15,
+        .alignment = ALIGN_LEFT,
+        .parent = components.options_container,
+    );
+    components.left_cursor = &option_components[3];
       
+    option_components[4] = COMPONENT_CONSTRUCTOR(
+        .bg_color = &ColorSchema->background,
+        .text_color = &ColorSchema->text, 
+        .text = "<",
+        .border_size = 0,
+        .width = 10,
+        .height = 40,
+        .y_position = 15,
+        .alignment = ALIGN_RIGHT,
+        .parent = components.options_container,
+    );
+    components.right_cursor = &option_components[4];
 
     // Indicar el orden de selección
     component_selection_order[0] = components.start_btn;
@@ -280,6 +326,7 @@ void home_screen_main() {
     enableDoubleBuffering(); // Habilitar double buffering para evitar flickering
 
     initialize_component_tree();
+    iterate_focused(&gui_context, 1);
     render_tree(&gui_context);
 
 	subscribeToEvent(KEY_EVENT, (void (*)(void *))main_key_handler, (void *)0);

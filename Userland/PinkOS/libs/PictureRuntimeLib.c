@@ -42,29 +42,45 @@ static Point calculate_position_and_size(Component* comp, Point parent_pos, int 
             // Usar posición Y específica
             position.y = parent_pos.y + comp->y_position;
         } else if (comp->parent->children_count > 0) {
-            // Distribuir hijos uniformemente
+            // Distribuir hijos uniformemente - solo considerar elementos con y_position == -1
             int total_height = 0;
-            for (int i = 0; i < comp->parent->children_count; i++) {
-                total_height += comp->parent->children[i].height;
-            }
+            int distributable_count = 0;
             
-            int spacing = (parent_height - total_height) / (comp->parent->children_count + 1);
-            
-            // Encontrar índice de este componente
-            int my_index = 0;
+            // Calcular altura total y contar solo elementos que usan distribución uniforme
             for (int i = 0; i < comp->parent->children_count; i++) {
-                if (&comp->parent->children[i] == comp) {
-                    my_index = i;
-                    break;
+                if (comp->parent->children[i].y_position == -1) {
+                    total_height += comp->parent->children[i].height;
+                    distributable_count++;
                 }
             }
             
-            int y_offset = spacing;
-            for (int i = 0; i < my_index; i++) {
-                y_offset += comp->parent->children[i].height + spacing;
+            if (distributable_count > 0) {
+                int spacing = (parent_height - total_height) / (distributable_count + 1);
+                
+                // Encontrar índice de este componente entre los distribuibles
+                int my_distributable_index = 0;
+                for (int i = 0; i < comp->parent->children_count; i++) {
+                    if (&comp->parent->children[i] == comp) {
+                        break;
+                    }
+                    if (comp->parent->children[i].y_position == -1) {
+                        my_distributable_index++;
+                    }
+                }
+                
+                int y_offset = spacing;
+                int current_distributable_index = 0;
+                for (int i = 0; i < comp->parent->children_count && current_distributable_index < my_distributable_index; i++) {
+                    if (comp->parent->children[i].y_position == -1) {
+                        y_offset += comp->parent->children[i].height + spacing;
+                        current_distributable_index++;
+                    }
+                }
+                
+                position.y = parent_pos.y + y_offset;
+            } else {
+                position.y = parent_pos.y;
             }
-            
-            position.y = parent_pos.y + y_offset;
         } else {
             position.y = parent_pos.y;
         }

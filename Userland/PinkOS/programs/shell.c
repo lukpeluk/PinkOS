@@ -54,9 +54,11 @@ typedef struct ShellContext {
 	int oldest_string; 		// índice de la línea más vieja del buffer (para poder scrollear hasta arriba y ver dónde termina el buffer circular)
 	int scroll; 			// indica qué línea es la que está en la parte superior de la pantalla
 
+	int history_index;		// índice para navegar el historial de comandos
+	char unfinished_input[STRING_SIZE]; // guarda el input que el usuario estaba escribiendo antes de navegar el historial, para restaurarlo si vuelve al prompt vacío
+
 	uint32_t current_text_color;   // Lo cambia el marcado
 	int highlighting_text;	       // indica si el texto es resaltado (por el marcado)
-
 
 	// El primero es el que tendrá el foco (recibe input), y si es el único también es el que manda el output a la consola, si hay dos es el segundo
 	Pid running_program_pids[2]; 
@@ -300,7 +302,7 @@ void redraw()
 	{
 		ADVANCE_INDEX(i, BUFFER_SIZE)
 
-		if (shell_context->is_input[i] == 1)
+		if (shell_context->is_input[i])
 		{
 			syscall(DRAW_STRING_SYSCALL, (uint64_t)default_prompt, (uint64_t)ColorSchema->prompt, (uint64_t)ColorSchema->background, 0, 0);
 		}
@@ -845,6 +847,47 @@ void key_handler(KeyboardEvent * event)
 		return;
 	}
 
+	// --- UP AND DOWN ARROWS FOR COMMAND HISTORY ---
+	if((scan_code == 0x48 || scan_code == 0x50) && event_type == 3 && !shell_context->running_programs) // up or down arrow
+	{
+		int i = shell_context->history_index;
+		if(i == -1) i = shell_context->current_string; // si no hay historial, empieza desde la línea actual
+
+		// Guardo el último que mostré para saltar los repetidos
+		char last_command_iterated[STRING_SIZE];
+		strcpy(last_command_iterated, shell_context->buffer[shell_context->current_string]); 
+
+		// Si recién estoy empezando a iterar guardo lo que había escrito
+		if(i == shell_context->current_string){
+			strcpy(shell_context->unfinished_input, shell_context->buffer[shell_context->current_string]);
+		} 
+
+		while (i != ((scan_code == 0x48) ? shell_context->oldest_string : shell_context->current_string)){
+			if(scan_code == 0x48) 
+				DECREASE_INDEX(i, BUFFER_SIZE) 
+			else 
+				ADVANCE_INDEX(i, BUFFER_SIZE)
+
+			if (shell_context->is_input[i] && strcmp(shell_context->buffer[i], last_command_iterated) != 0) break;
+		}
+
+		if(i == shell_context->history_index || !shell_context->is_input[i]) return; // no change
+
+		if(i == shell_context->current_string){
+			// Si vuelve abajo de todo copio el backup de lo que había escrito el usuario
+			strcpy(shell_context->buffer[shell_context->current_string], shell_context->unfinished_input);
+			shell_context->current_position = strlen(shell_context->unfinished_input);
+		} else {
+			// copiar el comando del historial a la línea del comando actual
+			strcpy(shell_context->buffer[shell_context->current_string], shell_context->buffer[i]);
+			shell_context->current_position = strlen(shell_context->buffer[i]);
+		}
+		shell_context->history_index = i;
+
+		redraw();
+		return;
+	}
+
 	// --- HANDLE SHELL KEYBOARD SHORTCUTS ---
 	if(is_ctrl_pressed)
 	{
@@ -923,6 +966,8 @@ void key_handler(KeyboardEvent * event)
 	
 	// --- ENTER TO EXECUTE ---
 	if (ascii == '\n' && !shell_context->running_programs) {
+		shell_context->history_index = -1; // reset history index
+
 		log_to_serial("I: Enter pressed, executing program");
 		redraw(); // redibuja para que se parsee el marcado
 		if(!execute_builtin(PREV_STRING)){
