@@ -4,6 +4,9 @@
 #include <colors.h>
 #include <themes.h>
 
+
+
+
 extern uint64_t syscall(uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 
 // Struct para acceso O(1) a los componentes por nombre
@@ -182,9 +185,9 @@ static void main_key_handler(KeyboardEvent * event) {
     } 
 
     // Esc para quitar el foco
-    if (event->scan_code == 0x01) { // esc
-        unfocus(&gui_context);
-    }
+    // if (event->scan_code == 0x01) { // esc
+    //     unfocus(&gui_context);
+    // }
 }
 
 // Función inicializadora que crea el árbol con "hola sr. sapo"

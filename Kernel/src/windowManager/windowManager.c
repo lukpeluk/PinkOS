@@ -180,7 +180,7 @@ int addWindow(Pid pid){
     if (newWindow->buffer == NULL || newWindow->working_buffer == NULL) {
         // log_to_serial("addWindow: Error al crear el buffer de video");
         free(newWindow->buffer);
-        free(newWindow->working_buffer);
+        free(newWindow->working_buffer); // TODO: acá puede haber un doble free que es un problema, ver qué onda
         free(newWindow);
         return -1; // No se pudo allocar memoria para el buffer
     }

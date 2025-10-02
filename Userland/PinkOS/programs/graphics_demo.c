@@ -41,8 +41,20 @@ static uint32_t static_color_6 = 0xD8DEE9;
 static uint32_t static_color_7 = 0x000000;
 static uint32_t static_color_8 = 0xFFFFFF;
 
+
+static void self_destruct_press_handler(void* context, struct Component* comp) {
+    // Se auto desactiva
+    comp->active = 0;
+}
+
+// Si se tipea "enable" en el subtitle, se activa el footer 
+static void handle_input(void* context, struct Component* comp) {
+    if(strcmp(comp->text, "enable") == 0)
+        components.footer->active = 1;
+}
+
 // Función inicializadora que crea el árbol con "hola sr. sapo"
-void initialize_component_tree() {
+static void initialize_component_tree() {
 
     // Título principal con "hola sr. sapo" - índice 0
     component_array[0] = COMPONENT_CONSTRUCTOR(
@@ -72,7 +84,7 @@ void initialize_component_tree() {
         .children = 0, // no tiene hijos
         .children_count = 0,
         .parent = &component_array[5], // apunta a container1
-        .on_press = 0,
+        .on_press = handle_input,
         .on_key_press = input_key_handler,
         .needs_full_redraw = 1
     );
@@ -82,14 +94,14 @@ void initialize_component_tree() {
     component_array[2] = COMPONENT_CONSTRUCTOR(
         .bg_color = &static_color_3,
         .text_color = &static_color_4,
-        .text = "PinkOS UI System",
+        .text = "Self destruct",
         .width = 90, // 90% del contenedor
         .height = 30,
         .alignment = ALIGN_CENTER,
         .children = 0, // no tiene hijos
         .children_count = 0,
         .parent = &component_array[5], // apunta a container1
-        .on_press = 0,
+        .on_press = self_destruct_press_handler,
         .on_key_press = 0,
         .needs_full_redraw = 1
     );

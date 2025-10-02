@@ -30,6 +30,7 @@ extern uint32_t default_border_color;
         .height = 100,                  \
         .alignment = ALIGN_CENTER,      \
         .y_position = -1,               \
+        .active = 1,                    \
         .children = 0,                  \
         .children_count = 0,            \
         .parent = 0,                    \
@@ -46,6 +47,7 @@ typedef enum {
     ALIGN_CENTER,
     ALIGN_RIGHT
 } Alignment;
+
 
 // Callback para on_press, recibe el contexto y el componente que fue presionado
 typedef void (*OnPressCallback)(struct GuiContext* context, struct Component* comp);
@@ -70,6 +72,8 @@ struct Component {
     Alignment alignment;    // Respecto a su parent, horizontalmente
     int y_position;         // Posición vertical absoluta, -1 para auto (distribuido uniformemente)
 
+    int active;   // Si es 0 no se renderiza ni es seleccionable
+
     // Estructura de árbol
     struct Component* children; // Apunta directamente al inicio del array de hijos contiguos
     int children_count;
@@ -80,6 +84,12 @@ struct Component {
     OnKeyPressCallback on_key_press;
     OnFocusCallback on_focus_gain;
     OnFocusCallback on_focus_lost;
+
+    // Variables (dependen del programa, se definen en sus headers y cada uno casteará como necesite)
+    void* variables; // Cada componente tiene la lista de variables, para poder sobrescribirlas en su scope. Si la tiene como NULL el valor es el del padre
+
+    // Handler metadata (definida por los handlers y el sistema para guardar estados internos del componente, dependen del programa)
+    void * metadata;
 
     // Render
     int needs_full_redraw;      // 1 si necesita redibujarse todo, ejemplo cuando un hijo cambia de posición o cambia el color del fondo

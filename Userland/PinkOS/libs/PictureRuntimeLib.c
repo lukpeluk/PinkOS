@@ -42,13 +42,13 @@ static Point calculate_position_and_size(Component* comp, Point parent_pos, int 
             // Usar posición Y específica
             position.y = parent_pos.y + comp->y_position;
         } else if (comp->parent->children_count > 0) {
-            // Distribuir hijos uniformemente - solo considerar elementos con y_position == -1
+            // Distribuir hijos uniformemente - solo considerar elementos con y_position == -1 y que estén activos
             int total_height = 0;
             int distributable_count = 0;
             
             // Calcular altura total y contar solo elementos que usan distribución uniforme
             for (int i = 0; i < comp->parent->children_count; i++) {
-                if (comp->parent->children[i].y_position == -1) {
+                if (comp->parent->children[i].y_position == -1 && comp->parent->children[i].active) {
                     total_height += comp->parent->children[i].height;
                     distributable_count++;
                 }
@@ -63,7 +63,7 @@ static Point calculate_position_and_size(Component* comp, Point parent_pos, int 
                     if (&comp->parent->children[i] == comp) {
                         break;
                     }
-                    if (comp->parent->children[i].y_position == -1) {
+                    if (comp->parent->children[i].y_position == -1 && comp->parent->children[i].active) {
                         my_distributable_index++;
                     }
                 }
@@ -71,7 +71,7 @@ static Point calculate_position_and_size(Component* comp, Point parent_pos, int 
                 int y_offset = spacing;
                 int current_distributable_index = 0;
                 for (int i = 0; i < comp->parent->children_count && current_distributable_index < my_distributable_index; i++) {
-                    if (comp->parent->children[i].y_position == -1) {
+                    if (comp->parent->children[i].y_position == -1 && comp->parent->children[i].active) {
                         y_offset += comp->parent->children[i].height + spacing;
                         current_distributable_index++;
                     }
@@ -91,7 +91,7 @@ static Point calculate_position_and_size(Component* comp, Point parent_pos, int 
 
 // Función para renderizar un componente y sus hijos
 static void render_component(Component* comp, GuiContext * context, Point parent_pos, int parent_width, int parent_height) {
-    if (!comp) return;
+    if (!comp || !comp->active) return;
 
     int actual_width, actual_height;
     Point position = calculate_position_and_size(comp, parent_pos, parent_width, parent_height, &actual_width, &actual_height);
@@ -192,6 +192,11 @@ void iterate_focused(GuiContext * context, int direction) {
     context->focused = context->selection_order[new_index];
     context->focused->needs_full_redraw = 1;
     context->focused_index = new_index;
+
+    if(!context->focused->active) {
+        iterate_focused(context, direction); // Saltar componentes inactivos
+        return;
+    }
 
     if(context->focused->on_focus_gain) context->focused->on_focus_gain(context, context->focused);
     if(prev_focused && prev_focused->on_focus_lost) prev_focused->on_focus_lost(context, prev_focused);
